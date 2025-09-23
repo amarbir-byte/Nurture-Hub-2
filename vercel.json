@@ -6,6 +6,15 @@
     "app/api/**/*.js": {
       "runtime": "nodejs18.x"
     }
+{
+  "version": 2,
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "nodejs20.x"
+    }
+  }
+}
+    
   },
   "headers": [
     {

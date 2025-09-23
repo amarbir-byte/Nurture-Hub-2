@@ -127,23 +127,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     })
 
-    // Add a periodic check to ensure auth doesn't get stuck
-    const authHealthCheck = setInterval(() => {
-      if (mounted && loading) {
-        console.warn('Auth appears to be stuck in loading state, forcing reset', {
-          initialLoadingComplete,
-          hasSession: !!session,
-          hasUser: !!user
-        })
-        setLoading(false)
-        initialLoadingComplete = true
-      }
-    }, 10000) // Check every 10 seconds
-
     return () => {
       mounted = false
       clearTimeout(timeoutId)
-      clearInterval(authHealthCheck)
       subscription.unsubscribe()
     }
   }, [])

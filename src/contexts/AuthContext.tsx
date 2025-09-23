@@ -10,6 +10,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
   signOut: () => Promise<{ error: AuthError | null }>
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>
+  forceAuthReset: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -128,11 +129,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Add a periodic check to ensure auth doesn't get stuck
     const authHealthCheck = setInterval(() => {
-      if (mounted && loading && initialLoadingComplete) {
-        console.warn('Auth appears to be stuck in loading state, forcing reset')
+      if (mounted && loading) {
+        console.warn('Auth appears to be stuck in loading state, forcing reset', {
+          initialLoadingComplete,
+          hasSession: !!session,
+          hasUser: !!user
+        })
         setLoading(false)
+        initialLoadingComplete = true
       }
-    }, 15000) // Check every 15 seconds
+    }, 10000) // Check every 10 seconds
 
     return () => {
       mounted = false
@@ -181,6 +187,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
+  const forceAuthReset = () => {
+    console.log('Force resetting auth state')
+    setLoading(false)
+    setSession(null)
+    setUser(null)
+  }
+
   const resetPassword = async (email: string) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -201,6 +214,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signIn,
     signOut,
     resetPassword,
+    forceAuthReset,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

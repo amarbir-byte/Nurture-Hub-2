@@ -17,6 +17,12 @@ interface Property {
   description?: string
   listing_date?: string
   sold_date?: string
+  sale_price?: number
+  list_price?: number
+  floor_area?: number
+  land_area_m2?: number
+  organisation?: string
+  sale_method?: string
   lat?: number
   lng?: number
   created_at: string

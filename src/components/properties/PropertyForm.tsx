@@ -14,6 +14,12 @@ interface Property {
   description?: string
   listing_date?: string
   sold_date?: string
+  sale_price?: number
+  list_price?: number
+  floor_area?: number
+  land_area_m2?: number
+  organisation?: string
+  sale_method?: string
   lat?: number
   lng?: number
   created_at: string
@@ -30,12 +36,17 @@ interface FormData {
   address: string
   status: 'listed' | 'sold' | 'withdrawn'
   price: string
+  sale_price: string
   bedrooms: string
   bathrooms: string
   property_type: 'house' | 'apartment' | 'townhouse' | 'land' | 'commercial'
   description: string
   listing_date: string
   sold_date: string
+  floor_area: string
+  land_area_m2: string
+  organisation: string
+  showAdvanced: boolean
 }
 
 export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) {
@@ -47,12 +58,17 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
     address: property?.address || '',
     status: property?.status || 'listed',
     price: property?.price?.toString() || '',
+    sale_price: property?.sale_price?.toString() || '',
     bedrooms: property?.bedrooms?.toString() || '',
     bathrooms: property?.bathrooms?.toString() || '',
     property_type: property?.property_type || 'house',
     description: property?.description || '',
     listing_date: property?.listing_date || '',
     sold_date: property?.sold_date || '',
+    floor_area: property?.floor_area?.toString() || '',
+    land_area_m2: property?.land_area_m2?.toString() || '',
+    organisation: property?.organisation || '',
+    showAdvanced: false,
   })
 
   const mockGeocode = async (_address: string) => {
@@ -78,10 +94,17 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
       newErrors.address = 'Address is required'
     }
 
-    if (!formData.price.trim()) {
-      newErrors.price = 'Price is required'
-    } else if (isNaN(Number(formData.price)) || Number(formData.price) <= 0) {
+    // Require either price or sale_price
+    if (!formData.price.trim() && !formData.sale_price.trim()) {
+      newErrors.price = 'Either Price or Sale Price is required'
+    }
+
+    if (formData.price && (isNaN(Number(formData.price)) || Number(formData.price) <= 0)) {
       newErrors.price = 'Price must be a valid positive number'
+    }
+
+    if (formData.sale_price && (isNaN(Number(formData.sale_price)) || Number(formData.sale_price) <= 0)) {
+      newErrors.sale_price = 'Sale price must be a valid positive number'
     }
 
     if (formData.bedrooms && (isNaN(Number(formData.bedrooms)) || Number(formData.bedrooms) < 0)) {
@@ -119,13 +142,17 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
       const propertyData = {
         address: formData.address.trim(),
         status: formData.status,
-        price: Number(formData.price),
+        price: formData.price ? Number(formData.price) : null,
+        sale_price: formData.sale_price ? Number(formData.sale_price) : null,
         bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
         bathrooms: formData.bathrooms ? Number(formData.bathrooms) : null,
         property_type: formData.property_type,
         description: formData.description.trim() || null,
         listing_date: formData.listing_date || null,
         sold_date: formData.sold_date || null,
+        floor_area: formData.floor_area ? Number(formData.floor_area) : null,
+        land_area_m2: formData.land_area_m2 ? Number(formData.land_area_m2) : null,
+        organisation: formData.organisation.trim() || null,
         lat: coordinates.lat,
         lng: coordinates.lng,
         user_id: user?.id,
@@ -158,9 +185,9 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
     }
   }
 
-  const handleInputChange = (field: keyof FormData, value: string) => {
+  const handleInputChange = (field: keyof FormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }))
-    if (errors[field]) {
+    if (errors[field as keyof Partial<FormData>]) {
       setErrors(prev => ({ ...prev, [field]: undefined }))
     }
   }
@@ -239,24 +266,54 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
               </div>
             </div>
 
-            {/* Price */}
-            <div>
-              <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
-                Price (NZD) *
-              </label>
-              <input
-                type="number"
-                id="price"
-                value={formData.price}
-                onChange={(e) => handleInputChange('price', e.target.value)}
-                className={`input-field ${errors.price ? 'border-red-500' : ''}`}
-                placeholder="650000"
-                min="0"
-                step="1000"
-              />
-              {errors.price && (
-                <p className="mt-1 text-sm text-red-600">{errors.price}</p>
-              )}
+            {/* Price Section */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-medium text-gray-900">Pricing</h3>
+                <p className="text-sm text-gray-500">* At least one price field required</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
+                    {formData.status === 'listed' ? 'List Price (NZD)' : 'Price (NZD)'}
+                  </label>
+                  <input
+                    type="number"
+                    id="price"
+                    value={formData.price}
+                    onChange={(e) => handleInputChange('price', e.target.value)}
+                    className={`input-field ${errors.price ? 'border-red-500' : ''}`}
+                    placeholder="650000"
+                    min="0"
+                    step="1000"
+                  />
+                  {errors.price && (
+                    <p className="mt-1 text-sm text-red-600">{errors.price}</p>
+                  )}
+                </div>
+
+                {formData.status === 'sold' && (
+                  <div>
+                    <label htmlFor="sale_price" className="block text-sm font-medium text-gray-700 mb-1">
+                      Sale Price (NZD)
+                    </label>
+                    <input
+                      type="number"
+                      id="sale_price"
+                      value={formData.sale_price}
+                      onChange={(e) => handleInputChange('sale_price', e.target.value)}
+                      className={`input-field ${errors.sale_price ? 'border-red-500' : ''}`}
+                      placeholder="675000"
+                      min="0"
+                      step="1000"
+                    />
+                    {errors.sale_price && (
+                      <p className="mt-1 text-sm text-red-600">{errors.sale_price}</p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Bedrooms & Bathrooms */}
@@ -337,6 +394,82 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
                 </div>
               )}
             </div>
+
+            {/* Advanced Fields Toggle */}
+            <div className="border-t border-gray-200 pt-6">
+              <button
+                type="button"
+                onClick={() => handleInputChange('showAdvanced', !formData.showAdvanced)}
+                className="flex items-center text-sm font-medium text-primary-600 hover:text-primary-500"
+              >
+                <span>{formData.showAdvanced ? 'Hide' : 'Show'} Additional Details</span>
+                <svg
+                  className={`ml-2 h-4 w-4 transform transition-transform ${
+                    formData.showAdvanced ? 'rotate-180' : ''
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Advanced Fields */}
+            {formData.showAdvanced && (
+              <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
+                {/* Property Measurements */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="floor_area" className="block text-sm font-medium text-gray-700 mb-1">
+                      Floor Area (m²)
+                    </label>
+                    <input
+                      type="number"
+                      id="floor_area"
+                      value={formData.floor_area}
+                      onChange={(e) => handleInputChange('floor_area', e.target.value)}
+                      className="input-field"
+                      placeholder="120"
+                      min="0"
+                      step="1"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="land_area_m2" className="block text-sm font-medium text-gray-700 mb-1">
+                      Land Area (m²)
+                    </label>
+                    <input
+                      type="number"
+                      id="land_area_m2"
+                      value={formData.land_area_m2}
+                      onChange={(e) => handleInputChange('land_area_m2', e.target.value)}
+                      className="input-field"
+                      placeholder="600"
+                      min="0"
+                      step="1"
+                    />
+                  </div>
+                </div>
+
+                {/* Organisation */}
+                <div>
+                  <label htmlFor="organisation" className="block text-sm font-medium text-gray-700 mb-1">
+                    Real Estate Agency
+                  </label>
+                  <input
+                    type="text"
+                    id="organisation"
+                    value={formData.organisation}
+                    onChange={(e) => handleInputChange('organisation', e.target.value)}
+                    className="input-field"
+                    placeholder="Barfoot & Thompson, Ray White, etc."
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Description */}
             <div>

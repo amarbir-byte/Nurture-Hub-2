@@ -10,6 +10,12 @@ interface Property {
   description?: string
   listing_date?: string
   sold_date?: string
+  sale_price?: number
+  list_price?: number
+  floor_area?: number
+  land_area_m2?: number
+  organisation?: string
+  sale_method?: string
   lat?: number
   lng?: number
   created_at: string
@@ -114,29 +120,81 @@ export function PropertyCard({ property, onEdit, onDelete }: PropertyCardProps) 
       </h3>
 
       {/* Price */}
-      <div className="text-2xl font-bold text-primary-600 mb-3">
-        {formatPrice(property.price)}
+      <div className="mb-3">
+        {property.status === 'sold' && property.sale_price ? (
+          <div>
+            <div className="text-2xl font-bold text-blue-600">
+              {formatPrice(property.sale_price)}
+            </div>
+            <div className="text-sm text-gray-500">
+              Sold for {formatPrice(property.sale_price)}
+              {property.price && property.price !== property.sale_price && (
+                <span className="ml-1">(Listed: {formatPrice(property.price)})</span>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="text-2xl font-bold text-primary-600">
+            {formatPrice(property.price)}
+          </div>
+        )}
       </div>
 
       {/* Property Details */}
-      <div className="flex items-center space-x-4 text-sm text-gray-600 mb-4">
-        {property.bedrooms && (
-          <div className="flex items-center">
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-            </svg>
-            {property.bedrooms} bed{property.bedrooms !== 1 ? 's' : ''}
-          </div>
-        )}
-        {property.bathrooms && (
-          <div className="flex items-center">
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
-            </svg>
-            {property.bathrooms} bath{property.bathrooms !== 1 ? 's' : ''}
+      <div className="space-y-2 mb-4">
+        <div className="flex items-center space-x-4 text-sm text-gray-600">
+          {property.bedrooms && (
+            <div className="flex items-center">
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+              </svg>
+              {property.bedrooms} bed{property.bedrooms !== 1 ? 's' : ''}
+            </div>
+          )}
+          {property.bathrooms && (
+            <div className="flex items-center">
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+              </svg>
+              {property.bathrooms} bath{property.bathrooms !== 1 ? 's' : ''}
+            </div>
+          )}
+        </div>
+
+        {/* Area Information */}
+        {(property.floor_area || property.land_area_m2) && (
+          <div className="flex items-center space-x-4 text-sm text-gray-600">
+            {property.floor_area && (
+              <div className="flex items-center">
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+                {property.floor_area}m² floor
+              </div>
+            )}
+            {property.land_area_m2 && (
+              <div className="flex items-center">
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                </svg>
+                {property.land_area_m2}m² land
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {/* Agency Information */}
+      {property.organisation && (
+        <div className="text-sm text-gray-600 mb-3">
+          <div className="flex items-center">
+            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            {property.organisation}
+          </div>
+        </div>
+      )}
 
       {/* Description */}
       {property.description && (

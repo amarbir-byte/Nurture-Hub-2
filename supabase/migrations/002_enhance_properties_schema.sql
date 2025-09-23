@@ -20,8 +20,7 @@ ADD COLUMN valuation NUMERIC(12,2),
 ADD COLUMN price_per_sqm NUMERIC(10,2),
 
 -- Property details
-ADD COLUMN bathrooms INTEGER,
-ADD COLUMN description TEXT,
+-- Note: bathrooms, description, listing_date, sold_date already added in 003_add_missing_columns.sql
 ADD COLUMN floor_area NUMERIC(10,2), -- in square meters
 ADD COLUMN land_area_ha NUMERIC(10,4), -- in hectares
 ADD COLUMN land_area_m2 NUMERIC(10,2), -- in square meters
@@ -31,8 +30,7 @@ ADD COLUMN garages INTEGER,
 ADD COLUMN carports INTEGER,
 
 -- Date fields
-ADD COLUMN listing_date DATE,
-ADD COLUMN sold_date DATE,
+-- Note: listing_date, sold_date already added in 003_add_missing_columns.sql
 ADD COLUMN sale_date DATE,
 ADD COLUMN settlement_date DATE,
 ADD COLUMN agreement_date DATE,
@@ -123,7 +121,7 @@ CREATE INDEX idx_properties_sold_date ON public.properties(sold_date) WHERE sold
 
 -- Property characteristics
 CREATE INDEX idx_properties_bedrooms ON public.properties(bedrooms) WHERE bedrooms IS NOT NULL;
-CREATE INDEX idx_properties_bathrooms ON public.properties(bathrooms) WHERE bathrooms IS NOT NULL;
+-- Note: bathrooms index not created here as bathrooms column was added in 003_add_missing_columns.sql
 CREATE INDEX idx_properties_property_type ON public.properties(property_type) WHERE property_type IS NOT NULL;
 
 -- Area-based searches
@@ -294,6 +292,7 @@ CREATE TRIGGER update_property_calculated_fields_trigger
 -- COMMENTS for New Fields
 -- =============================================
 
+-- Enhanced field comments
 COMMENT ON COLUMN public.properties.street_number IS 'Street number component of address';
 COMMENT ON COLUMN public.properties.street IS 'Street name component of address';
 COMMENT ON COLUMN public.properties.suburb IS 'Suburb/area component of address';
@@ -315,3 +314,5 @@ COMMENT ON COLUMN public.properties.investment_yield IS 'Calculated rental yield
 COMMENT ON COLUMN public.properties.condition_rating IS 'Property condition rating 1-5 (1=Poor, 5=Excellent)';
 COMMENT ON COLUMN public.properties.public_listing IS 'Whether property is publicly visible';
 COMMENT ON COLUMN public.properties.featured_property IS 'Whether property is featured/highlighted';
+
+-- Note: Comments for bathrooms, description, listing_date, sold_date are in 003_add_missing_columns.sql

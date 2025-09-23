@@ -446,12 +446,53 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
         return
       }
 
-      // Insert properties into database
+      // Insert properties into database with all enhanced REINZ fields
       const propertiesWithUser = properties.map(property => ({
-        ...property,
+        // Core fields
+        address: property.address,
+        status: property.status || 'listed',
+        price: property.price || property.sale_price || property.list_price,
+        property_type: property.property_type || 'house',
+        lat: property.lat,
+        lng: property.lng,
         user_id: user?.id,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+
+        // Address components
+        street_number: property.street_number,
+        street: property.street,
+        suburb: property.suburb,
+
+        // Pricing
+        sale_price: property.sale_price,
+        list_price: property.list_price,
+        valuation: property.valuation,
+
+        // Property details
+        bedrooms: property.bedrooms,
+        bathrooms: property.bathrooms,
+        description: property.description,
+        floor_area: property.floor_area,
+        land_area_ha: property.land_area_ha,
+        land_area_m2: property.land_area_m2,
+
+        // Dates
+        listing_date: property.listing_date,
+        sold_date: property.sold_date || property.sale_date,
+        sale_date: property.sale_date,
+        settlement_date: property.settlement_date,
+        agreement_date: property.agreement_date,
+
+        // Sale information
+        days_to_sell: property.days_to_sell,
+        sale_category: property.sale_category,
+        sale_method: property.sale_method,
+        organisation: property.organisation,
+
+        // Property characteristics
+        new_dwelling: property.new_dwelling,
+        sale_tenure: property.sale_tenure,
       }))
 
       const { error } = await supabase

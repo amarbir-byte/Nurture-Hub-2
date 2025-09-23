@@ -1,9 +1,12 @@
 {
   "name": "nurture-hub",
   "private": true,
-  "version": "0.1.0",
-  "description": "Proximity-based marketing CRM for real estate agents",
+  "version": "1.0.0",
+  "description": "Proximity-based marketing CRM for real estate agents. 50% cheaper than kvCORE with better results.",
   "type": "module",
+  "author": "Nurture Hub Team",
+  "keywords": ["real-estate", "crm", "proximity-marketing", "sms-campaigns", "property-management"],
+  "homepage": "https://nurture-hub.vercel.app",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

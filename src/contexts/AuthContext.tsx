@@ -33,27 +33,46 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     let initialLoadingComplete = false
+    let mounted = true
 
     // Set a timeout to prevent infinite loading on initial load only
     const timeoutId = setTimeout(() => {
-      if (!initialLoadingComplete) {
+      if (!initialLoadingComplete && mounted) {
         console.warn('Auth session timeout - stopping loading')
         setLoading(false)
       }
-    }, 10000) // 10 second timeout
+    }, 8000) // 8 second timeout (reduced from 10)
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (!mounted) return
+
       initialLoadingComplete = true
       clearTimeout(timeoutId)
+
+      if (error) {
+        console.error('Session error:', error)
+        // If there's a session error, clear everything and stop loading
+        setSession(null)
+        setUser(null)
+        setLoading(false)
+        return
+      }
+
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
     }).catch((error) => {
+      if (!mounted) return
+
       initialLoadingComplete = true
       clearTimeout(timeoutId)
       console.error('Error getting session:', error)
-      setLoading(false) // Stop loading even on error
+
+      // Clear auth state on error
+      setSession(null)
+      setUser(null)
+      setLoading(false)
     })
 
     // Listen for auth changes
@@ -61,13 +80,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session?.user?.email)
+
+      // Handle specific auth events
+      if (event === 'TOKEN_REFRESHED') {
+        console.log('Token refreshed successfully')
+      } else if (event === 'SIGNED_OUT') {
+        console.log('User signed out')
+        // Clear any local storage or cache if needed
+      }
+
       setSession(session)
       setUser(session?.user ?? null)
-      // Only set loading to false if we're still in initial loading state
+
+      // Always set loading to false after any auth state change
+      setLoading(false)
+
+      // Mark initial loading as complete
       if (!initialLoadingComplete) {
         initialLoadingComplete = true
         clearTimeout(timeoutId)
-        setLoading(false)
       }
 
       // Handle sign up confirmation
@@ -95,8 +126,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     })
 
+    // Add a periodic check to ensure auth doesn't get stuck
+    const authHealthCheck = setInterval(() => {
+      if (mounted && loading && initialLoadingComplete) {
+        console.warn('Auth appears to be stuck in loading state, forcing reset')
+        setLoading(false)
+      }
+    }, 15000) // Check every 15 seconds
+
     return () => {
+      mounted = false
       clearTimeout(timeoutId)
+      clearInterval(authHealthCheck)
       subscription.unsubscribe()
     }
   }, [])

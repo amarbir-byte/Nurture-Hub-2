@@ -32,11 +32,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let initialLoadingComplete = false
+
+    // Set a timeout to prevent infinite loading on initial load only
+    const timeoutId = setTimeout(() => {
+      if (!initialLoadingComplete) {
+        console.warn('Auth session timeout - stopping loading')
+        setLoading(false)
+      }
+    }, 10000) // 10 second timeout
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      initialLoadingComplete = true
+      clearTimeout(timeoutId)
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
+    }).catch((error) => {
+      initialLoadingComplete = true
+      clearTimeout(timeoutId)
+      console.error('Error getting session:', error)
+      setLoading(false) // Stop loading even on error
     })
 
     // Listen for auth changes
@@ -46,7 +63,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('Auth state changed:', event, session?.user?.email)
       setSession(session)
       setUser(session?.user ?? null)
-      setLoading(false)
+      // Only set loading to false if we're still in initial loading state
+      if (!initialLoadingComplete) {
+        initialLoadingComplete = true
+        clearTimeout(timeoutId)
+        setLoading(false)
+      }
 
       // Handle sign up confirmation
       if (event === 'SIGNED_IN' && session?.user) {
@@ -73,7 +95,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      clearTimeout(timeoutId)
+      subscription.unsubscribe()
+    }
   }, [])
 
   const signUp = async (email: string, password: string) => {

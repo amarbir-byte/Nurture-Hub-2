@@ -14,14 +14,6 @@ interface Property {
   lng: number
 }
 
-interface Contact {
-  id: string
-  name: string
-  address: string
-  phone?: string
-  lat: number
-  lng: number
-}
 
 interface Campaign {
   id: string

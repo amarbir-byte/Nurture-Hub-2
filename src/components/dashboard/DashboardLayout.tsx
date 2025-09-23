@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useSubscription } from '../../contexts/SubscriptionContext'
 
-type DashboardPage = 'dashboard' | 'properties' | 'contacts' | 'marketing' | 'templates' | 'settings'
+type DashboardPage = 'dashboard' | 'properties' | 'contacts' | 'marketing' | 'templates' | 'settings' | 'beta' | 'admin'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -10,14 +10,22 @@ interface DashboardLayoutProps {
   onNavigate: (page: DashboardPage) => void
 }
 
-const navigationItems = [
-  { name: 'Dashboard', page: 'dashboard' as DashboardPage, icon: 'dashboard' },
-  { name: 'Properties', page: 'properties' as DashboardPage, icon: 'properties' },
-  { name: 'Contacts', page: 'contacts' as DashboardPage, icon: 'contacts' },
-  { name: 'Marketing', page: 'marketing' as DashboardPage, icon: 'marketing' },
-  { name: 'Templates', page: 'templates' as DashboardPage, icon: 'templates' },
-  { name: 'Settings', page: 'settings' as DashboardPage, icon: 'settings' },
-]
+const getNavigationItems = (isAdmin: boolean) => {
+  const baseItems = [
+    { name: 'Dashboard', page: 'dashboard' as DashboardPage, icon: 'dashboard' },
+    { name: 'Properties', page: 'properties' as DashboardPage, icon: 'properties' },
+    { name: 'Contacts', page: 'contacts' as DashboardPage, icon: 'contacts' },
+    { name: 'Marketing', page: 'marketing' as DashboardPage, icon: 'marketing' },
+    { name: 'Templates', page: 'templates' as DashboardPage, icon: 'templates' },
+    { name: 'Settings', page: 'settings' as DashboardPage, icon: 'settings' },
+  ]
+
+  if (isAdmin) {
+    baseItems.push({ name: 'Admin', page: 'admin' as DashboardPage, icon: 'admin' })
+  }
+
+  return baseItems
+}
 
 function NavIcon({ icon }: { icon: string }) {
   switch (icon) {
@@ -60,6 +68,12 @@ function NavIcon({ icon }: { icon: string }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
       )
+    case 'admin':
+      return (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+      )
     default:
       return null
   }
@@ -69,6 +83,9 @@ export function DashboardLayout({ children, currentPage, onNavigate }: Dashboard
   const { user, signOut } = useAuth()
   const { userSubscription, isTrialing, trialDaysRemaining, usageStats } = useSubscription()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const isAdmin = userSubscription?.is_admin || false
+  const navigationItems = getNavigationItems(isAdmin)
 
   const handleSignOut = async () => {
     await signOut()

@@ -2,35 +2,36 @@ import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 
-interface ImportContact {
-  name: string
-  email?: string
-  phone?: string
+interface ImportProperty {
   address: string
-  suburb?: string
-  city?: string
-  postal_code?: string
-  notes?: string
-  tags?: string[]
+  status?: 'listed' | 'sold' | 'withdrawn'
+  price?: number
+  bedrooms?: number
+  bathrooms?: number
+  property_type?: 'house' | 'apartment' | 'townhouse' | 'land' | 'commercial'
+  description?: string
+  listing_date?: string
+  sold_date?: string
   [key: string]: any
 }
 
-interface ContactImportProps {
+interface PropertyImportProps {
   onImportComplete: (importedCount: number) => void
   onClose: () => void
 }
 
-export function ContactImport({ onImportComplete, onClose }: ContactImportProps) {
+export function PropertyImport({ onImportComplete, onClose }: PropertyImportProps) {
   const { user } = useAuth()
   const [file, setFile] = useState<File | null>(null)
-  const [importing, setImporting] = useState(false)
-  const [preview, setPreview] = useState<ImportContact[]>([])
-  const [fieldMapping, setFieldMapping] = useState<Record<string, string>>({})
-  const [errors, setErrors] = useState<string[]>([])
   const [step, setStep] = useState<'upload' | 'mapping' | 'preview'>('upload')
+  const [headers, setHeaders] = useState<string[]>([])
+  const [fieldMapping, setFieldMapping] = useState<Record<string, string>>({})
+  const [preview, setPreview] = useState<ImportProperty[]>([])
+  const [errors, setErrors] = useState<string[]>([])
+  const [importing, setImporting] = useState(false)
 
-  const requiredFields = ['name', 'address']
-  const optionalFields = ['email', 'phone', 'suburb', 'city', 'postal_code', 'notes', 'tags']
+  const requiredFields = ['address']
+  const optionalFields = ['status', 'price', 'bedrooms', 'bathrooms', 'property_type', 'description', 'listing_date', 'sold_date']
   const allFields = [...requiredFields, ...optionalFields]
 
   const mockGeocode = async (_address: string) => {
@@ -49,7 +50,6 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
     }
   }
 
-
   const parseTSV = (tsvText: string): { headers: string[], rows: string[][] } => {
     const lines = tsvText.split('\n').filter(line => line.trim())
     if (lines.length === 0) throw new Error('TSV file is empty')
@@ -61,11 +61,9 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
   }
 
   const parseExcelCSV = (csvText: string): { headers: string[], rows: string[][] } => {
-    // Handle Excel-exported CSV which might use semicolons
     const lines = csvText.split('\n').filter(line => line.trim())
     if (lines.length === 0) throw new Error('File is empty')
 
-    // Try to detect delimiter
     const firstLine = lines[0]
     const delimiter = firstLine.includes(';') ? ';' : ','
 
@@ -78,8 +76,6 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
   }
 
   const parseExcelFile = async (_arrayBuffer: ArrayBuffer): Promise<{ headers: string[], rows: string[][] }> => {
-    // For now, we'll provide instructions for Excel users to export as CSV
-    // In a real implementation, you'd use a library like SheetJS
     throw new Error('Excel file support: Please export your Excel file as CSV format for import. Excel files will be fully supported in the next update.')
   }
 
@@ -93,7 +89,6 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
       const text = await file.text()
       return parseTSV(text)
     } else {
-      // CSV, TXT, or other delimited files
       const text = await file.text()
       return parseExcelCSV(text)
     }
@@ -115,57 +110,54 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
     setErrors([])
 
     try {
-      let headers: string[]
+      const { headers } = await parseFile(selectedFile)
 
-      if (fileName.endsWith('.xlsx')) {
-        // For Excel files, we'll create a simple reader that converts to CSV format
-        const arrayBuffer = await selectedFile.arrayBuffer()
-        const { headers: xlsxHeaders } = await parseExcelFile(arrayBuffer)
-        headers = xlsxHeaders
-      } else {
-        // Handle text-based files
-        const text = await selectedFile.text()
-
-        if (fileName.endsWith('.tsv')) {
-          const { headers: tsvHeaders } = parseTSV(text)
-          headers = tsvHeaders
-        } else {
-          // CSV, TXT, or other delimited files
-          const { headers: csvHeaders } = parseExcelCSV(text)
-          headers = csvHeaders
-        }
-      }
-
-      // Auto-detect field mappings
       const autoMapping: Record<string, string> = {}
       headers.forEach(header => {
         const lowerHeader = header.toLowerCase()
-        if (lowerHeader.includes('name') || lowerHeader.includes('full')) {
-          autoMapping['name'] = header
-        } else if (lowerHeader.includes('email') || lowerHeader.includes('mail')) {
-          autoMapping['email'] = header
-        } else if (lowerHeader.includes('phone') || lowerHeader.includes('mobile') || lowerHeader.includes('tel')) {
-          autoMapping['phone'] = header
-        } else if (lowerHeader.includes('address') || lowerHeader.includes('street')) {
+        if (lowerHeader.includes('address')) {
           autoMapping['address'] = header
-        } else if (lowerHeader.includes('suburb')) {
-          autoMapping['suburb'] = header
-        } else if (lowerHeader.includes('city')) {
-          autoMapping['city'] = header
-        } else if (lowerHeader.includes('postal') || lowerHeader.includes('zip') || lowerHeader.includes('postcode')) {
-          autoMapping['postal_code'] = header
-        } else if (lowerHeader.includes('note') || lowerHeader.includes('comment')) {
-          autoMapping['notes'] = header
-        } else if (lowerHeader.includes('tag')) {
-          autoMapping['tags'] = header
+        } else if (lowerHeader.includes('status')) {
+          autoMapping['status'] = header
+        } else if (lowerHeader.includes('price') || lowerHeader.includes('cost')) {
+          autoMapping['price'] = header
+        } else if (lowerHeader.includes('bedroom') || lowerHeader.includes('bed')) {
+          autoMapping['bedrooms'] = header
+        } else if (lowerHeader.includes('bathroom') || lowerHeader.includes('bath')) {
+          autoMapping['bathrooms'] = header
+        } else if (lowerHeader.includes('type') || lowerHeader.includes('property_type')) {
+          autoMapping['property_type'] = header
+        } else if (lowerHeader.includes('description') || lowerHeader.includes('desc')) {
+          autoMapping['description'] = header
+        } else if (lowerHeader.includes('listing') || lowerHeader.includes('list_date')) {
+          autoMapping['listing_date'] = header
+        } else if (lowerHeader.includes('sold') || lowerHeader.includes('sale_date')) {
+          autoMapping['sold_date'] = header
         }
       })
 
+      setHeaders(headers)
       setFieldMapping(autoMapping)
       setStep('mapping')
     } catch (error) {
-      setErrors(['Error reading CSV file. Please check the format.'])
+      setErrors(['Error reading file. Please check the format.'])
     }
+  }
+
+  const downloadTemplate = () => {
+    const csvContent = 'Address,Status,Price,Bedrooms,Bathrooms,Property Type,Description,Listing Date,Sold Date\n' +
+      '123 Main Street Auckland,listed,750000,3,2,house,Beautiful family home,2024-01-15,\n' +
+      '456 Queen Street Wellington,sold,950000,4,3,townhouse,Modern townhouse,2024-01-10,2024-02-15'
+
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'property_import_template.csv'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
   }
 
   const generatePreview = async () => {
@@ -174,36 +166,40 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
     try {
       const { headers, rows } = await parseFile(file)
 
-      const contacts: ImportContact[] = rows.slice(0, 5).map(row => {
-        const contact: any = {}
+      const properties: ImportProperty[] = rows.slice(0, 5).map(row => {
+        const property: any = {}
 
         Object.entries(fieldMapping).forEach(([field, csvHeader]) => {
           const headerIndex = headers.indexOf(csvHeader)
           if (headerIndex !== -1) {
             let value = row[headerIndex]?.trim()
-            if (field === 'tags' && value) {
-              contact[field] = value.split(';').map((tag: string) => tag.trim()).filter((tag: string) => tag)
-            } else if (value) {
-              contact[field] = value
+            if (value) {
+              if (field === 'price' || field === 'bedrooms' || field === 'bathrooms') {
+                const numValue = parseFloat(value)
+                if (!isNaN(numValue)) {
+                  property[field] = numValue
+                }
+              } else {
+                property[field] = value
+              }
             }
           }
         })
 
-        return contact
+        return property
       })
 
-      // Validate required fields
       const validationErrors: string[] = []
-      contacts.forEach((contact, index) => {
+      properties.forEach((property, index) => {
         requiredFields.forEach(field => {
-          if (!contact[field]) {
+          if (!property[field]) {
             validationErrors.push(`Row ${index + 2}: Missing required field '${field}'`)
           }
         })
       })
 
       setErrors(validationErrors)
-      setPreview(contacts)
+      setPreview(properties)
       setStep('preview')
     } catch (error) {
       setErrors(['Error generating preview'])
@@ -217,107 +213,89 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
     try {
       const { headers, rows } = await parseFile(file)
 
-      const contacts: ImportContact[] = []
+      const properties: ImportProperty[] = []
       const importErrors: string[] = []
 
-      // Process all rows
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i]
-        const contact: any = {}
+        const property: any = {}
 
         Object.entries(fieldMapping).forEach(([field, csvHeader]) => {
           const headerIndex = headers.indexOf(csvHeader)
           if (headerIndex !== -1) {
             let value = row[headerIndex]?.trim()
-            if (field === 'tags' && value) {
-              contact[field] = value.split(';').map((tag: string) => tag.trim()).filter((tag: string) => tag)
-            } else if (value) {
-              contact[field] = value
+            if (value) {
+              if (field === 'price' || field === 'bedrooms' || field === 'bathrooms') {
+                const numValue = parseFloat(value)
+                if (!isNaN(numValue)) {
+                  property[field] = numValue
+                }
+              } else {
+                property[field] = value
+              }
             }
           }
         })
 
         // Validate required fields
-        const hasRequiredFields = requiredFields.every(field => contact[field])
-        if (hasRequiredFields) {
-          contacts.push(contact)
-        } else {
-          importErrors.push(`Row ${i + 2}: Missing required fields`)
+        const missingFields = requiredFields.filter(field => !property[field])
+        if (missingFields.length > 0) {
+          importErrors.push(`Row ${i + 2}: Missing required fields: ${missingFields.join(', ')}`)
+          continue
         }
+
+        // Set defaults
+        if (!property.status) property.status = 'listed'
+        if (!property.property_type) property.property_type = 'house'
+
+        // Mock geocoding
+        const { lat, lng } = await mockGeocode(property.address)
+        property.lat = lat
+        property.lng = lng
+
+        properties.push(property)
       }
 
-      if (contacts.length === 0) {
-        setErrors(['No valid contacts found to import'])
+      if (importErrors.length > 0) {
+        setErrors(importErrors)
+        setImporting(false)
         return
       }
 
-      // Import contacts to database
-      let successCount = 0
-      for (const contact of contacts) {
-        try {
-          const coordinates = await mockGeocode(contact.address)
+      // Insert properties into database
+      const propertiesWithUser = properties.map(property => ({
+        ...property,
+        user_id: user?.id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }))
 
-          const contactData = {
-            name: contact.name,
-            email: contact.email || null,
-            phone: contact.phone || null,
-            address: contact.address,
-            suburb: contact.suburb || null,
-            city: contact.city || null,
-            postal_code: contact.postal_code || null,
-            notes: contact.notes || null,
-            tags: contact.tags || null,
-            lat: coordinates.lat,
-            lng: coordinates.lng,
-            contact_source: 'import' as const,
-            user_id: user?.id,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }
+      const { error } = await supabase
+        .from('properties')
+        .insert(propertiesWithUser)
 
-          const { error } = await supabase
-            .from('contacts')
-            .insert([contactData])
+      if (error) throw error
 
-          if (!error) {
-            successCount++
-          }
-        } catch (error) {
-          console.error('Error importing contact:', contact.name, error)
-        }
-      }
-
-      onImportComplete(successCount)
+      onImportComplete(properties.length)
+      onClose()
     } catch (error) {
-      setErrors(['Error during import process'])
+      console.error('Error importing properties:', error)
+      setErrors(['Error importing properties. Please try again.'])
     } finally {
       setImporting(false)
     }
   }
 
-  const downloadTemplate = () => {
-    const csvContent = 'Name,Email,Phone,Address,Suburb,City,Postal Code,Notes,Tags\n' +
-      'John Smith,john@example.com,+64 21 123 4567,123 Queen Street,CBD,Auckland,1010,First time buyer,buyer;motivated\n' +
-      'Jane Doe,jane@example.com,+64 21 987 6543,456 Ponsonby Road,Ponsonby,Auckland,1011,Investor interested in apartments,investor;repeat-client'
-
-    const blob = new Blob([csvContent], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'contact-import-template.csv'
-    a.click()
-    window.URL.revokeObjectURL(url)
-  }
-
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="p-6">
+          {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Import Contacts from CSV</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Import Properties</h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-500"
+              className="p-2 hover:bg-gray-100 rounded-md"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -356,12 +334,12 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                   </svg>
                   <div className="mt-4">
-                    <label htmlFor="csv-upload" className="cursor-pointer">
+                    <label htmlFor="property-upload" className="cursor-pointer">
                       <span className="mt-2 block text-sm font-medium text-gray-900">
                         Click to upload file
                       </span>
                       <input
-                        id="csv-upload"
+                        id="property-upload"
                         type="file"
                         accept=".csv,.tsv,.txt,.xlsx"
                         onChange={handleFileUpload}
@@ -369,7 +347,7 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
                       />
                     </label>
                     <p className="mt-2 text-sm text-gray-600">
-                      Upload a CSV, TSV, TXT, or Excel (.xlsx) file with contact information
+                      Upload a CSV, TSV, TXT, or Excel (.xlsx) file with property information
                     </p>
                   </div>
                 </div>
@@ -386,9 +364,10 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
                 <div className="mt-3 pt-3 border-t border-blue-200">
                   <p className="font-medium text-blue-900 mb-1">Format Requirements:</p>
                   <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• <strong>Required fields:</strong> Name, Address</li>
-                    <li>• <strong>Optional fields:</strong> Email, Phone, Suburb, City, Postal Code, Notes</li>
-                    <li>• <strong>Tags:</strong> Separate multiple tags with semicolons (;)</li>
+                    <li>• <strong>Required field:</strong> Address</li>
+                    <li>• <strong>Optional fields:</strong> Status, Price, Bedrooms, Bathrooms, Property Type, Description, Listing Date, Sold Date</li>
+                    <li>• <strong>Status values:</strong> listed, sold, withdrawn</li>
+                    <li>• <strong>Property types:</strong> house, apartment, townhouse, land, commercial</li>
                     <li>• First row should contain column headers</li>
                   </ul>
                 </div>
@@ -413,7 +392,7 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
                   </p>
                   <button
                     onClick={() => setStep('mapping')}
-                    className="mt-2 btn-primary"
+                    className="mt-3 btn-primary"
                   >
                     Continue to Field Mapping
                   </button>
@@ -423,35 +402,37 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
           )}
 
           {/* Step 2: Field Mapping */}
-          {step === 'mapping' && file && (
+          {step === 'mapping' && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Map CSV columns to contact fields</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {allFields.map(field => (
-                    <div key={field}>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {field.charAt(0).toUpperCase() + field.slice(1).replace('_', ' ')}
-                        {requiredFields.includes(field) && ' *'}
-                      </label>
-                      <select
-                        value={fieldMapping[field] || ''}
-                        onChange={(e) => setFieldMapping(prev => ({ ...prev, [field]: e.target.value }))}
-                        className="input-field"
-                      >
-                        <option value="">Select column...</option>
-                        {Object.keys(fieldMapping).length > 0 &&
-                          Object.values(new Set(Object.values(fieldMapping))).map(header => (
-                            <option key={header} value={header}>{header}</option>
-                          ))
-                        }
-                      </select>
-                    </div>
-                  ))}
-                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Map CSV Fields to Property Data</h3>
+                <p className="text-sm text-gray-600 mb-6">
+                  Match the columns in your file to the property fields below. Required fields are marked with *.
+                </p>
               </div>
 
-              <div className="flex space-x-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {allFields.map((field) => (
+                  <div key={field}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {field.charAt(0).toUpperCase() + field.slice(1).replace('_', ' ')}
+                      {requiredFields.includes(field) && <span className="text-red-500 ml-1">*</span>}
+                    </label>
+                    <select
+                      value={fieldMapping[field] || ''}
+                      onChange={(e) => setFieldMapping(prev => ({ ...prev, [field]: e.target.value }))}
+                      className="input-field"
+                    >
+                      <option value="">Select column</option>
+                      {headers.map((header) => (
+                        <option key={header} value={header}>{header}</option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-between">
                 <button
                   onClick={() => setStep('upload')}
                   className="btn-secondary"
@@ -461,7 +442,7 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
                 <button
                   onClick={generatePreview}
                   className="btn-primary"
-                  disabled={!fieldMapping.name || !fieldMapping.address}
+                  disabled={!fieldMapping.address}
                 >
                   Generate Preview
                 </button>
@@ -469,38 +450,48 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
             </div>
           )}
 
-          {/* Step 3: Preview & Import */}
+          {/* Step 3: Preview */}
           {step === 'preview' && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Preview (first 5 contacts)</h3>
-                {preview.length > 0 && (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {preview.map((contact, index) => (
-                          <tr key={index}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{contact.name}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.email || '-'}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.phone || '-'}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.address}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Preview Import</h3>
+                <p className="text-sm text-gray-600">
+                  Review the first 5 properties that will be imported. Check the data is correct before proceeding.
+                </p>
               </div>
 
-              <div className="flex space-x-3">
+              {preview.length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Address</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Beds/Baths</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {preview.map((property, index) => (
+                        <tr key={index}>
+                          <td className="px-4 py-2 text-sm text-gray-900">{property.address}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900">{property.status || 'listed'}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900">
+                            {property.price ? `$${property.price.toLocaleString()}` : '-'}
+                          </td>
+                          <td className="px-4 py-2 text-sm text-gray-900">{property.property_type || 'house'}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900">
+                            {property.bedrooms || '-'} / {property.bathrooms || '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              <div className="flex justify-between">
                 <button
                   onClick={() => setStep('mapping')}
                   className="btn-secondary"
@@ -513,14 +504,7 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
                   className="btn-primary"
                   disabled={importing || errors.length > 0}
                 >
-                  {importing ? (
-                    <div className="flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Importing...
-                    </div>
-                  ) : (
-                    'Import Contacts'
-                  )}
+                  {importing ? 'Importing...' : `Import ${preview.length} Properties`}
                 </button>
               </div>
             </div>
@@ -529,14 +513,11 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
           {/* Errors */}
           {errors.length > 0 && (
             <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-4">
-              <h4 className="font-medium text-red-800 mb-2">Issues found:</h4>
-              <ul className="text-sm text-red-700 space-y-1">
-                {errors.slice(0, 10).map((error, index) => (
+              <h4 className="font-medium text-red-900 mb-2">Please fix the following issues:</h4>
+              <ul className="text-sm text-red-800 space-y-1">
+                {errors.map((error, index) => (
                   <li key={index}>• {error}</li>
                 ))}
-                {errors.length > 10 && (
-                  <li>• ... and {errors.length - 10} more errors</li>
-                )}
               </ul>
             </div>
           )}

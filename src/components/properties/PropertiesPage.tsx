@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { PropertyCard } from './PropertyCard'
 import { PropertyForm } from './PropertyForm'
+import { PropertyImport } from './PropertyImport'
 
 interface Property {
   id: string
@@ -27,6 +28,7 @@ export function PropertiesPage() {
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [editingProperty, setEditingProperty] = useState<Property | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'listed' | 'sold' | 'withdrawn'>('all')
@@ -83,6 +85,12 @@ export function PropertiesPage() {
     }
   }
 
+  const handleImportComplete = (importedCount: number) => {
+    alert(`Successfully imported ${importedCount} properties!`)
+    fetchProperties() // Refresh the list
+    setShowImport(false)
+  }
+
   const filteredProperties = properties.filter(property => {
     const matchesSearch = property.address.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === 'all' || property.status === statusFilter
@@ -113,15 +121,26 @@ export function PropertiesPage() {
           <h1 className="text-2xl font-bold text-gray-900">Properties</h1>
           <p className="text-gray-600">Manage your property listings and sales</p>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="mt-4 sm:mt-0 btn-primary"
-        >
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Add Property
-        </button>
+        <div className="mt-4 sm:mt-0 flex space-x-3">
+          <button
+            onClick={() => setShowForm(true)}
+            className="btn-primary"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Add Property
+          </button>
+          <button
+            onClick={() => setShowImport(true)}
+            className="btn-secondary"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+            </svg>
+            Import CSV
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -227,6 +246,14 @@ export function PropertiesPage() {
             setShowForm(false)
             setEditingProperty(null)
           }}
+        />
+      )}
+
+      {/* Property Import Modal */}
+      {showImport && (
+        <PropertyImport
+          onImportComplete={handleImportComplete}
+          onClose={() => setShowImport(false)}
         />
       )}
     </div>

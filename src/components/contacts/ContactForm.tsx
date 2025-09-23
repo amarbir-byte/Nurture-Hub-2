@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 
@@ -64,7 +64,7 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
     tags: contact?.tags?.join(', ') || '',
   })
 
-  const mockGeocode = async (address: string) => {
+  const mockGeocode = async (_address: string) => {
     const nzCities = [
       { name: 'Auckland', lat: -36.8485, lng: 174.7633 },
       { name: 'Wellington', lat: -41.2865, lng: 174.7762 },

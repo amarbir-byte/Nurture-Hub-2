@@ -16,9 +16,10 @@ interface UserSubscription {
   id: string
   email: string
   stripe_customer_id: string | null
-  subscription_status: 'trialing' | 'active' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'past_due' | 'unpaid' | null
+  subscription_status: 'trialing' | 'active' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'past_due' | 'unpaid'
   plan_type: PlanId | null
   unlimited_access: boolean
+  is_admin: boolean
   trial_end_date: string | null
   created_at: string
   updated_at: string
@@ -28,6 +29,7 @@ interface UsageStats {
   contacts: number
   campaigns_this_month: number
   templates: number
+  properties: number
   storage_mb: number
 }
 
@@ -132,6 +134,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
         contacts: contactsCount.count || 0,
         campaigns_this_month: campaignsCount.count || 0,
         templates: templatesCount.count || 0,
+        properties: 0, // TODO: Add actual properties count
         storage_mb: 0 // TODO: Calculate actual storage usage
       })
     } catch (error) {

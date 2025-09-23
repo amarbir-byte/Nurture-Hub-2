@@ -46,7 +46,7 @@ export function PerformanceMonitor() {
 
       // Time to Interactive (approximate)
       if (navigation) {
-        const tti = navigation.domComplete - navigation.navigationStart
+        const tti = navigation.domComplete - navigation.fetchStart
         metrics.push({
           name: 'Time to Interactive',
           value: tti,

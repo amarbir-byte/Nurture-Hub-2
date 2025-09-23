@@ -73,7 +73,8 @@ export function useUsageLimits() {
       }
     }
 
-    const used = usageStats?.[feature === 'campaigns' ? 'campaigns_this_month' : feature] || 0
+    const usageKey = feature === 'campaigns' ? 'campaigns_this_month' : feature as keyof typeof usageStats
+    const used = usageStats?.[usageKey] || 0
     const remaining = Math.max(0, limit - used)
     const limitReached = used >= limit
     const warningThreshold = used >= (limit * 0.8)

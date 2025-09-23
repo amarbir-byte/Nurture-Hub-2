@@ -9,12 +9,13 @@ import { ContactsPage } from './components/contacts/ContactsPage'
 import { TemplatesPage } from './components/templates/TemplatesPage'
 import { MarketingPage } from './components/marketing/MarketingPage'
 import { SubscriptionPage } from './components/billing/SubscriptionPage'
+import { AdminPanel } from './components/admin/AdminPanel'
 import { OfflineIndicator } from './components/common/OfflineIndicator'
 import { PerformanceMonitor } from './components/common/PerformanceMonitor'
 import { FeedbackWidget } from './components/beta/FeedbackWidget'
 import { BetaDashboard } from './components/beta/BetaDashboard'
 
-type DashboardPage = 'dashboard' | 'properties' | 'contacts' | 'marketing' | 'templates' | 'settings' | 'beta'
+type DashboardPage = 'dashboard' | 'properties' | 'contacts' | 'marketing' | 'templates' | 'settings' | 'beta' | 'admin'
 
 function LandingPage() {
   return (
@@ -31,11 +32,11 @@ function LandingPage() {
             Generate leads with precision targeting. Send SMS campaigns to homeowners within 0.1km
             of your listings. 50% cheaper than kvCORE with better results.
           </p>
-          <div className="mt-8 flex justify-center space-x-4">
-            <button className="btn-primary text-lg px-8 py-3">
+          <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+            <button className="btn-primary text-lg px-8 py-3 w-full sm:w-auto">
               Start 14-Day Free Trial
             </button>
-            <button className="btn-secondary text-lg px-8 py-3">
+            <button className="btn-secondary text-lg px-8 py-3 w-full sm:w-auto">
               Watch Demo
             </button>
           </div>
@@ -293,6 +294,8 @@ function Dashboard() {
         return <SubscriptionPage />
       case 'beta':
         return isBetaTester ? <BetaDashboard /> : <DashboardHome />
+      case 'admin':
+        return <AdminPanel />
       default:
         return <DashboardHome />
     }

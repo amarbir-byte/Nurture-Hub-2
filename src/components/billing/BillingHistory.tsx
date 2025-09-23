@@ -1,9 +1,9 @@
 interface UserSubscription {
   id: string
   subscription_status: string
-  plan_type?: string
+  plan_type: string | null
   unlimited_access: boolean
-  trial_end_date?: string
+  trial_end_date: string | null
 }
 
 interface BillingHistoryProps {

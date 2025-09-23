@@ -24,7 +24,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://*.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://api.stripe.com; frame-src https://js.stripe.com;"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://*.supabase.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://r2cdn.perplexity.ai; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com https://r2cdn.perplexity.ai; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com; frame-src https://js.stripe.com;"
         },
         {
           "key": "Strict-Transport-Security",
@@ -41,6 +41,9 @@
     }
   ],
   "env": {
-    "VITE_APP_URL": "https://nurture-hub.vercel.app"
+    "VITE_APP_URL": "https://nurture-hub.vercel.app",
+    "VITE_SUPABASE_URL": "https://danbkfdqwprutyzlvnid.supabase.co",
+    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhbmJrZmRxd3BydXR5emx2bmlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2MTE1MDIsImV4cCI6MjA3NDE4NzUwMn0.7qjB8kazTqPUVPknaoYCuYZEfxi-EAHv9RbIEa9w9gE",
+    "VITE_STRIPE_PUBLISHABLE_KEY": "pk_test_51SAQ8rH2TgB2v6s7pUTMDeowb8y7V9jHiuMzvz0jkCp0CQg4MKJg6txrwV7t1z9GjnvTtbL4arbTY3f5Evm9JEs9005WnzwhNx"
   }
 }

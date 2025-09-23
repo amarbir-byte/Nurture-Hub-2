@@ -27,6 +27,7 @@ interface Template {
   content: string
   category: string
   placeholders: string[]
+  usage_count: number
 }
 
 interface CampaignWizardProps {

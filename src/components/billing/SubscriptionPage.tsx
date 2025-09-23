@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useSubscription } from '../../contexts/SubscriptionContext'
 import { supabase } from '../../lib/supabase'
@@ -12,7 +12,7 @@ export function SubscriptionPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'plans' | 'history'>('overview')
   const [loading, setLoading] = useState(false)
 
-  const handleCreateCheckoutSession = async (priceId: string, planType: string) => {
+  const handleCreateCheckoutSession = async (_priceId: string, planType: string) => {
     setLoading(true)
     try {
       // In a real app, this would call your backend API to create a Stripe checkout session
@@ -142,11 +142,11 @@ export function SubscriptionPage() {
       {/* Current Subscription Status */}
       {userSubscription && !isTrialing && (
         <div className="card">
-          <div className="flex items-center justify-between">
+          <div className="space-y-4">
             <div>
               <h3 className="text-lg font-medium text-gray-900">Current Plan</h3>
-              <div className="mt-1 flex items-center space-x-4">
-                <span className="text-2xl font-bold text-primary-600">
+              <div className="mt-1 flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-1 sm:space-y-0">
+                <span className="text-xl sm:text-2xl font-bold text-primary-600">
                   {userSubscription.unlimited_access ? 'Unlimited Access' :
                    userSubscription.plan_type ?
                    `${userSubscription.plan_type.charAt(0).toUpperCase() + userSubscription.plan_type.slice(1)} Plan` :
@@ -164,52 +164,51 @@ export function SubscriptionPage() {
                   userSubscription.subscription_status === 'canceled' ? 'text-red-600' :
                   'text-yellow-600'
                 }`}>
-                  {userSubscription.subscription_status?.charAt(0).toUpperCase() +
-                   userSubscription.subscription_status?.slice(1)}
+                  {userSubscription.subscription_status.charAt(0).toUpperCase() +
+                   userSubscription.subscription_status.slice(1)}
                 </span>
               </p>
             </div>
-            <div className="flex space-x-3">
-              {userSubscription.subscription_status === 'active' && (
-                <>
-                  <button
-                    onClick={() => setActiveTab('plans')}
-                    className="btn-secondary"
-                  >
-                    Change Plan
-                  </button>
-                  <button
-                    onClick={handleCancelSubscription}
-                    className="btn-ghost text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    Cancel Subscription
-                  </button>
-                </>
-              )}
-            </div>
+            {userSubscription.subscription_status === 'active' && (
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => setActiveTab('plans')}
+                  className="btn-secondary w-full sm:w-auto"
+                >
+                  Change Plan
+                </button>
+                <button
+                  onClick={handleCancelSubscription}
+                  className="btn-ghost text-red-600 hover:text-red-700 hover:bg-red-50 w-full sm:w-auto"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
 
       {/* Tabs */}
       <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+        <nav className="-mb-px flex space-x-2 sm:space-x-8 overflow-x-auto">
           {[
-            { id: 'overview', name: 'Usage Overview', icon: '📊' },
-            { id: 'plans', name: 'Pricing Plans', icon: '💳' },
-            { id: 'history', name: 'Billing History', icon: '📄' },
+            { id: 'overview', name: 'Usage Overview', shortName: 'Usage', icon: '📊' },
+            { id: 'plans', name: 'Pricing Plans', shortName: 'Plans', icon: '💳' },
+            { id: 'history', name: 'Billing History', shortName: 'History', icon: '📄' },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`whitespace-nowrap py-2 px-1 sm:px-3 border-b-2 font-medium text-sm flex-shrink-0 ${
                 activeTab === tab.id
                   ? 'border-primary-500 text-primary-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              <span className="mr-2">{tab.icon}</span>
-              {tab.name}
+              <span className="mr-1 sm:mr-2">{tab.icon}</span>
+              <span className="hidden sm:inline">{tab.name}</span>
+              <span className="sm:hidden">{tab.shortName}</span>
             </button>
           ))}
         </nav>
@@ -227,7 +226,7 @@ export function SubscriptionPage() {
 
         {activeTab === 'plans' && (
           <PricingCards
-            currentPlan={userSubscription?.plan_type}
+            currentPlan={userSubscription?.plan_type ?? undefined}
             onSelectPlan={handleCreateCheckoutSession}
             loading={loading}
             isTrialing={isTrialing}

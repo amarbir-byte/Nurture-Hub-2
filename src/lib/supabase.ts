@@ -32,6 +32,7 @@ export interface Database {
           subscription_status: 'trialing' | 'active' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'past_due' | 'unpaid' | null
           plan_type: 'starter' | 'professional' | 'enterprise' | null
           unlimited_access: boolean
+          is_admin: boolean
           trial_end_date: string | null
           created_at: string
           updated_at: string
@@ -43,6 +44,7 @@ export interface Database {
           subscription_status?: 'trialing' | 'active' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'past_due' | 'unpaid' | null
           plan_type?: 'starter' | 'professional' | 'enterprise' | null
           unlimited_access?: boolean
+          is_admin?: boolean
           trial_end_date?: string | null
           created_at?: string
           updated_at?: string
@@ -54,6 +56,7 @@ export interface Database {
           subscription_status?: 'trialing' | 'active' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'past_due' | 'unpaid' | null
           plan_type?: 'starter' | 'professional' | 'enterprise' | null
           unlimited_access?: boolean
+          is_admin?: boolean
           trial_end_date?: string | null
           created_at?: string
           updated_at?: string

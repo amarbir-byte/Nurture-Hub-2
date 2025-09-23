@@ -8,9 +8,9 @@ interface UsageStats {
 interface UserSubscription {
   id: string
   subscription_status: string
-  plan_type?: string
+  plan_type: string | null
   unlimited_access: boolean
-  trial_end_date?: string
+  trial_end_date: string | null
 }
 
 interface UsageOverviewProps {
@@ -122,7 +122,7 @@ export function UsageOverview({ usageStats, userSubscription, isTrialing }: Usag
     <div className="space-y-6">
       {/* Current Plan Summary */}
       <div className="card bg-gradient-to-r from-primary-50 to-primary-100 border-primary-200">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
           <div>
             <h3 className="text-lg font-medium text-primary-900">
               {userSubscription?.unlimited_access ? 'Unlimited Access' :
@@ -137,7 +137,7 @@ export function UsageOverview({ usageStats, userSubscription, isTrialing }: Usag
                'Your current subscription plan and usage'}
             </p>
           </div>
-          <div className="text-right">
+          <div className="text-left sm:text-right">
             <div className="text-2xl font-bold text-primary-900">
               {userSubscription?.unlimited_access ? '∞' :
                isTrialing ? 'Trial' :

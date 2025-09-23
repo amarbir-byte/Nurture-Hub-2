@@ -3,15 +3,45 @@ import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 
 interface ImportProperty {
-  address: string
-  status?: 'listed' | 'sold' | 'withdrawn'
-  price?: number
+  // Core address fields
+  address?: string
+  street_number?: string
+  street?: string
+  suburb?: string
+
+  // Price and sale information
+  sale_price?: number
+  list_price?: number
+  price?: number // legacy field for backward compatibility
+
+  // Date fields
+  sale_date?: string
+  settlement_date?: string
+  agreement_date?: string
+  listing_date?: string
+  sold_date?: string // legacy field
+
+  // Property details
   bedrooms?: number
   bathrooms?: number
+  floor_area?: number
+  land_area_ha?: number
+  land_area_m2?: number
   property_type?: 'house' | 'apartment' | 'townhouse' | 'land' | 'commercial'
+
+  // Sale details
+  days_to_sell?: number
+  sale_category?: string
+  sale_method?: string
+  status?: 'listed' | 'sold' | 'withdrawn'
+
+  // Additional fields
+  valuation?: number
+  organisation?: string
+  new_dwelling?: boolean
+  sale_tenure?: string
   description?: string
-  listing_date?: string
-  sold_date?: string
+
   [key: string]: any
 }
 
@@ -30,9 +60,18 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
   const [errors, setErrors] = useState<string[]>([])
   const [importing, setImporting] = useState(false)
 
-  const requiredFields = ['address']
-  const optionalFields = ['status', 'price', 'bedrooms', 'bathrooms', 'property_type', 'description', 'listing_date', 'sold_date']
-  const allFields = [...requiredFields, ...optionalFields]
+  // Core REINZ fields
+  const reinzFields = [
+    'street_number', 'street', 'suburb', 'sale_price', 'sale_date', 'list_price',
+    'settlement_date', 'agreement_date', 'days_to_sell', 'sale_category', 'sale_method',
+    'valuation', 'organisation', 'bedrooms', 'floor_area', 'land_area_ha', 'land_area_m2',
+    'new_dwelling', 'sale_tenure'
+  ]
+
+  // Legacy fields for backward compatibility
+  const legacyFields = ['address', 'status', 'price', 'bathrooms', 'property_type', 'description', 'listing_date', 'sold_date']
+
+  const requiredFields = ['address'] // At minimum need address or street components
 
   const mockGeocode = async (_address: string) => {
     const nzCities = [
@@ -114,27 +153,77 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
 
       const autoMapping: Record<string, string> = {}
       headers.forEach(header => {
-        const lowerHeader = header.toLowerCase()
-        if (lowerHeader.includes('address')) {
-          autoMapping['address'] = header
-        } else if (lowerHeader.includes('status')) {
-          autoMapping['status'] = header
-        } else if (lowerHeader.includes('price') || lowerHeader.includes('cost')) {
-          autoMapping['price'] = header
-        } else if (lowerHeader.includes('bedroom') || lowerHeader.includes('bed')) {
+        const lowerHeader = header.toLowerCase().replace(/\s+/g, '_')
+        const originalLower = header.toLowerCase()
+
+        // REINZ-specific field mappings (exact matches first)
+        if (lowerHeader === 'street_number') {
+          autoMapping['street_number'] = header
+        } else if (lowerHeader === 'street') {
+          autoMapping['street'] = header
+        } else if (lowerHeader === 'suburb') {
+          autoMapping['suburb'] = header
+        } else if (lowerHeader === 'sale_price') {
+          autoMapping['sale_price'] = header
+        } else if (lowerHeader === 'sale_date') {
+          autoMapping['sale_date'] = header
+        } else if (lowerHeader === 'list_price') {
+          autoMapping['list_price'] = header
+        } else if (lowerHeader === 'settlement_date') {
+          autoMapping['settlement_date'] = header
+        } else if (lowerHeader === 'agreement_date') {
+          autoMapping['agreement_date'] = header
+        } else if (lowerHeader === 'days_to_sell') {
+          autoMapping['days_to_sell'] = header
+        } else if (lowerHeader === 'sale_category') {
+          autoMapping['sale_category'] = header
+        } else if (lowerHeader === 'sale_method') {
+          autoMapping['sale_method'] = header
+        } else if (lowerHeader === 'valuation') {
+          autoMapping['valuation'] = header
+        } else if (lowerHeader === 'organisation') {
+          autoMapping['organisation'] = header
+        } else if (lowerHeader === 'bedrooms') {
           autoMapping['bedrooms'] = header
-        } else if (lowerHeader.includes('bathroom') || lowerHeader.includes('bath')) {
+        } else if (lowerHeader === 'floor_area') {
+          autoMapping['floor_area'] = header
+        } else if (lowerHeader === 'land_area_ha') {
+          autoMapping['land_area_ha'] = header
+        } else if (lowerHeader === 'land_area_m2') {
+          autoMapping['land_area_m2'] = header
+        } else if (lowerHeader === 'new_dwelling') {
+          autoMapping['new_dwelling'] = header
+        } else if (lowerHeader === 'sale_tenure') {
+          autoMapping['sale_tenure'] = header
+
+        // Fuzzy matching for common variations
+        } else if (originalLower.includes('address')) {
+          autoMapping['address'] = header
+        } else if (originalLower.includes('status')) {
+          autoMapping['status'] = header
+        } else if (originalLower.includes('price') && !autoMapping['sale_price'] && !autoMapping['list_price']) {
+          // Default price field if no specific price fields matched
+          autoMapping['price'] = header
+        } else if (originalLower.includes('bedroom') || originalLower.includes('bed')) {
+          if (!autoMapping['bedrooms']) autoMapping['bedrooms'] = header
+        } else if (originalLower.includes('bathroom') || originalLower.includes('bath')) {
           autoMapping['bathrooms'] = header
-        } else if (lowerHeader.includes('type') || lowerHeader.includes('property_type')) {
+        } else if (originalLower.includes('type') || originalLower.includes('property_type')) {
           autoMapping['property_type'] = header
-        } else if (lowerHeader.includes('description') || lowerHeader.includes('desc')) {
+        } else if (originalLower.includes('description') || originalLower.includes('desc')) {
           autoMapping['description'] = header
-        } else if (lowerHeader.includes('listing') || lowerHeader.includes('list_date')) {
-          autoMapping['listing_date'] = header
-        } else if (lowerHeader.includes('sold') || lowerHeader.includes('sale_date')) {
+        } else if (originalLower.includes('listing') || originalLower.includes('list_date')) {
+          if (!autoMapping['list_price']) autoMapping['listing_date'] = header
+        } else if (originalLower.includes('sold') && !autoMapping['sale_date']) {
           autoMapping['sold_date'] = header
         }
       })
+
+      // Create composite address if we have street components but no address
+      if (!autoMapping['address'] && (autoMapping['street_number'] || autoMapping['street'] || autoMapping['suburb'])) {
+        // We'll handle address composition in the processing step
+        autoMapping['address'] = 'COMPOSITE'
+      }
 
       setHeaders(headers)
       setFieldMapping(autoMapping)
@@ -145,15 +234,16 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
   }
 
   const downloadTemplate = () => {
-    const csvContent = 'Address,Status,Price,Bedrooms,Bathrooms,Property Type,Description,Listing Date,Sold Date\n' +
-      '123 Main Street Auckland,listed,750000,3,2,house,Beautiful family home,2024-01-15,\n' +
-      '456 Queen Street Wellington,sold,950000,4,3,townhouse,Modern townhouse,2024-01-10,2024-02-15'
+    // REINZ-style template with comprehensive fields
+    const csvContent = 'Street Number,Street,Suburb,Sale Price,Sale Date,List Price,Settlement Date,Agreement Date,Days To Sell,Sale Category,Sale Method,Valuation,Organisation,Bedrooms,Floor Area,Land Area ha,Land Area m2,New Dwelling,Sale Tenure\n' +
+      '123,Main Street,Auckland,750000,2024-02-15,695000,2024-03-15,2024-01-20,26,Normal Sale,Auction,780000,Barfoot & Thompson,3,120,0.06,600,No,Freehold\n' +
+      '456,Queen Street,Wellington,950000,2024-02-10,925000,2024-03-10,2024-01-25,16,Normal Sale,Private Treaty,970000,Ray White,4,150,0.08,800,Yes,Freehold'
 
     const blob = new Blob([csvContent], { type: 'text/csv' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'property_import_template.csv'
+    a.download = 'reinz_property_import_template.csv'
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -169,16 +259,53 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
       const properties: ImportProperty[] = rows.slice(0, 5).map(row => {
         const property: any = {}
 
+        // Handle composite address creation
+        if (fieldMapping['address'] === 'COMPOSITE') {
+          const addressParts = []
+          if (fieldMapping['street_number']) {
+            const streetNumIndex = headers.indexOf(fieldMapping['street_number'])
+            if (streetNumIndex !== -1 && row[streetNumIndex]?.trim()) {
+              addressParts.push(row[streetNumIndex].trim())
+            }
+          }
+          if (fieldMapping['street']) {
+            const streetIndex = headers.indexOf(fieldMapping['street'])
+            if (streetIndex !== -1 && row[streetIndex]?.trim()) {
+              addressParts.push(row[streetIndex].trim())
+            }
+          }
+          if (fieldMapping['suburb']) {
+            const suburbIndex = headers.indexOf(fieldMapping['suburb'])
+            if (suburbIndex !== -1 && row[suburbIndex]?.trim()) {
+              addressParts.push(row[suburbIndex].trim())
+            }
+          }
+          if (addressParts.length > 0) {
+            property.address = addressParts.join(' ')
+          }
+        }
+
         Object.entries(fieldMapping).forEach(([field, csvHeader]) => {
+          if (csvHeader === 'COMPOSITE') return // Skip composite fields, handled above
+
           const headerIndex = headers.indexOf(csvHeader)
           if (headerIndex !== -1) {
             let value = row[headerIndex]?.trim()
             if (value) {
-              if (field === 'price' || field === 'bedrooms' || field === 'bathrooms') {
-                const numValue = parseFloat(value)
+              // Numeric fields
+              if (['price', 'sale_price', 'list_price', 'valuation', 'bedrooms', 'bathrooms', 'floor_area', 'land_area_m2', 'days_to_sell'].includes(field)) {
+                const numValue = parseFloat(value.replace(/[,$]/g, '')) // Remove commas and dollar signs
                 if (!isNaN(numValue)) {
                   property[field] = numValue
                 }
+              } else if (field === 'land_area_ha') {
+                const numValue = parseFloat(value.replace(/[,$]/g, ''))
+                if (!isNaN(numValue)) {
+                  property[field] = numValue
+                }
+              } else if (field === 'new_dwelling') {
+                // Convert to boolean
+                property[field] = value.toLowerCase() === 'yes' || value.toLowerCase() === 'true' || value === '1'
               } else {
                 property[field] = value
               }
@@ -220,16 +347,53 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
         const row = rows[i]
         const property: any = {}
 
+        // Handle composite address creation
+        if (fieldMapping['address'] === 'COMPOSITE') {
+          const addressParts = []
+          if (fieldMapping['street_number']) {
+            const streetNumIndex = headers.indexOf(fieldMapping['street_number'])
+            if (streetNumIndex !== -1 && row[streetNumIndex]?.trim()) {
+              addressParts.push(row[streetNumIndex].trim())
+            }
+          }
+          if (fieldMapping['street']) {
+            const streetIndex = headers.indexOf(fieldMapping['street'])
+            if (streetIndex !== -1 && row[streetIndex]?.trim()) {
+              addressParts.push(row[streetIndex].trim())
+            }
+          }
+          if (fieldMapping['suburb']) {
+            const suburbIndex = headers.indexOf(fieldMapping['suburb'])
+            if (suburbIndex !== -1 && row[suburbIndex]?.trim()) {
+              addressParts.push(row[suburbIndex].trim())
+            }
+          }
+          if (addressParts.length > 0) {
+            property.address = addressParts.join(' ')
+          }
+        }
+
         Object.entries(fieldMapping).forEach(([field, csvHeader]) => {
+          if (csvHeader === 'COMPOSITE') return // Skip composite fields, handled above
+
           const headerIndex = headers.indexOf(csvHeader)
           if (headerIndex !== -1) {
             let value = row[headerIndex]?.trim()
             if (value) {
-              if (field === 'price' || field === 'bedrooms' || field === 'bathrooms') {
-                const numValue = parseFloat(value)
+              // Numeric fields
+              if (['price', 'sale_price', 'list_price', 'valuation', 'bedrooms', 'bathrooms', 'floor_area', 'land_area_m2', 'days_to_sell'].includes(field)) {
+                const numValue = parseFloat(value.replace(/[,$]/g, '')) // Remove commas and dollar signs
                 if (!isNaN(numValue)) {
                   property[field] = numValue
                 }
+              } else if (field === 'land_area_ha') {
+                const numValue = parseFloat(value.replace(/[,$]/g, ''))
+                if (!isNaN(numValue)) {
+                  property[field] = numValue
+                }
+              } else if (field === 'new_dwelling') {
+                // Convert to boolean
+                property[field] = value.toLowerCase() === 'yes' || value.toLowerCase() === 'true' || value === '1'
               } else {
                 property[field] = value
               }
@@ -237,16 +401,36 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
           }
         })
 
-        // Validate required fields
-        const missingFields = requiredFields.filter(field => !property[field])
-        if (missingFields.length > 0) {
-          importErrors.push(`Row ${i + 2}: Missing required fields: ${missingFields.join(', ')}`)
+        // Validate required fields - need at least an address or address components
+        const hasAddress = property.address || (property.street_number && property.street) || property.street || property.suburb
+        if (!hasAddress) {
+          importErrors.push(`Row ${i + 2}: Missing address information (need address or street/suburb)`)
           continue
         }
 
-        // Set defaults
-        if (!property.status) property.status = 'listed'
+        // If we have individual components but no composite address, create one
+        if (!property.address && (property.street_number || property.street || property.suburb)) {
+          const addressParts = [property.street_number, property.street, property.suburb].filter(Boolean)
+          property.address = addressParts.join(' ')
+        }
+
+        // Set defaults and normalize data
+        if (!property.status) {
+          property.status = property.sale_date || property.sale_price ? 'sold' : 'listed'
+        }
         if (!property.property_type) property.property_type = 'house'
+
+        // Use sale_price as primary price if available
+        if (!property.price && property.sale_price) {
+          property.price = property.sale_price
+        } else if (!property.price && property.list_price) {
+          property.price = property.list_price
+        }
+
+        // Use sale_date as sold_date for backward compatibility
+        if (!property.sold_date && property.sale_date) {
+          property.sold_date = property.sale_date
+        }
 
         // Mock geocoding
         const { lat, lng } = await mockGeocode(property.address)
@@ -362,14 +546,18 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
                   <li>• <strong>Excel files:</strong> Excel workbook files (.xlsx) - Export as CSV for now</li>
                 </ul>
                 <div className="mt-3 pt-3 border-t border-blue-200">
-                  <p className="font-medium text-blue-900 mb-1">Format Requirements:</p>
+                  <p className="font-medium text-blue-900 mb-1">REINZ Export Format Support:</p>
                   <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• <strong>Required field:</strong> Address</li>
-                    <li>• <strong>Optional fields:</strong> Status, Price, Bedrooms, Bathrooms, Property Type, Description, Listing Date, Sold Date</li>
-                    <li>• <strong>Status values:</strong> listed, sold, withdrawn</li>
-                    <li>• <strong>Property types:</strong> house, apartment, townhouse, land, commercial</li>
-                    <li>• First row should contain column headers</li>
+                    <li>• <strong>Address:</strong> Street Number, Street, Suburb (or combined Address field)</li>
+                    <li>• <strong>Pricing:</strong> Sale Price, List Price, Valuation</li>
+                    <li>• <strong>Dates:</strong> Sale Date, Settlement Date, Agreement Date, Listing Date</li>
+                    <li>• <strong>Property Details:</strong> Bedrooms, Floor Area, Land Area (ha/m²)</li>
+                    <li>• <strong>Sale Info:</strong> Days To Sell, Sale Category, Sale Method, Organisation</li>
+                    <li>• <strong>Additional:</strong> New Dwelling (Yes/No), Sale Tenure</li>
                   </ul>
+                  <div className="mt-2 pt-2 border-t border-blue-200">
+                    <p className="text-xs text-blue-700">Auto-detects REINZ export format and standard property CSV files</p>
+                  </div>
                 </div>
               </div>
 
@@ -411,25 +599,54 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {allFields.map((field) => (
-                  <div key={field}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {field.charAt(0).toUpperCase() + field.slice(1).replace('_', ' ')}
-                      {requiredFields.includes(field) && <span className="text-red-500 ml-1">*</span>}
-                    </label>
-                    <select
-                      value={fieldMapping[field] || ''}
-                      onChange={(e) => setFieldMapping(prev => ({ ...prev, [field]: e.target.value }))}
-                      className="input-field"
-                    >
-                      <option value="">Select column</option>
-                      {headers.map((header) => (
-                        <option key={header} value={header}>{header}</option>
-                      ))}
-                    </select>
-                  </div>
-                ))}
+              {/* REINZ Fields Section */}
+              <div className="mb-6">
+                <h4 className="text-md font-medium text-gray-800 mb-3">REINZ Export Fields</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {reinzFields.map((field) => (
+                    <div key={field}>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        {field.charAt(0).toUpperCase() + field.slice(1).replace(/_/g, ' ')}
+                      </label>
+                      <select
+                        value={fieldMapping[field] || ''}
+                        onChange={(e) => setFieldMapping(prev => ({ ...prev, [field]: e.target.value }))}
+                        className="input-field text-sm"
+                      >
+                        <option value="">Select column</option>
+                        {headers.map((header) => (
+                          <option key={header} value={header}>{header}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Legacy/Standard Fields Section */}
+              <div>
+                <h4 className="text-md font-medium text-gray-800 mb-3">Standard Property Fields</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {legacyFields.map((field) => (
+                    <div key={field}>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        {field.charAt(0).toUpperCase() + field.slice(1).replace('_', ' ')}
+                        {requiredFields.includes(field) && <span className="text-red-500 ml-1">*</span>}
+                      </label>
+                      <select
+                        value={fieldMapping[field] || ''}
+                        onChange={(e) => setFieldMapping(prev => ({ ...prev, [field]: e.target.value }))}
+                        className="input-field"
+                      >
+                        <option value="">Select column</option>
+                        <option value="COMPOSITE">Create from Street + Suburb</option>
+                        {headers.map((header) => (
+                          <option key={header} value={header}>{header}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="flex justify-between">
@@ -442,7 +659,7 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
                 <button
                   onClick={generatePreview}
                   className="btn-primary"
-                  disabled={!fieldMapping.address}
+                  disabled={!fieldMapping.address && !fieldMapping.street && !fieldMapping.suburb}
                 >
                   Generate Preview
                 </button>
@@ -465,25 +682,30 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Address</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Beds/Baths</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Address</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sale Price</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sale Date</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Bedrooms</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Area</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Days to Sell</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {preview.map((property, index) => (
                         <tr key={index}>
-                          <td className="px-4 py-2 text-sm text-gray-900">{property.address}</td>
-                          <td className="px-4 py-2 text-sm text-gray-900">{property.status || 'listed'}</td>
-                          <td className="px-4 py-2 text-sm text-gray-900">
-                            {property.price ? `$${property.price.toLocaleString()}` : '-'}
+                          <td className="px-3 py-2 text-sm text-gray-900">{property.address}</td>
+                          <td className="px-3 py-2 text-sm text-gray-900">
+                            {property.sale_price ? `$${property.sale_price.toLocaleString()}` :
+                             property.price ? `$${property.price.toLocaleString()}` : '-'}
                           </td>
-                          <td className="px-4 py-2 text-sm text-gray-900">{property.property_type || 'house'}</td>
-                          <td className="px-4 py-2 text-sm text-gray-900">
-                            {property.bedrooms || '-'} / {property.bathrooms || '-'}
+                          <td className="px-3 py-2 text-sm text-gray-900">{property.sale_date || property.sold_date || '-'}</td>
+                          <td className="px-3 py-2 text-sm text-gray-900">{property.bedrooms || '-'}</td>
+                          <td className="px-3 py-2 text-sm text-gray-900">
+                            {property.floor_area ? `${property.floor_area}m²` :
+                             property.land_area_m2 ? `${property.land_area_m2}m² land` :
+                             property.land_area_ha ? `${property.land_area_ha}ha` : '-'}
                           </td>
+                          <td className="px-3 py-2 text-sm text-gray-900">{property.days_to_sell || '-'}</td>
                         </tr>
                       ))}
                     </tbody>

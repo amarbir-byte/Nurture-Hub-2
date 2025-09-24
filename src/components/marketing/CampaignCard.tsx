@@ -112,9 +112,7 @@ export function CampaignCard({ campaign, onDelete }: CampaignCardProps) {
             {campaign.property.address}
           </h3>
           <p className="text-lg font-semibold text-primary-600">
-            {campaign.property.sale_price
-              ? formatPrice(campaign.property.sale_price)
-              : campaign.property.price
+            {campaign.property.price
               ? formatPrice(campaign.property.price)
               : 'Price N/A'
             }

@@ -127,7 +127,7 @@ export function CampaignWizard({ properties, onComplete, onCancel }: CampaignWiz
         currency: 'NZD',
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
-      }).format(property.sale_price || property.price || 0),
+      }).format(property.price || 0),
       'PropertyType': property.property_type,
       'AgentName': 'Your Name', // This would come from user profile
       'AgentPhone': '+64 21 123 4567', // This would come from user profile
@@ -304,7 +304,7 @@ export function CampaignWizard({ properties, onComplete, onCancel }: CampaignWiz
                           currency: 'NZD',
                           minimumFractionDigits: 0,
                           maximumFractionDigits: 0,
-                        }).format(property.sale_price || property.price || 0)}
+                        }).format(property.price || 0)}
                       </p>
                     </div>
                   ))}

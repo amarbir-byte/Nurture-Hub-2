@@ -34,21 +34,21 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
   const optionalFields = ['email', 'phone', 'suburb', 'city', 'postal_code', 'notes', 'tags']
   const allFields = [...requiredFields, ...optionalFields]
 
-  const mockGeocode = async (_address: string) => {
-    const nzCities = [
-      { name: 'Auckland', lat: -36.8485, lng: 174.7633 },
-      { name: 'Wellington', lat: -41.2865, lng: 174.7762 },
-      { name: 'Christchurch', lat: -43.5321, lng: 172.6362 },
-      { name: 'Hamilton', lat: -37.7870, lng: 175.2793 },
-      { name: 'Tauranga', lat: -37.6878, lng: 176.1651 },
-    ]
+  // const mockGeocode = async (_address: string) => {
+  //   const nzCities = [
+  //     { name: 'Auckland', lat: -36.8485, lng: 174.7633 },
+  //     { name: 'Wellington', lat: -41.2865, lng: 174.7762 },
+  //     { name: 'Christchurch', lat: -43.5321, lng: 172.6362 },
+  //     { name: 'Hamilton', lat: -37.7870, lng: 175.2793 },
+  //     { name: 'Tauranga', lat: -37.6878, lng: 176.1651 },
+  //   ]
 
-    const randomCity = nzCities[Math.floor(Math.random() * nzCities.length)]
-    return {
-      lat: randomCity.lat + (Math.random() - 0.5) * 0.1,
-      lng: randomCity.lng + (Math.random() - 0.5) * 0.1,
-    }
-  }
+  //   const randomCity = nzCities[Math.floor(Math.random() * nzCities.length)]
+  //   return {
+  //     lat: randomCity.lat + (Math.random() - 0.5) * 0.1,
+  //     lng: randomCity.lng + (Math.random() - 0.5) * 0.1,
+  //   }
+  // }
 
 
   const parseTSV = (tsvText: string): { headers: string[], rows: string[][] } => {

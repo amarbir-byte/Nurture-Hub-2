@@ -3,7 +3,7 @@
  */
 
 import { supabase } from '../lib/supabase'
-import { batchGeocode, GeocodingResult } from '../lib/maptiler'
+import { batchGeocode } from '../lib/maptiler'
 
 export interface MigrationProgress {
   total: number

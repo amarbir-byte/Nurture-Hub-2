@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { autocompleteAddress, AutocompleteResult } from '../../lib/maptiler'
+import { autocompleteAddress, type AutocompleteResult } from '../../lib/maptiler'
 
 interface AddressAutocompleteProps {
   value: string
@@ -29,7 +29,7 @@ export function AddressAutocomplete({
 
   const inputRef = useRef<HTMLInputElement>(null)
   const suggestionRefs = useRef<(HTMLDivElement | null)[]>([])
-  const debounceTimeout = useRef<NodeJS.Timeout>()
+  const debounceTimeout = useRef<NodeJS.Timeout | undefined>(undefined)
 
   // Debounced autocomplete search
   useEffect(() => {
@@ -112,7 +112,7 @@ export function AddressAutocomplete({
     }
   }
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  const handleBlur = () => {
     // Delay hiding suggestions to allow click events on suggestions
     setTimeout(() => {
       setShowSuggestions(false)
@@ -186,7 +186,7 @@ export function AddressAutocomplete({
           {suggestions.map((suggestion, index) => (
             <div
               key={`${suggestion.place_name}-${index}`}
-              ref={el => suggestionRefs.current[index] = el}
+              ref={el => { suggestionRefs.current[index] = el }}
               className={`
                 px-4 py-2 cursor-pointer text-sm
                 ${index === activeSuggestion

@@ -191,7 +191,7 @@ export function mockGeocode(address: string): { lat: number; lng: number } {
   // Create a combined hash for street+area to ensure addresses on same street get very close coordinates
   const streetHash = hashString(street)
   const areaHash = hashString(area)
-  const combinedHash = streetHash + areaHash
+  // const combinedHash = streetHash + areaHash
 
   // Generate coordinates with two levels:
   // 1. Area-level offset (within ~2km radius for same area)

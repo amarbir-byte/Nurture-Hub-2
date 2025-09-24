@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { migrateAllAddresses, MigrationProgress } from '../../utils/migrateGeodata'
+import { migrateAllAddresses, type MigrationProgress } from '../../utils/migrateGeodata'
 
 interface MigrationState {
   isRunning: boolean

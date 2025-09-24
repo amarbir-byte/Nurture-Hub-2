@@ -22,7 +22,7 @@ const MAPTILER_API_KEY = import.meta.env.VITE_MAPTILER_API_KEY
 const BASE_URL = 'https://api.maptiler.com/geocoding'
 
 // Simple in-memory cache to reduce API calls
-const geocodeCache = new Map<string, GeocodingResult>()
+// const geocodeCache = new Map<string, GeocodingResult>()
 const CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 hours in milliseconds
 
 interface CachedResult {

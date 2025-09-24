@@ -235,7 +235,7 @@ export function ContactCard({ contact, onEdit, onDelete, onViewDetails }: Contac
             </button>
             <button
               onClick={handleSMS}
-              className="flex-1 btn-secondary btn-sm"
+              className="flex-1 btn-primary btn-sm"
               title="SMS"
             >
               <span>SMS</span>

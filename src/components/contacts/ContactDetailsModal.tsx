@@ -569,7 +569,7 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                           <div className="flex space-x-2">
                             <button
                               onClick={() => handleCommunicate('email')}
-                              className="flex-1 btn-primary text-sm"
+                              className="flex-1 btn-secondary text-sm"
                               disabled={!contact.email}
                             >
                               <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -579,7 +579,7 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                             </button>
                             <button
                               onClick={() => handleCommunicate('text')}
-                              className="flex-1 btn-secondary text-sm"
+                              className="flex-1 btn-primary text-sm"
                               disabled={!contact.phone}
                             >
                               <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -29,6 +29,7 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
   const [fieldMapping, setFieldMapping] = useState<Record<string, string>>({})
   const [errors, setErrors] = useState<string[]>([])
   const [step, setStep] = useState<'upload' | 'mapping' | 'preview'>('upload')
+  const [csvHeaders, setCsvHeaders] = useState<string[]>([])
 
   const requiredFields = ['name', 'address']
   const optionalFields = ['email', 'phone', 'suburb', 'city', 'postal_code', 'notes', 'tags']
@@ -100,6 +101,139 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
     }
   }
 
+  // Enhanced column detection with fuzzy matching
+  const detectColumnType = (header: string): { field: string; confidence: number } => {
+    const lowerHeader = header.toLowerCase().trim()
+    
+    // Exact matches (highest confidence)
+    const exactMatches: Record<string, string[]> = {
+      'name': ['name', 'full name', 'fullname', 'contact name', 'client name', 'customer name'],
+      'email': ['email', 'e-mail', 'email address', 'mail'],
+      'phone': ['phone', 'mobile', 'cell', 'telephone', 'tel', 'contact number', 'phone number'],
+      'address': ['address', 'street address', 'full address', 'property address'],
+      'street_number': ['street number', 'house number', 'number', 'street no', 'house no'],
+      'street_name': ['street name', 'street', 'road', 'avenue', 'drive', 'lane', 'crescent'],
+      'suburb': ['suburb', 'area', 'district', 'neighborhood', 'neighbourhood'],
+      'city': ['city', 'town', 'municipality'],
+      'postal_code': ['postal code', 'postcode', 'zip code', 'zip', 'pincode'],
+      'notes': ['notes', 'comments', 'remarks', 'description', 'additional info'],
+      'tags': ['tags', 'categories', 'labels', 'groups']
+    }
+
+    // Check exact matches first
+    for (const [field, variations] of Object.entries(exactMatches)) {
+      if (variations.some(variation => lowerHeader === variation)) {
+        return { field, confidence: 1.0 }
+      }
+    }
+
+    // Fuzzy matching for partial matches
+    const fuzzyMatches: Record<string, string[]> = {
+      'name': ['name', 'full', 'contact', 'client', 'customer', 'person'],
+      'email': ['email', 'mail', '@'],
+      'phone': ['phone', 'mobile', 'cell', 'tel', 'contact', 'number'],
+      'address': ['address', 'street', 'property', 'location'],
+      'street_number': ['number', 'no', 'house'],
+      'street_name': ['street', 'road', 'avenue', 'drive', 'lane', 'crescent', 'way', 'place'],
+      'suburb': ['suburb', 'area', 'district', 'neighborhood'],
+      'city': ['city', 'town', 'municipality'],
+      'postal_code': ['postal', 'postcode', 'zip', 'pin'],
+      'notes': ['note', 'comment', 'remark', 'description', 'info'],
+      'tags': ['tag', 'category', 'label', 'group']
+    }
+
+    let bestMatch = { field: '', confidence: 0 }
+    
+    for (const [field, keywords] of Object.entries(fuzzyMatches)) {
+      const matchCount = keywords.filter(keyword => lowerHeader.includes(keyword)).length
+      const confidence = matchCount / keywords.length
+      
+      if (confidence > bestMatch.confidence && confidence > 0.3) {
+        bestMatch = { field, confidence }
+      }
+    }
+
+    return bestMatch
+  }
+
+  // Intelligent address parsing
+  const parseAddressComponents = (addressString: string): {
+    street_number?: string
+    street_name?: string
+    suburb?: string
+    city?: string
+    postal_code?: string
+  } => {
+    if (!addressString) return {}
+
+    const address = addressString.trim()
+    const components: any = {}
+
+    // Extract postal code (NZ format: 4 digits)
+    const postalMatch = address.match(/\b(\d{4})\b/)
+    if (postalMatch) {
+      components.postal_code = postalMatch[1]
+    }
+
+    // Extract street number (at the beginning)
+    const numberMatch = address.match(/^(\d+[a-zA-Z]?)\s+/)
+    if (numberMatch) {
+      components.street_number = numberMatch[1]
+    }
+
+    // Common NZ city patterns
+    const nzCities = [
+      'Auckland', 'Wellington', 'Christchurch', 'Hamilton', 'Tauranga', 'Napier', 'Hastings',
+      'Dunedin', 'Palmerston North', 'Nelson', 'Rotorua', 'New Plymouth', 'Whangarei',
+      'Invercargill', 'Whanganui', 'Gisborne', 'Pukekohe', 'Timaru', 'Masterton'
+    ]
+
+    // Extract city
+    for (const city of nzCities) {
+      if (address.toLowerCase().includes(city.toLowerCase())) {
+        components.city = city
+        break
+      }
+    }
+
+    // Extract suburb (common patterns)
+    const suburbPatterns = [
+      /,\s*([^,]+),\s*(?:Auckland|Wellington|Christchurch|Hamilton|Tauranga)/i,
+      /,\s*([^,]+),\s*\d{4}/i,
+      /,\s*([^,]+)$/i
+    ]
+
+    for (const pattern of suburbPatterns) {
+      const match = address.match(pattern)
+      if (match && match[1] && !match[1].match(/\d{4}/)) {
+        components.suburb = match[1].trim()
+        break
+      }
+    }
+
+    // Extract street name (everything between number and suburb/city)
+    let streetName = address
+    if (components.street_number) {
+      streetName = streetName.replace(new RegExp(`^${components.street_number}\\s+`), '')
+    }
+    if (components.suburb) {
+      streetName = streetName.replace(new RegExp(`,\\s*${components.suburb}.*$`), '')
+    }
+    if (components.city) {
+      streetName = streetName.replace(new RegExp(`,\\s*${components.city}.*$`), '')
+    }
+    if (components.postal_code) {
+      streetName = streetName.replace(new RegExp(`,\\s*${components.postal_code}.*$`), '')
+    }
+    
+    streetName = streetName.replace(/,\s*$/, '').trim()
+    if (streetName && streetName !== address) {
+      components.street_name = streetName
+    }
+
+    return components
+  }
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0]
     if (!selectedFile) return
@@ -116,56 +250,115 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
     setErrors([])
 
     try {
-      let headers: string[]
+      const { headers, rows } = await parseFile(selectedFile)
 
-      if (fileName.endsWith('.xlsx')) {
-        // For Excel files, we'll create a simple reader that converts to CSV format
-        const arrayBuffer = await selectedFile.arrayBuffer()
-        const { headers: xlsxHeaders } = await parseExcelFile(arrayBuffer)
-        headers = xlsxHeaders
-      } else {
-        // Handle text-based files
-        const text = await selectedFile.text()
+      // Enhanced auto-detection with confidence scoring
+      const autoMapping: Record<string, string> = {}
+      const columnDetections: Record<string, { field: string; confidence: number }> = {}
 
-        if (fileName.endsWith('.tsv')) {
-          const { headers: tsvHeaders } = parseTSV(text)
-          headers = tsvHeaders
-        } else {
-          // CSV, TXT, or other delimited files
-          const { headers: csvHeaders } = parseExcelCSV(text)
-          headers = csvHeaders
+      // Detect column types for all headers
+      headers.forEach(header => {
+        const detection = detectColumnType(header)
+        columnDetections[header] = detection
+      })
+
+      // Assign best matches (highest confidence wins)
+      const usedFields = new Set<string>()
+      const sortedDetections = Object.entries(columnDetections)
+        .sort(([, a], [, b]) => b.confidence - a.confidence)
+
+      for (const [header, detection] of sortedDetections) {
+        if (detection.confidence > 0.3 && !usedFields.has(detection.field)) {
+          autoMapping[detection.field] = header
+          usedFields.add(detection.field)
         }
       }
 
-      // Auto-detect field mappings
-      const autoMapping: Record<string, string> = {}
-      headers.forEach(header => {
-        const lowerHeader = header.toLowerCase()
-        if (lowerHeader.includes('name') || lowerHeader.includes('full')) {
-          autoMapping['name'] = header
-        } else if (lowerHeader.includes('email') || lowerHeader.includes('mail')) {
-          autoMapping['email'] = header
-        } else if (lowerHeader.includes('phone') || lowerHeader.includes('mobile') || lowerHeader.includes('tel')) {
-          autoMapping['phone'] = header
-        } else if (lowerHeader.includes('address') || lowerHeader.includes('street')) {
-          autoMapping['address'] = header
-        } else if (lowerHeader.includes('suburb')) {
-          autoMapping['suburb'] = header
-        } else if (lowerHeader.includes('city')) {
-          autoMapping['city'] = header
-        } else if (lowerHeader.includes('postal') || lowerHeader.includes('zip') || lowerHeader.includes('postcode')) {
-          autoMapping['postal_code'] = header
-        } else if (lowerHeader.includes('note') || lowerHeader.includes('comment')) {
-          autoMapping['notes'] = header
-        } else if (lowerHeader.includes('tag')) {
-          autoMapping['tags'] = header
+      // Special handling for address components
+      // If we have a full address but also separate components, prefer the components
+      if (autoMapping.address && (autoMapping.street_number || autoMapping.street_name)) {
+        // Keep the full address as fallback, but prioritize components
+        console.log('Found both full address and components, will parse full address')
+      }
+
+      // If we have separate address components but no full address, create one
+      if (!autoMapping.address && (autoMapping.street_number || autoMapping.street_name)) {
+        // We'll construct the address from components during processing
+        console.log('Found address components, will construct full address')
+      }
+
+      setFieldMapping(autoMapping)
+      setCsvHeaders(headers)
+
+      // Auto-generate preview if we have the minimum required fields
+      if (autoMapping.name && (autoMapping.address || autoMapping.street_number || autoMapping.street_name)) {
+        await generatePreviewFromMapping(headers, rows, autoMapping)
+      } else {
+        setStep('mapping')
+      }
+    } catch (error) {
+      setErrors(['Error reading file. Please check the format.'])
+      console.error('File parsing error:', error)
+    }
+  }
+
+  // New function to generate preview directly from mapping
+  const generatePreviewFromMapping = async (headers: string[], rows: string[][], mapping: Record<string, string>) => {
+    try {
+      const contacts: ImportContact[] = rows.slice(0, 5).map(row => {
+        const contact: any = {}
+
+        // Map basic fields
+        Object.entries(mapping).forEach(([field, csvHeader]) => {
+          const headerIndex = headers.indexOf(csvHeader)
+          if (headerIndex !== -1) {
+            let value = row[headerIndex]?.trim()
+            if (field === 'tags' && value) {
+              contact[field] = value.split(';').map((tag: string) => tag.trim()).filter((tag: string) => tag)
+            } else if (value) {
+              contact[field] = value
+            }
+          }
+        })
+
+        // Handle address construction and parsing
+        if (mapping.address && contact.address) {
+          // Parse the full address into components
+          const components = parseAddressComponents(contact.address)
+          Object.assign(contact, components)
+        } else if (mapping.street_number || mapping.street_name) {
+          // Construct address from components
+          const addressParts = [
+            contact.street_number,
+            contact.street_name,
+            contact.suburb,
+            contact.city,
+            contact.postal_code
+          ].filter(Boolean)
+          
+          contact.address = addressParts.join(', ')
+        }
+
+        return contact
+      })
+
+      // Validate required fields
+      const validationErrors: string[] = []
+      contacts.forEach((contact, index) => {
+        if (!contact.name) {
+          validationErrors.push(`Row ${index + 2}: Missing required field 'name'`)
+        }
+        if (!contact.address) {
+          validationErrors.push(`Row ${index + 2}: Missing required field 'address'`)
         }
       })
 
-      setFieldMapping(autoMapping)
-      setStep('mapping')
+      setErrors(validationErrors)
+      setPreview(contacts)
+      setStep('preview')
     } catch (error) {
-      setErrors(['Error reading CSV file. Please check the format.'])
+      setErrors(['Error generating preview'])
+      console.error('Preview generation error:', error)
     }
   }
 
@@ -238,6 +431,24 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
           }
         })
 
+        // Handle address construction and parsing
+        if (fieldMapping.address && contact.address) {
+          // Parse the full address into components
+          const components = parseAddressComponents(contact.address)
+          Object.assign(contact, components)
+        } else if (fieldMapping.street_number || fieldMapping.street_name) {
+          // Construct address from components
+          const addressParts = [
+            contact.street_number,
+            contact.street_name,
+            contact.suburb,
+            contact.city,
+            contact.postal_code
+          ].filter(Boolean)
+          
+          contact.address = addressParts.join(', ')
+        }
+
         // Validate required fields
         const hasRequiredFields = requiredFields.every(field => contact[field])
         if (hasRequiredFields) {
@@ -309,13 +520,30 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
   const downloadTemplate = () => {
     const csvContent = 'Name,Email,Phone,Address,Suburb,City,Postal Code,Notes,Tags\n' +
       'John Smith,john@example.com,+64 21 123 4567,123 Queen Street,CBD,Auckland,1010,First time buyer,buyer;motivated\n' +
-      'Jane Doe,jane@example.com,+64 21 987 6543,456 Ponsonby Road,Ponsonby,Auckland,1011,Investor interested in apartments,investor;repeat-client'
+      'Jane Doe,jane@example.com,+64 21 987 6543,456 Ponsonby Road,Ponsonby,Auckland,1011,Investor interested in apartments,investor;repeat-client\n' +
+      'Mike Johnson,mike@example.com,+64 21 555 1234,789 Main Street,Central,Wellington,6011,Looking for family home,family;first-home\n' +
+      'Sarah Wilson,sarah@example.com,+64 21 777 8888,321 Victoria Street,Christchurch Central,Christchurch,8013,Downsizing,downsizer;cash-buyer'
 
     const blob = new Blob([csvContent], { type: 'text/csv' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
     a.download = 'contact-import-template.csv'
+    a.click()
+    window.URL.revokeObjectURL(url)
+  }
+
+  const downloadAdvancedTemplate = () => {
+    const csvContent = 'Full Name,Email Address,Mobile Phone,Street Number,Street Name,Suburb,City,Postal Code,Comments,Category\n' +
+      'John Smith,john@example.com,+64 21 123 4567,123,Queen Street,CBD,Auckland,1010,First time buyer,buyer;motivated\n' +
+      'Jane Doe,jane@example.com,+64 21 987 6543,456,Ponsonby Road,Ponsonby,Auckland,1011,Investor interested in apartments,investor;repeat-client\n' +
+      'Mike Johnson,mike@example.com,+64 21 555 1234,789,Main Street,Central,Wellington,6011,Looking for family home,family;first-home'
+
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'contact-import-advanced-template.csv'
     a.click()
     window.URL.revokeObjectURL(url)
   }
@@ -395,26 +623,42 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
                   <li>• <strong>Excel files:</strong> Excel workbook files (.xlsx) - Export as CSV for now</li>
                 </ul>
                 <div className="mt-3 pt-3 border-t border-blue-200">
-                  <p className="font-medium text-blue-900 mb-1">Format Requirements:</p>
+                  <p className="font-medium text-blue-900 mb-1">Smart Import Features:</p>
                   <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• <strong>Required fields:</strong> Name, Address</li>
-                    <li>• <strong>Optional fields:</strong> Email, Phone, Suburb, City, Postal Code, Notes</li>
+                    <li>• <strong>Auto-detection:</strong> Automatically maps columns to contact fields</li>
+                    <li>• <strong>Address parsing:</strong> Handles both single address column and separate components</li>
+                    <li>• <strong>Required fields:</strong> Name + Address (or Street Number/Name)</li>
+                    <li>• <strong>Optional fields:</strong> Email, Phone, Suburb, City, Postal Code, Notes, Tags</li>
+                    <li>• <strong>Flexible headers:</strong> Recognizes variations like "Full Name", "Email Address", etc.</li>
                     <li>• <strong>Tags:</strong> Separate multiple tags with semicolons (;)</li>
-                    <li>• First row should contain column headers</li>
                   </ul>
                 </div>
               </div>
 
-              <div className="text-center">
-                <button
-                  onClick={downloadTemplate}
-                  className="btn-secondary"
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Download Template
-                </button>
+              <div className="text-center space-y-3">
+                <div className="flex justify-center space-x-4">
+                  <button
+                    onClick={downloadTemplate}
+                    className="btn-secondary"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Simple Template
+                  </button>
+                  <button
+                    onClick={downloadAdvancedTemplate}
+                    className="btn-secondary"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Advanced Template
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Simple: One address column • Advanced: Separate address components
+                </p>
               </div>
 
               {file && (
@@ -438,12 +682,36 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Map CSV columns to contact fields</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  We've automatically detected some column mappings. Review and adjust as needed.
+                </p>
+                
+                {/* Show detected mappings */}
+                {Object.keys(fieldMapping).length > 0 && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                    <h4 className="font-medium text-green-900 mb-2">Auto-detected mappings:</h4>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      {Object.entries(fieldMapping).map(([field, header]) => (
+                        <div key={field} className="flex items-center">
+                          <span className="font-medium text-green-800 capitalize">
+                            {field.replace('_', ' ')}:
+                          </span>
+                          <span className="ml-2 text-green-700">{header}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {allFields.map(field => (
                     <div key={field}>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         {field.charAt(0).toUpperCase() + field.slice(1).replace('_', ' ')}
                         {requiredFields.includes(field) && ' *'}
+                        {fieldMapping[field] && (
+                          <span className="ml-2 text-xs text-green-600">✓ Auto-detected</span>
+                        )}
                       </label>
                       <select
                         value={fieldMapping[field] || ''}
@@ -451,11 +719,9 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
                         className="input-field"
                       >
                         <option value="">Select column...</option>
-                        {Object.keys(fieldMapping).length > 0 &&
-                          Object.values(new Set(Object.values(fieldMapping))).map(header => (
-                            <option key={header} value={header}>{header}</option>
-                          ))
-                        }
+                        {csvHeaders.map(header => (
+                          <option key={header} value={header}>{header}</option>
+                        ))}
                       </select>
                     </div>
                   ))}
@@ -472,7 +738,7 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
                 <button
                   onClick={generatePreview}
                   className="btn-primary"
-                  disabled={!fieldMapping.name || !fieldMapping.address}
+                  disabled={!fieldMapping.name || (!fieldMapping.address && !fieldMapping.street_number && !fieldMapping.street_name)}
                 >
                   Generate Preview
                 </button>

@@ -538,14 +538,14 @@ Interested in similar properties in your area? Let's discuss your requirements.`
                           <div className="flex space-x-2">
                             <button
                               onClick={() => handleCommunicate('email')}
-                              className="flex-1 btn-primary text-sm"
+                              className="flex-1 btn-secondary text-sm"
                               disabled={!nearbyContacts.some(c => selectedContacts.includes(c.id) && c.email)}
                             >
                               Email
                             </button>
                             <button
                               onClick={() => handleCommunicate('text')}
-                              className="flex-1 btn-secondary text-sm"
+                              className="flex-1 btn-primary text-sm"
                               disabled={!nearbyContacts.some(c => selectedContacts.includes(c.id) && c.phone)}
                             >
                               Text

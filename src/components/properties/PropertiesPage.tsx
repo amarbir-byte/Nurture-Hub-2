@@ -33,6 +33,7 @@ interface Property {
 export function PropertiesPage() {
   const { user } = useAuth()
   const [properties, setProperties] = useState<Property[]>([])
+  const [propertiesCommunications, setPropertiesCommunications] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [showImport, setShowImport] = useState(false)
@@ -40,6 +41,7 @@ export function PropertiesPage() {
   const [viewingProperty, setViewingProperty] = useState<Property | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'listed' | 'sold' | 'withdrawn'>('all')
+  const [communicationFilter, setCommunicationFilter] = useState<'all' | 'contacted' | 'not_contacted'>('all')
 
   useEffect(() => {
     if (user) {
@@ -49,14 +51,34 @@ export function PropertiesPage() {
 
   const fetchProperties = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch properties
+      const { data: propertiesData, error: propertiesError } = await supabase
         .from('properties')
         .select('*')
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false })
 
-      if (error) throw error
-      setProperties(data || [])
+      if (propertiesError) throw propertiesError
+
+      // Fetch communication counts for each property
+      const { data: communicationsData, error: communicationsError } = await supabase
+        .from('communication_history')
+        .select('property_id')
+        .eq('user_id', user?.id)
+        .not('property_id', 'is', null)
+
+      if (communicationsError) throw communicationsError
+
+      // Count communications per property
+      const communicationsCount: Record<string, number> = {}
+      communicationsData?.forEach(comm => {
+        if (comm.property_id) {
+          communicationsCount[comm.property_id] = (communicationsCount[comm.property_id] || 0) + 1
+        }
+      })
+
+      setProperties(propertiesData || [])
+      setPropertiesCommunications(communicationsCount)
     } catch (error) {
       console.error('Error fetching properties:', error)
     } finally {
@@ -102,7 +124,13 @@ export function PropertiesPage() {
   const filteredProperties = properties.filter(property => {
     const matchesSearch = property.address.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === 'all' || property.status === statusFilter
-    return matchesSearch && matchesStatus
+    const communicationCount = propertiesCommunications[property.id] || 0
+    const matchesCommunication =
+      communicationFilter === 'all' ||
+      (communicationFilter === 'contacted' && communicationCount > 0) ||
+      (communicationFilter === 'not_contacted' && communicationCount === 0)
+
+    return matchesSearch && matchesStatus && matchesCommunication
   })
 
   const stats = {
@@ -204,6 +232,19 @@ export function PropertiesPage() {
               <option value="listed">Listed</option>
               <option value="sold">Sold</option>
               <option value="withdrawn">Withdrawn</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor="communication-filter" className="sr-only">Filter by communication</label>
+            <select
+              id="communication-filter"
+              value={communicationFilter}
+              onChange={(e) => setCommunicationFilter(e.target.value as any)}
+              className="input-field"
+            >
+              <option value="all">All Properties</option>
+              <option value="contacted">Contacted</option>
+              <option value="not_contacted">Not Contacted</option>
             </select>
           </div>
         </div>

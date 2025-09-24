@@ -66,9 +66,12 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
   const [selectedProperties, setSelectedProperties] = useState<string[]>([])
   const [showCommunicationModal, setShowCommunicationModal] = useState(false)
   const [communicationType, setCommunicationType] = useState<'email' | 'text' | 'call'>('email')
+  const [communicationHistory, setCommunicationHistory] = useState<any[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
 
   useEffect(() => {
     fetchNearbyProperties()
+    fetchCommunicationHistory()
   }, [contact])
 
   const fetchNearbyProperties = async () => {
@@ -125,6 +128,27 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
       Math.sin(dLng/2) * Math.sin(dLng/2)
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
     return R * c
+  }
+
+  const fetchCommunicationHistory = async () => {
+    if (!user || !contact) return
+
+    setLoadingHistory(true)
+    try {
+      const { data, error } = await supabase
+        .from('communication_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('contact_id', contact.id)
+        .order('sent_at', { ascending: false })
+
+      if (error) throw error
+      setCommunicationHistory(data || [])
+    } catch (error) {
+      console.error('Error fetching communication history:', error)
+    } finally {
+      setLoadingHistory(false)
+    }
   }
 
   const formatPrice = (price: number) => {
@@ -197,42 +221,68 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
   const handleSendCommunication = async () => {
     if (selectedProperties.length === 0) return
 
-    if (communicationType === 'email') {
-      // Create email with property details
-      const subject = `Property Market Update - ${contact.address || 'Your Area'}`
-      const body = generatePropertiesMessage()
+    const selectedProps = nearbyProperties.filter(p => selectedProperties.includes(p.id))
+    const subject = `Property Market Update - ${contact.address || 'Your Area'}`
+    let message = ''
 
-      if (contact.email) {
-        const mailtoLink = `mailto:${contact.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-        window.open(mailtoLink, '_blank')
+    try {
+      if (communicationType === 'email') {
+        message = generatePropertiesMessage()
+      } else if (communicationType === 'text') {
+        // Create SMS with property details (shorter version)
+        message = `Hi ${contact.first_name || 'there'}! Recent property activity near you:\n\n`
+
+        selectedProps.slice(0, 2).forEach((property, index) => { // Limit to 2 for SMS
+          const priceStr = property.status === 'sold' && property.sale_price
+            ? `Sold ${formatPrice(property.sale_price)}`
+            : `Listed ${formatPrice(property.price)}`
+          message += `${index + 1}. ${property.address} - ${priceStr}\n`
+        })
+
+        if (selectedProps.length > 2) {
+          message += `...and ${selectedProps.length - 2} more properties.\n`
+        }
+
+        message += `\nInterested in your property value? Let's chat!`
+      } else if (communicationType === 'call') {
+        message = `Called regarding ${selectedProps.length} nearby properties: ${selectedProps.map(p => p.address).join(', ')}`
       }
-    } else if (communicationType === 'text') {
-      // Create SMS with property details (shorter version)
-      const selectedProps = nearbyProperties.filter(p => selectedProperties.includes(p.id))
-      let message = `Hi ${contact.first_name || 'there'}! Recent property activity near you:\n\n`
 
-      selectedProps.slice(0, 2).forEach((property, index) => { // Limit to 2 for SMS
-        const priceStr = property.status === 'sold' && property.sale_price
-          ? `Sold ${formatPrice(property.sale_price)}`
-          : `Listed ${formatPrice(property.price)}`
-        message += `${index + 1}. ${property.address} - ${priceStr}\n`
+      // Record communication history
+      await supabase.from('communication_history').insert({
+        user_id: user?.id,
+        contact_id: contact.id,
+        contact_name: `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || contact.name || 'Unknown',
+        contact_email: contact.email,
+        contact_phone: contact.phone,
+        property_id: selectedProps.length === 1 ? selectedProps[0].id : null,
+        property_address: selectedProps.length === 1 ? selectedProps[0].address : null,
+        communication_type: communicationType,
+        subject: communicationType === 'email' ? subject : null,
+        message: message,
+        context: 'market_update',
+        related_properties: selectedProps.map(p => p.id),
+        tags: ['market_update', 'nearby_properties'],
+        sent_at: new Date().toISOString()
       })
 
-      if (selectedProps.length > 2) {
-        message += `...and ${selectedProps.length - 2} more properties.\n`
-      }
-
-      message += `\nInterested in your property value? Let's chat!`
-
-      if (contact.phone) {
+      // Open communication apps
+      if (communicationType === 'email' && contact.email) {
+        const mailtoLink = `mailto:${contact.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`
+        window.open(mailtoLink, '_blank')
+      } else if (communicationType === 'text' && contact.phone) {
         const smsLink = `sms:${contact.phone}?body=${encodeURIComponent(message)}`
         window.open(smsLink, '_blank')
-      }
-    } else if (communicationType === 'call') {
-      // Open phone to call contact
-      if (contact.phone) {
+      } else if (communicationType === 'call' && contact.phone) {
         window.open(`tel:${contact.phone}`, '_blank')
       }
+
+      // Refresh communication history
+      await fetchCommunicationHistory()
+
+    } catch (error) {
+      console.error('Error recording communication:', error)
+      alert('Communication sent but there was an issue saving the record.')
     }
 
     setShowCommunicationModal(false)
@@ -470,6 +520,76 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                         </div>
                       )}
                     </>
+                  )}
+                </div>
+
+                {/* Communication History */}
+                <div className="mt-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Communication History
+                  </h3>
+
+                  {loadingHistory ? (
+                    <div className="flex items-center justify-center h-20">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+                      <span className="ml-3 text-gray-600">Loading history...</span>
+                    </div>
+                  ) : communicationHistory.length === 0 ? (
+                    <div className="text-center py-6 text-gray-500">
+                      <svg className="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                      <p className="text-sm">No communications yet</p>
+                    </div>
+                  ) : (
+                    <div className="max-h-64 overflow-y-auto space-y-3">
+                      {communicationHistory.map((comm) => (
+                        <div key={comm.id} className="p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-2">
+                              <span className={`badge text-xs ${
+                                comm.communication_type === 'email' ? 'bg-blue-100 text-blue-800' :
+                                comm.communication_type === 'text' ? 'bg-green-100 text-green-800' :
+                                comm.communication_type === 'call' ? 'bg-purple-100 text-purple-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {comm.communication_type}
+                              </span>
+                              <span className="text-sm font-medium text-gray-900">
+                                {comm.context === 'property_alert' ? 'Property Alert' :
+                                 comm.context === 'market_update' ? 'Market Update' :
+                                 comm.context || 'Communication'}
+                              </span>
+                            </div>
+                            <span className="text-xs text-gray-500">
+                              {formatDate(comm.sent_at)}
+                            </span>
+                          </div>
+                          {comm.subject && (
+                            <div className="text-sm font-medium text-gray-800 mb-1">
+                              {comm.subject}
+                            </div>
+                          )}
+                          <div className="text-xs text-gray-600 line-clamp-2">
+                            {comm.message}
+                          </div>
+                          {comm.related_properties && comm.related_properties.length > 0 && (
+                            <div className="mt-2 text-xs text-blue-600">
+                              Related to {comm.related_properties.length} property{comm.related_properties.length !== 1 ? 'ies' : ''}
+                            </div>
+                          )}
+                          {comm.tags && comm.tags.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              {comm.tags.map((tag, index) => (
+                                <span key={index} className="badge text-xs bg-gray-100 text-gray-600">
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>

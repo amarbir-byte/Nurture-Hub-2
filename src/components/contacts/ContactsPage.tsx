@@ -30,6 +30,7 @@ interface Contact {
 export function ContactsPage() {
   const { user } = useAuth()
   const [contacts, setContacts] = useState<Contact[]>([])
+  const [contactsCommunications, setContactsCommunications] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [showImport, setShowImport] = useState(false)
@@ -38,6 +39,7 @@ export function ContactsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [sourceFilter, setSourceFilter] = useState<'all' | 'manual' | 'import' | 'campaign' | 'referral'>('all')
   const [followUpFilter, setFollowUpFilter] = useState<'all' | 'due' | 'overdue'>('all')
+  const [communicationFilter, setCommunicationFilter] = useState<'all' | 'contacted' | 'not_contacted'>('all')
 
   useEffect(() => {
     if (user) {
@@ -47,14 +49,34 @@ export function ContactsPage() {
 
   const fetchContacts = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch contacts
+      const { data: contactsData, error: contactsError } = await supabase
         .from('contacts')
         .select('*')
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false })
 
-      if (error) throw error
-      setContacts(data || [])
+      if (contactsError) throw contactsError
+
+      // Fetch communication counts for each contact
+      const { data: communicationsData, error: communicationsError } = await supabase
+        .from('communication_history')
+        .select('contact_id')
+        .eq('user_id', user?.id)
+        .not('contact_id', 'is', null)
+
+      if (communicationsError) throw communicationsError
+
+      // Count communications per contact
+      const communicationsCount: Record<string, number> = {}
+      communicationsData?.forEach(comm => {
+        if (comm.contact_id) {
+          communicationsCount[comm.contact_id] = (communicationsCount[comm.contact_id] || 0) + 1
+        }
+      })
+
+      setContacts(contactsData || [])
+      setContactsCommunications(communicationsCount)
     } catch (error) {
       console.error('Error fetching contacts:', error)
     } finally {
@@ -115,7 +137,13 @@ export function ContactsPage() {
       (followUpFilter === 'due' && followUpDate && followUpDate <= today) ||
       (followUpFilter === 'overdue' && followUpDate && followUpDate < today)
 
-    return matchesSearch && matchesSource && matchesFollowUp
+    const communicationCount = contactsCommunications[contact.id] || 0
+    const matchesCommunication =
+      communicationFilter === 'all' ||
+      (communicationFilter === 'contacted' && communicationCount > 0) ||
+      (communicationFilter === 'not_contacted' && communicationCount === 0)
+
+    return matchesSearch && matchesSource && matchesFollowUp && matchesCommunication
   })
 
   const stats = {
@@ -241,6 +269,19 @@ export function ContactsPage() {
               <option value="overdue">Overdue</option>
             </select>
           </div>
+          <div>
+            <label htmlFor="communication-filter" className="sr-only">Filter by communication</label>
+            <select
+              id="communication-filter"
+              value={communicationFilter}
+              onChange={(e) => setCommunicationFilter(e.target.value as any)}
+              className="input-field"
+            >
+              <option value="all">All Contacts</option>
+              <option value="contacted">Contacted</option>
+              <option value="not_contacted">Not Contacted</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -252,12 +293,12 @@ export function ContactsPage() {
           </svg>
           <h3 className="mt-4 text-lg font-medium text-gray-900">No contacts found</h3>
           <p className="mt-2 text-gray-600">
-            {searchTerm || sourceFilter !== 'all' || followUpFilter !== 'all'
+            {searchTerm || sourceFilter !== 'all' || followUpFilter !== 'all' || communicationFilter !== 'all'
               ? 'Try adjusting your search or filters.'
               : 'Get started by adding your first contact or importing a CSV file.'
             }
           </p>
-          {!searchTerm && sourceFilter === 'all' && followUpFilter === 'all' && (
+          {!searchTerm && sourceFilter === 'all' && followUpFilter === 'all' && communicationFilter === 'all' && (
             <div className="mt-6 flex justify-center space-x-3">
               <button
                 onClick={() => setShowForm(true)}

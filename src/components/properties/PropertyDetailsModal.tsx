@@ -54,9 +54,12 @@ export function PropertyDetailsModal({ property, onClose }: PropertyDetailsModal
   const [selectedContacts, setSelectedContacts] = useState<string[]>([])
   const [showCommunicationModal, setShowCommunicationModal] = useState(false)
   const [communicationType, setCommunicationType] = useState<'email' | 'text' | 'call'>('email')
+  const [communicationHistory, setCommunicationHistory] = useState<any[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
 
   useEffect(() => {
     fetchNearbyContacts()
+    fetchCommunicationHistory()
   }, [property])
 
   const fetchNearbyContacts = async () => {
@@ -101,6 +104,27 @@ export function PropertyDetailsModal({ property, onClose }: PropertyDetailsModal
       Math.sin(dLng/2) * Math.sin(dLng/2)
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
     return R * c
+  }
+
+  const fetchCommunicationHistory = async () => {
+    if (!user || !property) return
+
+    setLoadingHistory(true)
+    try {
+      const { data, error } = await supabase
+        .from('communication_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('property_id', property.id)
+        .order('sent_at', { ascending: false })
+
+      if (error) throw error
+      setCommunicationHistory(data || [])
+    } catch (error) {
+      console.error('Error fetching communication history:', error)
+    } finally {
+      setLoadingHistory(false)
+    }
   }
 
   const formatPrice = (price: number) => {
@@ -157,36 +181,61 @@ Interested in similar properties in your area? Let's discuss your requirements.`
     if (selectedContacts.length === 0) return
 
     const selectedContactsData = nearbyContacts.filter(c => selectedContacts.includes(c.id))
+    const subject = `Property Update: ${property.address}`
+    const message = generatePropertyMessage()
 
-    if (communicationType === 'email') {
-      // Create email with property details
-      const subject = `Property Update: ${property.address}`
-      const body = generatePropertyMessage()
-      const emails = selectedContactsData.map(c => c.email).filter(Boolean).join(',')
-
-      if (emails) {
-        const mailtoLink = `mailto:${emails}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-        window.open(mailtoLink, '_blank')
-      }
-    } else if (communicationType === 'text') {
-      // Create SMS with property details
-      const message = generatePropertyMessage()
-      const phones = selectedContactsData.map(c => c.phone).filter(Boolean)
-
-      if (phones.length > 0) {
-        // For multiple contacts, open individual SMS for each (limitation of SMS)
-        phones.forEach(phone => {
-          const smsLink = `sms:${phone}?body=${encodeURIComponent(message)}`
-          window.open(smsLink, '_blank')
+    try {
+      // Record communication history for each contact
+      const communicationPromises = selectedContactsData.map(contact => {
+        return supabase.from('communication_history').insert({
+          user_id: user?.id,
+          contact_id: contact.id,
+          contact_name: `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || contact.name || 'Unknown',
+          contact_email: contact.email,
+          contact_phone: contact.phone,
+          property_id: property.id,
+          property_address: property.address,
+          communication_type: communicationType,
+          subject: communicationType === 'email' ? subject : null,
+          message: message,
+          context: 'property_alert',
+          related_properties: [property.id],
+          tags: ['property_marketing', 'nearby_contact'],
+          sent_at: new Date().toISOString()
         })
+      })
+
+      await Promise.all(communicationPromises)
+
+      // Open communication apps
+      if (communicationType === 'email') {
+        const emails = selectedContactsData.map(c => c.email).filter(Boolean).join(',')
+        if (emails) {
+          const mailtoLink = `mailto:${emails}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`
+          window.open(mailtoLink, '_blank')
+        }
+      } else if (communicationType === 'text') {
+        const phones = selectedContactsData.map(c => c.phone).filter(Boolean)
+        if (phones.length > 0) {
+          phones.forEach(phone => {
+            const smsLink = `sms:${phone}?body=${encodeURIComponent(message)}`
+            window.open(smsLink, '_blank')
+          })
+        }
+      } else if (communicationType === 'call') {
+        const phones = selectedContactsData.map(c => c.phone).filter(Boolean)
+        if (phones.length > 0) {
+          window.open(`tel:${phones[0]}`, '_blank')
+        }
       }
-    } else if (communicationType === 'call') {
-      // For calls, show a list to call individually
-      const phones = selectedContactsData.map(c => c.phone).filter(Boolean)
-      if (phones.length > 0) {
-        // Open first contact's phone number
-        window.open(`tel:${phones[0]}`, '_blank')
-      }
+
+      // Refresh communication history
+      await fetchCommunicationHistory()
+
+    } catch (error) {
+      console.error('Error recording communication:', error)
+      // Still allow the communication to proceed even if recording fails
+      alert('Communication sent but there was an issue saving the record.')
     }
 
     setShowCommunicationModal(false)
@@ -446,6 +495,69 @@ Interested in similar properties in your area? Let's discuss your requirements.`
                         </div>
                       )}
                     </>
+                  )}
+                </div>
+
+                {/* Communication History */}
+                <div className="mt-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Communication History
+                  </h3>
+
+                  {loadingHistory ? (
+                    <div className="flex items-center justify-center h-20">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+                      <span className="ml-3 text-gray-600">Loading history...</span>
+                    </div>
+                  ) : communicationHistory.length === 0 ? (
+                    <div className="text-center py-6 text-gray-500">
+                      <svg className="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                      <p className="text-sm">No communications yet</p>
+                    </div>
+                  ) : (
+                    <div className="max-h-64 overflow-y-auto space-y-3">
+                      {communicationHistory.map((comm) => (
+                        <div key={comm.id} className="p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-2">
+                              <span className={`badge text-xs ${
+                                comm.communication_type === 'email' ? 'bg-blue-100 text-blue-800' :
+                                comm.communication_type === 'text' ? 'bg-green-100 text-green-800' :
+                                comm.communication_type === 'call' ? 'bg-purple-100 text-purple-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {comm.communication_type}
+                              </span>
+                              <span className="text-sm font-medium text-gray-900">
+                                {comm.contact_name}
+                              </span>
+                            </div>
+                            <span className="text-xs text-gray-500">
+                              {formatDate(comm.sent_at)}
+                            </span>
+                          </div>
+                          {comm.subject && (
+                            <div className="text-sm font-medium text-gray-800 mb-1">
+                              {comm.subject}
+                            </div>
+                          )}
+                          <div className="text-xs text-gray-600 line-clamp-2">
+                            {comm.message}
+                          </div>
+                          {comm.tags && comm.tags.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              {comm.tags.map((tag, index) => (
+                                <span key={index} className="badge text-xs bg-gray-100 text-gray-600">
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>

@@ -190,7 +190,7 @@ Interested in similar properties in your area? Let's discuss your requirements.`
         return supabase.from('communication_history').insert({
           user_id: user?.id,
           contact_id: contact.id,
-          contact_name: `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || contact.name || 'Unknown',
+          contact_name: `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Unknown',
           contact_email: contact.email,
           contact_phone: contact.phone,
           property_id: property.id,
@@ -548,7 +548,7 @@ Interested in similar properties in your area? Let's discuss your requirements.`
                           </div>
                           {comm.tags && comm.tags.length > 0 && (
                             <div className="mt-2 flex flex-wrap gap-1">
-                              {comm.tags.map((tag, index) => (
+                              {comm.tags.map((tag: string, index: number) => (
                                 <span key={index} className="badge text-xs bg-gray-100 text-gray-600">
                                   {tag}
                                 </span>

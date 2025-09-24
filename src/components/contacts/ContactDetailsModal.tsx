@@ -204,8 +204,8 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
       if (details.length > 0) {
         message += `   ${details.join(' • ')}\n`
       }
-      if (property.sale_date) {
-        message += `   Sold: ${formatDate(property.sale_date)}\n`
+      if (property.sold_date) {
+        message += `   Sold: ${formatDate(property.sold_date)}\n`
       }
       message += '\n'
     })
@@ -580,7 +580,7 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                           )}
                           {comm.tags && comm.tags.length > 0 && (
                             <div className="mt-2 flex flex-wrap gap-1">
-                              {comm.tags.map((tag, index) => (
+                              {comm.tags.map((tag: string, index: number) => (
                                 <span key={index} className="badge text-xs bg-gray-100 text-gray-600">
                                   {tag}
                                 </span>

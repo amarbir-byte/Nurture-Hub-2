@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from './contexts/AuthContext'
 import { useSubscription } from './contexts/SubscriptionContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import { Header } from './components/layout/Header'
 import { DashboardLayout } from './components/dashboard/DashboardLayout'
 import { PropertiesPage } from './components/properties/PropertiesPage'
@@ -23,23 +24,43 @@ function LandingPage() {
     <>
       <Header />
       {/* Hero Section */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl md:text-6xl">
-            Proximity-Based Marketing for{' '}
-            <span className="text-primary-600">Real Estate Agents</span>
-          </h1>
-          <p className="mt-6 max-w-2xl mx-auto text-xl text-gray-600">
-            Generate leads with precision targeting. Send SMS campaigns to homeowners within 0.1km
-            of your listings. 50% cheaper than kvCORE with better results.
-          </p>
-          <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-            <button className="btn-primary text-lg px-8 py-3 w-full sm:w-auto">
-              Start 14-Day Free Trial
-            </button>
-            <button className="btn-secondary text-lg px-8 py-3 w-full sm:w-auto">
-              Watch Demo
-            </button>
+      <main className="page-container py-20">
+        <div className="text-center animate-fade-in">
+          <div className="relative">
+            {/* Animated background elements */}
+            <div className="absolute inset-0 -z-10">
+              <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-gradient-to-r from-accent-400/20 to-primary-400/20 rounded-full blur-3xl animate-pulse-slow"></div>
+              <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-primary-400/20 to-accent-600/20 rounded-full blur-3xl animate-pulse-slow" style={{animationDelay: '1s'}}></div>
+            </div>
+
+            <h1 className="text-5xl font-bold text-primary-900 dark:text-white sm:text-6xl md:text-7xl lg:text-8xl tracking-tight">
+              Proximity-Based Marketing for{' '}
+              <span className="bg-gradient-to-r from-accent-600 via-accent-700 to-primary-700 bg-clip-text text-transparent">
+                Real Estate Agents
+              </span>
+            </h1>
+            <p className="mt-8 max-w-3xl mx-auto text-xl text-primary-600 dark:text-primary-400 leading-relaxed">
+              Generate leads with precision targeting. Send SMS campaigns to homeowners within 0.1km
+              of your listings. <span className="font-semibold text-accent-600 dark:text-accent-400">50% cheaper than kvCORE</span> with better results.
+            </p>
+            <div className="mt-12 flex flex-col sm:flex-row justify-center gap-6">
+              <button className="btn-primary text-lg px-10 py-4 w-full sm:w-auto group">
+                <span className="flex items-center justify-center">
+                  Start 14-Day Free Trial
+                  <svg className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </span>
+              </button>
+              <button className="btn-secondary text-lg px-10 py-4 w-full sm:w-auto group">
+                <span className="flex items-center justify-center">
+                  <svg className="w-5 h-5 mr-2 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-5-14S7 1.5 7 5s1.5 7 5 7 5-3.5 5-7-1.5-3.5-5-3.5z" />
+                  </svg>
+                  Watch Demo
+                </span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -315,26 +336,39 @@ function Dashboard() {
   )
 }
 
-function App() {
+function AppContent() {
   const { user, loading } = useAuth()
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-accent-500/20 border-t-accent-500 mx-auto"></div>
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-accent-500/20 to-primary-500/20 blur-sm animate-pulse"></div>
+          </div>
+          <p className="mt-6 text-primary-600 dark:text-primary-400 font-medium">
+            Loading your workspace...
+          </p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <PerformanceMonitor />
       <OfflineIndicator />
       {user ? <Dashboard /> : <LandingPage />}
     </div>
+  )
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   )
 }
 

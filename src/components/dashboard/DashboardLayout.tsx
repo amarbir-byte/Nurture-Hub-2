@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useSubscription } from '../../contexts/SubscriptionContext'
+import { useTheme } from '../../contexts/ThemeContext'
 
 type DashboardPage = 'dashboard' | 'properties' | 'contacts' | 'marketing' | 'templates' | 'settings' | 'beta' | 'admin'
 
@@ -82,6 +83,7 @@ function NavIcon({ icon }: { icon: string }) {
 export function DashboardLayout({ children, currentPage, onNavigate }: DashboardLayoutProps) {
   const { user, signOut } = useAuth()
   const { userSubscription, isTrialing, trialDaysRemaining, usageStats } = useSubscription()
+  const { toggleTheme, actualTheme } = useTheme()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const isAdmin = userSubscription?.is_admin || false
@@ -92,47 +94,78 @@ export function DashboardLayout({ children, currentPage, onNavigate }: Dashboard
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div
-            className="fixed inset-0 bg-gray-600 bg-opacity-75"
+            className="fixed inset-0 bg-dark-950/50 dark:bg-dark-950/70 backdrop-blur-sm"
             onClick={() => setSidebarOpen(false)}
           />
         </div>
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-200 ease-in-out lg:transition-none`}>
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
-          <h1 className="text-xl font-bold text-primary-600">Nurture Hub</h1>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+      <div className={`fixed inset-y-0 left-0 z-50 w-72 glass-nav transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-all duration-300 ease-smooth lg:transition-none`}>
+        {/* Sidebar Header */}
+        <div className="flex items-center justify-between h-20 px-8 border-b border-white/10 dark:border-white/5">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-accent-500 to-accent-700 rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-lg">N</span>
+            </div>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-primary-900 to-accent-700 dark:from-white dark:to-accent-300 bg-clip-text text-transparent">
+              Nurture Hub
+            </h1>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-xl text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-dark-800 transition-all duration-200"
+              title={`Switch to ${actualTheme === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {actualTheme === 'dark' ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              )}
+            </button>
+
+            {/* Close Button (Mobile) */}
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden p-2 rounded-xl text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-dark-800 transition-all duration-200"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Trial status */}
         {isTrialing && (
-          <div className="p-4 border-b border-gray-200">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <div className="flex">
+          <div className="p-6 border-b border-white/10 dark:border-white/5">
+            <div className="bg-gradient-to-r from-warning-500/10 to-warning-600/10 dark:from-warning-400/10 dark:to-warning-500/10 border border-warning-200/50 dark:border-warning-600/50 rounded-2xl p-4 backdrop-blur-sm">
+              <div className="flex items-start space-x-3">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
+                  <div className="w-8 h-8 bg-gradient-to-br from-warning-400 to-warning-600 rounded-xl flex items-center justify-center">
+                    <svg className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </div>
                 </div>
-                <div className="ml-3">
-                  <p className="text-sm text-yellow-800">
-                    <span className="font-medium">{trialDaysRemaining} days</span> left in trial
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-warning-700 dark:text-warning-300">
+                    <span className="font-bold">{trialDaysRemaining} days</span> left in trial
                   </p>
-                  <button className="text-xs text-yellow-700 underline mt-1">
-                    Upgrade now
+                  <button className="mt-2 text-xs font-medium text-warning-600 dark:text-warning-400 hover:text-warning-700 dark:hover:text-warning-300 transition-colors">
+                    Upgrade to Pro →
                   </button>
                 </div>
               </div>
@@ -141,72 +174,83 @@ export function DashboardLayout({ children, currentPage, onNavigate }: Dashboard
         )}
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-1">
-          {navigationItems.map((item) => (
+        <nav className="flex-1 px-6 py-8 space-y-2">
+          {navigationItems.map((item, index) => (
             <button
               key={item.name}
               onClick={() => onNavigate(item.page)}
-              className={`group flex items-center w-full px-2 py-2 text-sm font-medium rounded-md ${
+              className={`nav-link w-full animate-enter-stagger ${
                 currentPage === item.page
-                  ? 'bg-primary-100 text-primary-900'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  ? 'nav-link-active'
+                  : 'nav-link-inactive'
               }`}
+              style={{animationDelay: `${index * 0.1}s`}}
             >
               <NavIcon icon={item.icon} />
-              <span className="ml-3">{item.name}</span>
+              <span className="ml-3 font-semibold">{item.name}</span>
+              {currentPage === item.page && (
+                <div className="ml-auto w-2 h-2 bg-white rounded-full animate-pulse" />
+              )}
             </button>
           ))}
         </nav>
 
         {/* Usage stats */}
         {usageStats && (
-          <div className="p-4 border-t border-gray-200">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <div className="p-6 border-t border-white/10 dark:border-white/5">
+            <h3 className="text-xs font-bold text-primary-500 dark:text-primary-400 uppercase tracking-wider mb-4">
               Usage This Month
             </h3>
-            <div className="space-y-3">
-              <div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Contacts</span>
-                  <span className="text-gray-900">{usageStats.contacts}</span>
+            <div className="space-y-4">
+              {[
+                { label: 'Contacts', value: usageStats.contacts, icon: '👥', color: 'from-accent-500 to-accent-600' },
+                { label: 'Campaigns', value: usageStats.campaigns_this_month, icon: '📢', color: 'from-primary-500 to-primary-600' },
+                { label: 'Templates', value: usageStats.templates, icon: '📝', color: 'from-success-500 to-success-600' },
+              ].map((stat, index) => (
+                <div key={stat.label} className="animate-enter-stagger" style={{animationDelay: `${(index + 5) * 0.1}s`}}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-8 h-8 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center text-sm`}>
+                        {stat.icon}
+                      </div>
+                      <span className="text-sm font-medium text-primary-600 dark:text-primary-400">{stat.label}</span>
+                    </div>
+                    <span className="text-lg font-bold text-primary-900 dark:text-white">{stat.value}</span>
+                  </div>
                 </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Campaigns</span>
-                  <span className="text-gray-900">{usageStats.campaigns_this_month}</span>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Templates</span>
-                  <span className="text-gray-900">{usageStats.templates}</span>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         )}
 
         {/* User menu */}
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex items-center">
-            <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
-              <span className="text-sm font-medium text-white">
-                {user?.email?.charAt(0).toUpperCase()}
-              </span>
+        <div className="p-6 border-t border-white/10 dark:border-white/5">
+          <div className="flex items-center space-x-3">
+            <div className="relative">
+              <div className="w-12 h-12 bg-gradient-to-br from-accent-500 to-accent-700 rounded-2xl flex items-center justify-center shadow-lg">
+                <span className="text-lg font-bold text-white">
+                  {user?.email?.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success-500 border-2 border-white dark:border-dark-900 rounded-full"></div>
             </div>
-            <div className="ml-3 flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
+
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-primary-900 dark:text-white truncate">
                 {user?.email}
               </p>
-              <p className="text-xs text-gray-500">
-                {userSubscription?.unlimited_access ? 'Unlimited Access' :
-                 userSubscription?.plan_type ? `${userSubscription.plan_type} Plan` : 'Free Trial'}
-              </p>
+              <div className="flex items-center space-x-2 mt-1">
+                <div className="badge badge-primary">
+                  {userSubscription?.unlimited_access ? 'Unlimited Access' :
+                   userSubscription?.plan_type ? `${userSubscription.plan_type} Plan` : 'Free Trial'}
+                </div>
+              </div>
             </div>
+
             <button
               onClick={handleSignOut}
-              className="ml-3 p-1 rounded-md text-gray-400 hover:text-gray-500"
+              className="p-2 rounded-xl text-primary-500 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-dark-800 hover:text-error-600 dark:hover:text-error-400 transition-all duration-200"
+              title="Sign out"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -217,22 +261,43 @@ export function DashboardLayout({ children, currentPage, onNavigate }: Dashboard
       </div>
 
       {/* Main content */}
-      <div className="lg:ml-64 flex flex-col min-h-screen">
+      <div className="lg:ml-72 flex flex-col min-h-screen">
         {/* Mobile header */}
-        <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
+        <div className="lg:hidden glass-nav px-6 py-4 border-b border-white/10 dark:border-white/5">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 rounded-xl text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-dark-800 transition-all duration-200"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+
+            {/* Mobile theme toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-xl text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-dark-800 transition-all duration-200"
+              title={`Switch to ${actualTheme === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {actualTheme === 'dark' ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Page content */}
-        <main className="flex-1 p-6">
-          {children}
+        <main className="flex-1 p-8 animate-fade-in">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>

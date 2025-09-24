@@ -33,106 +33,92 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    let initialLoadingComplete = false
     let mounted = true
 
-    // Set a timeout to prevent infinite loading on initial load only
-    const timeoutId = setTimeout(() => {
-      if (!initialLoadingComplete && mounted) {
-        console.warn('Auth session timeout - stopping loading')
-        setLoading(false)
-      }
-    }, 8000) // 8 second timeout (reduced from 10)
+    console.log('AuthProvider: Starting auth initialization')
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (!mounted) return
+    const getInitialSession = async () => {
+      try {
+        console.log('AuthProvider: Getting initial session')
+        const { data: { session }, error } = await supabase.auth.getSession()
 
-      initialLoadingComplete = true
-      clearTimeout(timeoutId)
+        if (!mounted) return
 
-      if (error) {
-        console.error('Session error:', error)
-        // If there's a session error, clear everything and stop loading
+        if (error) {
+          console.error('Session error:', error)
+          setSession(null)
+          setUser(null)
+        } else {
+          console.log('AuthProvider: Session retrieved', { hasSession: !!session })
+          setSession(session)
+          setUser(session?.user ?? null)
+        }
+
+        setLoading(false)
+      } catch (error) {
+        if (!mounted) return
+        console.error('Error getting session:', error)
         setSession(null)
         setUser(null)
         setLoading(false)
-        return
       }
+    }
 
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
-    }).catch((error) => {
-      if (!mounted) return
-
-      initialLoadingComplete = true
-      clearTimeout(timeoutId)
-      console.error('Error getting session:', error)
-
-      // Clear auth state on error
-      setSession(null)
-      setUser(null)
-      setLoading(false)
-    })
+    // Start the session retrieval
+    getInitialSession()
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email)
+      console.log('AuthProvider: Auth state changed:', event, session?.user?.email)
 
-      // Handle specific auth events
-      if (event === 'TOKEN_REFRESHED') {
-        console.log('Token refreshed successfully')
-      } else if (event === 'SIGNED_OUT') {
-        console.log('User signed out')
-        // Clear any local storage or cache if needed
-      }
+      if (!mounted) return
 
       setSession(session)
       setUser(session?.user ?? null)
-
-      // Always set loading to false after any auth state change
       setLoading(false)
 
-      // Mark initial loading as complete
-      if (!initialLoadingComplete) {
-        initialLoadingComplete = true
-        clearTimeout(timeoutId)
-      }
-
-      // Handle sign up confirmation
+      // Handle user creation asynchronously without blocking auth
       if (event === 'SIGNED_IN' && session?.user) {
-        // Check if user exists in our users table, if not create them
-        const { data: existingUser } = await supabase
-          .from('users')
-          .select('id')
-          .eq('id', session.user.id)
-          .single()
-
-        if (!existingUser) {
-          // Create user record with trial period
-          const trialEndDate = new Date()
-          trialEndDate.setDate(trialEndDate.getDate() + 14) // 14-day trial
-
-          await supabase.from('users').insert({
-            id: session.user.id,
-            email: session.user.email!,
-            subscription_status: 'trialing',
-            trial_end_date: trialEndDate.toISOString(),
-            unlimited_access: false,
-          })
-        }
+        createUserRecordIfNeeded(session.user)
       }
     })
 
     return () => {
       mounted = false
-      clearTimeout(timeoutId)
       subscription.unsubscribe()
     }
   }, [])
+
+  // Separate function to handle user record creation without blocking auth flow
+  const createUserRecordIfNeeded = async (user: User) => {
+    try {
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', user.id)
+        .single()
+
+      if (!existingUser) {
+        const trialEndDate = new Date()
+        trialEndDate.setDate(trialEndDate.getDate() + 14) // 14-day trial
+
+        await supabase.from('users').insert({
+          id: user.id,
+          email: user.email!,
+          subscription_status: 'trialing',
+          trial_end_date: trialEndDate.toISOString(),
+          unlimited_access: false,
+        })
+        console.log('AuthProvider: User record created for', user.email)
+      }
+    } catch (error) {
+      console.error('Error creating user record:', error)
+      // Don't throw - this shouldn't block auth flow
+    }
+  }
 
   const signUp = async (email: string, password: string) => {
     try {
@@ -174,7 +160,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   const forceAuthReset = () => {
-    console.log('Force resetting auth state')
+    console.log('AuthProvider: Force resetting auth state')
     setLoading(false)
     setSession(null)
     setUser(null)

@@ -265,19 +265,22 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
           if (fieldMapping['street_number']) {
             const streetNumIndex = headers.indexOf(fieldMapping['street_number'])
             if (streetNumIndex !== -1 && row[streetNumIndex]?.trim()) {
-              addressParts.push(row[streetNumIndex].trim())
+              const cleanValue = row[streetNumIndex].trim().replace(/^=+/, '').replace(/["""]/g, '"')
+              addressParts.push(cleanValue)
             }
           }
           if (fieldMapping['street']) {
             const streetIndex = headers.indexOf(fieldMapping['street'])
             if (streetIndex !== -1 && row[streetIndex]?.trim()) {
-              addressParts.push(row[streetIndex].trim())
+              const cleanValue = row[streetIndex].trim().replace(/^=+/, '').replace(/["""]/g, '"')
+              addressParts.push(cleanValue)
             }
           }
           if (fieldMapping['suburb']) {
             const suburbIndex = headers.indexOf(fieldMapping['suburb'])
             if (suburbIndex !== -1 && row[suburbIndex]?.trim()) {
-              addressParts.push(row[suburbIndex].trim())
+              const cleanValue = row[suburbIndex].trim().replace(/^=+/, '').replace(/["""]/g, '"')
+              addressParts.push(cleanValue)
             }
           }
           if (addressParts.length > 0) {
@@ -294,12 +297,12 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
             if (value) {
               // Numeric fields
               if (['price', 'sale_price', 'list_price', 'valuation', 'bedrooms', 'bathrooms', 'floor_area', 'land_area_m2', 'days_to_sell'].includes(field)) {
-                const numValue = parseFloat(value.replace(/[,$]/g, '')) // Remove commas and dollar signs
+                const numValue = parseFloat(value.replace(/[=,$"]/g, '')) // Remove =, commas, dollar signs, and quotes
                 if (!isNaN(numValue)) {
                   property[field] = numValue
                 }
               } else if (field === 'land_area_ha') {
-                const numValue = parseFloat(value.replace(/[,$]/g, ''))
+                const numValue = parseFloat(value.replace(/[=,$"]/g, ''))
                 if (!isNaN(numValue)) {
                   property[field] = numValue
                 }
@@ -307,7 +310,8 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
                 // Convert to boolean
                 property[field] = value.toLowerCase() === 'yes' || value.toLowerCase() === 'true' || value === '1'
               } else {
-                property[field] = value
+                // Clean up text fields by removing Excel formatting characters
+                property[field] = value.replace(/^=+/, '').replace(/["""]/g, '"')
               }
             }
           }
@@ -353,19 +357,22 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
           if (fieldMapping['street_number']) {
             const streetNumIndex = headers.indexOf(fieldMapping['street_number'])
             if (streetNumIndex !== -1 && row[streetNumIndex]?.trim()) {
-              addressParts.push(row[streetNumIndex].trim())
+              const cleanValue = row[streetNumIndex].trim().replace(/^=+/, '').replace(/["""]/g, '"')
+              addressParts.push(cleanValue)
             }
           }
           if (fieldMapping['street']) {
             const streetIndex = headers.indexOf(fieldMapping['street'])
             if (streetIndex !== -1 && row[streetIndex]?.trim()) {
-              addressParts.push(row[streetIndex].trim())
+              const cleanValue = row[streetIndex].trim().replace(/^=+/, '').replace(/["""]/g, '"')
+              addressParts.push(cleanValue)
             }
           }
           if (fieldMapping['suburb']) {
             const suburbIndex = headers.indexOf(fieldMapping['suburb'])
             if (suburbIndex !== -1 && row[suburbIndex]?.trim()) {
-              addressParts.push(row[suburbIndex].trim())
+              const cleanValue = row[suburbIndex].trim().replace(/^=+/, '').replace(/["""]/g, '"')
+              addressParts.push(cleanValue)
             }
           }
           if (addressParts.length > 0) {
@@ -382,12 +389,12 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
             if (value) {
               // Numeric fields
               if (['price', 'sale_price', 'list_price', 'valuation', 'bedrooms', 'bathrooms', 'floor_area', 'land_area_m2', 'days_to_sell'].includes(field)) {
-                const numValue = parseFloat(value.replace(/[,$]/g, '')) // Remove commas and dollar signs
+                const numValue = parseFloat(value.replace(/[=,$"]/g, '')) // Remove =, commas, dollar signs, and quotes
                 if (!isNaN(numValue)) {
                   property[field] = numValue
                 }
               } else if (field === 'land_area_ha') {
-                const numValue = parseFloat(value.replace(/[,$]/g, ''))
+                const numValue = parseFloat(value.replace(/[=,$"]/g, ''))
                 if (!isNaN(numValue)) {
                   property[field] = numValue
                 }
@@ -395,7 +402,8 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
                 // Convert to boolean
                 property[field] = value.toLowerCase() === 'yes' || value.toLowerCase() === 'true' || value === '1'
               } else {
-                property[field] = value
+                // Clean up text fields by removing Excel formatting characters
+                property[field] = value.replace(/^=+/, '').replace(/["""]/g, '"')
               }
             }
           }

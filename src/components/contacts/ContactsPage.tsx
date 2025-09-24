@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { ContactCard } from './ContactCard'
 import { ContactForm } from './ContactForm'
 import { ContactImport } from './ContactImport'
+import { ContactDetailsModal } from './ContactDetailsModal'
 
 interface Contact {
   id: string
@@ -33,6 +34,7 @@ export function ContactsPage() {
   const [showForm, setShowForm] = useState(false)
   const [showImport, setShowImport] = useState(false)
   const [editingContact, setEditingContact] = useState<Contact | null>(null)
+  const [viewingContact, setViewingContact] = useState<Contact | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [sourceFilter, setSourceFilter] = useState<'all' | 'manual' | 'import' | 'campaign' | 'referral'>('all')
   const [followUpFilter, setFollowUpFilter] = useState<'all' | 'due' | 'overdue'>('all')
@@ -280,6 +282,7 @@ export function ContactsPage() {
               contact={contact}
               onEdit={() => handleEditContact(contact)}
               onDelete={() => handleDeleteContact(contact.id)}
+              onViewDetails={() => setViewingContact(contact)}
             />
           ))}
         </div>
@@ -302,6 +305,14 @@ export function ContactsPage() {
         <ContactImport
           onImportComplete={handleImportComplete}
           onClose={() => setShowImport(false)}
+        />
+      )}
+
+      {/* Contact Details Modal */}
+      {viewingContact && (
+        <ContactDetailsModal
+          contact={viewingContact}
+          onClose={() => setViewingContact(null)}
         />
       )}
     </div>

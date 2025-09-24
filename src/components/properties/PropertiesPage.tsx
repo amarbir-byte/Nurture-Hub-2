@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { PropertyCard } from './PropertyCard'
 import { PropertyForm } from './PropertyForm'
 import { PropertyImport } from './PropertyImport'
+import { PropertyDetailsModal } from './PropertyDetailsModal'
 
 interface Property {
   id: string
@@ -36,6 +37,7 @@ export function PropertiesPage() {
   const [showForm, setShowForm] = useState(false)
   const [showImport, setShowImport] = useState(false)
   const [editingProperty, setEditingProperty] = useState<Property | null>(null)
+  const [viewingProperty, setViewingProperty] = useState<Property | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'listed' | 'sold' | 'withdrawn'>('all')
 
@@ -238,6 +240,7 @@ export function PropertiesPage() {
               property={property}
               onEdit={() => handleEditProperty(property)}
               onDelete={() => handleDeleteProperty(property.id)}
+              onViewDetails={() => setViewingProperty(property)}
             />
           ))}
         </div>
@@ -260,6 +263,14 @@ export function PropertiesPage() {
         <PropertyImport
           onImportComplete={handleImportComplete}
           onClose={() => setShowImport(false)}
+        />
+      )}
+
+      {/* Property Details Modal */}
+      {viewingProperty && (
+        <PropertyDetailsModal
+          property={viewingProperty}
+          onClose={() => setViewingProperty(null)}
         />
       )}
     </div>

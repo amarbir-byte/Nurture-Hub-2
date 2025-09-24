@@ -109,9 +109,6 @@ export function ContactCard({ contact, onEdit, onDelete, onViewDetails }: Contac
     onDelete()
   }
 
-  const handleQuickActionClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-  }
 
   return (
     <div 

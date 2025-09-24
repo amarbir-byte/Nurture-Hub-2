@@ -297,7 +297,7 @@ export function DashboardLayout({ children, currentPage, onNavigate }: Dashboard
         </div>
 
         {/* Page content */}
-        <main className="flex-1 p-8 animate-fade-in">
+        <main className="flex-1 p-8 animate-fade-in overflow-x-hidden">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>

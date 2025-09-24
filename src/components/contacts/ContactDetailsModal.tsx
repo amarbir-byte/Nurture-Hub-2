@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
+import { TemplateSelector } from '../common/TemplateSelector'
+import { type MessageTemplate, replaceTemplateVariables } from '../../utils/messageTemplates'
 import { MapTilerMap } from '../ui/MapTilerMap'
 
 interface Contact {
@@ -70,6 +72,7 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
   const [communicationHistory, setCommunicationHistory] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [radius, setRadius] = useState(10) // Default 10km radius
+  const [selectedTemplate, setSelectedTemplate] = useState<MessageTemplate | null>(null)
 
   useEffect(() => {
     fetchNearbyProperties()
@@ -181,10 +184,34 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
 
   const handleCommunicate = (type: 'email' | 'text' | 'call') => {
     setCommunicationType(type)
+    setSelectedTemplate(null) // Reset template selection
     setShowCommunicationModal(true)
   }
 
   const generatePropertiesMessage = () => {
+    if (selectedTemplate) {
+      const selectedProps = nearbyProperties.filter(p => selectedProperties.includes(p.id))
+      const propertiesList = selectedProps.map(prop => {
+        const priceStr = prop.sale_price
+          ? formatPrice(prop.sale_price)
+          : prop.price
+          ? formatPrice(prop.price)
+          : 'Price not available'
+        return `${prop.address} - ${priceStr} • ${prop.property_type}`
+      }).join(', ')
+
+      const variables = {
+        contact_name: contact.first_name || contact.name || 'there',
+        area: 'your area', // Could be derived from contact address
+        properties_list: propertiesList,
+        agent_name: 'Your Agent'
+      }
+      
+      const { message } = replaceTemplateVariables(selectedTemplate, variables)
+      return message
+    }
+
+    // Fallback to original message
     const selectedProps = nearbyProperties.filter(p => selectedProperties.includes(p.id))
 
     if (selectedProps.length === 0) return ''
@@ -222,26 +249,44 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
     return message
   }
 
+  const generatePropertiesSubject = () => {
+    if (selectedTemplate && selectedTemplate.subject) {
+      const variables = {
+        contact_name: contact.first_name || contact.name || 'there',
+        area: 'your area',
+        agent_name: 'Your Agent'
+      }
+      
+      const { subject } = replaceTemplateVariables(selectedTemplate, variables)
+      return subject
+    }
+    
+    return `Properties Near You - ${contact.first_name || contact.name || 'Contact'}`
+  }
+
   const handleSendCommunication = async () => {
     if (selectedProperties.length === 0) return
 
     const selectedProps = nearbyProperties.filter(p => selectedProperties.includes(p.id))
-    const subject = `Property Market Update - ${contact.address || 'Your Area'}`
+    const subject = generatePropertiesSubject()
     let message = ''
 
     try {
       if (communicationType === 'email') {
         message = generatePropertiesMessage()
       } else if (communicationType === 'text') {
-        // Create SMS with property details (shorter version)
-        message = `Hi ${contact.first_name || 'there'}! Recent property activity near you:\n\n`
+        if (selectedTemplate) {
+          message = generatePropertiesMessage()
+        } else {
+          // Create SMS with property details (shorter version)
+          message = `Hi ${contact.first_name || 'there'}! Recent property activity near you:\n\n`
 
-        selectedProps.slice(0, 2).forEach((property, index) => { // Limit to 2 for SMS
-          const priceStr = property.sale_price
-            ? `Sold ${formatPrice(property.sale_price)}`
-            : property.price
-            ? `Listed ${formatPrice(property.price)}`
-            : 'Price N/A'
+          selectedProps.slice(0, 2).forEach((property, index) => { // Limit to 2 for SMS
+            const priceStr = property.sale_price
+              ? `Sold ${formatPrice(property.sale_price)}`
+              : property.price
+              ? `Listed ${formatPrice(property.price)}`
+              : 'Price N/A'
           message += `${index + 1}. ${property.address} - ${priceStr}\n`
         })
 
@@ -250,6 +295,7 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
         }
 
         message += `\nInterested in your property value? Let's chat!`
+        }
       } else if (communicationType === 'call') {
         message = `Called regarding ${selectedProps.length} nearby properties: ${selectedProps.map(p => p.address).join(', ')}`
       }
@@ -274,7 +320,7 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
 
       // Open communication apps
       if (communicationType === 'email' && contact.email) {
-        const mailtoLink = `mailto:${contact.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`
+        const mailtoLink = `mailto:${contact.email}?subject=${encodeURIComponent(subject || 'Property Update')}&body=${encodeURIComponent(message)}`
         window.open(mailtoLink, '_blank')
       } else if (communicationType === 'text' && contact.phone) {
         const smsLink = `sms:${contact.phone}?body=${encodeURIComponent(message)}`
@@ -709,9 +755,27 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                 </div>
               </div>
 
+              {/* Template Selection */}
+              {(communicationType === 'email' || communicationType === 'text') && (
+                <div className="mb-4">
+                  <TemplateSelector
+                    type={communicationType === 'text' ? 'sms' : communicationType}
+                    category="contact"
+                    selectedTemplateId={selectedTemplate?.id}
+                    onTemplateSelect={setSelectedTemplate}
+                  />
+                </div>
+              )}
+
+              {/* Message Preview */}
               {(communicationType === 'email' || communicationType === 'text') && (
                 <div className="mb-4 p-3 bg-gray-50 rounded text-sm max-h-64 overflow-y-auto">
                   <strong>Message Preview:</strong>
+                  {selectedTemplate && (
+                    <div className="text-xs text-gray-600 mb-2">
+                      Using template: {selectedTemplate.name}
+                    </div>
+                  )}
                   <div className="mt-2 whitespace-pre-line">{generatePropertiesMessage()}</div>
                 </div>
               )}

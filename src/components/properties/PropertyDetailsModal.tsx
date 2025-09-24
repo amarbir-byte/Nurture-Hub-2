@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { MapTilerMap } from '../ui/MapTilerMap'
+import { TemplateSelector } from '../common/TemplateSelector'
+import { type MessageTemplate, replaceTemplateVariables } from '../../utils/messageTemplates'
 
 interface Property {
   id: string
@@ -58,6 +60,7 @@ export function PropertyDetailsModal({ property, onClose }: PropertyDetailsModal
   const [communicationHistory, setCommunicationHistory] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [radius, setRadius] = useState(10) // Default 10km radius
+  const [selectedTemplate, setSelectedTemplate] = useState<MessageTemplate | null>(null)
 
   useEffect(() => {
     fetchNearbyContacts()
@@ -157,10 +160,33 @@ export function PropertyDetailsModal({ property, onClose }: PropertyDetailsModal
 
   const handleCommunicate = (type: 'email' | 'text' | 'call') => {
     setCommunicationType(type)
+    setSelectedTemplate(null) // Reset template selection
     setShowCommunicationModal(true)
   }
 
   const generatePropertyMessage = () => {
+    if (selectedTemplate) {
+      const variables = {
+        contact_name: 'Contact', // Will be replaced per contact
+        property_address: property.address,
+        property_price: property.sale_price 
+          ? formatPrice(property.sale_price)
+          : property.price 
+          ? formatPrice(property.price)
+          : 'Price not available',
+        property_type: property.property_type.charAt(0).toUpperCase() + property.property_type.slice(1),
+        bedrooms: property.bedrooms?.toString() || '',
+        bathrooms: property.bathrooms?.toString() || '',
+        floor_area: property.floor_area?.toString() || '',
+        property_description: property.description || '',
+        agent_name: 'Your Agent' // This would come from user profile
+      }
+      
+      const { message } = replaceTemplateVariables(selectedTemplate, variables)
+      return message
+    }
+
+    // Fallback to original message
     const priceStr = property.sale_price
       ? `Sold for ${formatPrice(property.sale_price)}`
       : property.price
@@ -181,11 +207,31 @@ ${property.description || ''}
 Interested in similar properties in your area? Let's discuss your requirements.`
   }
 
+  const generatePropertySubject = () => {
+    if (selectedTemplate && selectedTemplate.subject) {
+      const variables = {
+        contact_name: 'Contact',
+        property_address: property.address,
+        property_price: property.sale_price 
+          ? formatPrice(property.sale_price)
+          : property.price 
+          ? formatPrice(property.price)
+          : 'Price not available',
+        agent_name: 'Your Agent'
+      }
+      
+      const { subject } = replaceTemplateVariables(selectedTemplate, variables)
+      return subject
+    }
+    
+    return `Property Update: ${property.address}`
+  }
+
   const handleSendCommunication = async () => {
     if (selectedContacts.length === 0) return
 
     const selectedContactsData = nearbyContacts.filter(c => selectedContacts.includes(c.id))
-    const subject = `Property Update: ${property.address}`
+    const subject = generatePropertySubject()
     const message = generatePropertyMessage()
 
     try {
@@ -215,7 +261,7 @@ Interested in similar properties in your area? Let's discuss your requirements.`
       if (communicationType === 'email') {
         const emails = selectedContactsData.map(c => c.email).filter(Boolean).join(',')
         if (emails) {
-          const mailtoLink = `mailto:${emails}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`
+          const mailtoLink = `mailto:${emails}?subject=${encodeURIComponent(subject || 'Property Update')}&body=${encodeURIComponent(message)}`
           window.open(mailtoLink, '_blank')
         }
       } else if (communicationType === 'text') {
@@ -664,9 +710,27 @@ Interested in similar properties in your area? Let's discuss your requirements.`
                 </div>
               </div>
 
-              {communicationType === 'email' && (
+              {/* Template Selection */}
+              {(communicationType === 'email' || communicationType === 'text') && (
+                <div className="mb-4">
+                  <TemplateSelector
+                    type={communicationType === 'text' ? 'sms' : communicationType}
+                    category="property"
+                    selectedTemplateId={selectedTemplate?.id}
+                    onTemplateSelect={setSelectedTemplate}
+                  />
+                </div>
+              )}
+
+              {/* Message Preview */}
+              {(communicationType === 'email' || communicationType === 'text') && (
                 <div className="mb-4 p-3 bg-gray-50 rounded text-sm">
                   <strong>Preview:</strong>
+                  {selectedTemplate && (
+                    <div className="text-xs text-gray-600 mb-2">
+                      Using template: {selectedTemplate.name}
+                    </div>
+                  )}
                   <div className="mt-2 whitespace-pre-line">{generatePropertyMessage()}</div>
                 </div>
               )}

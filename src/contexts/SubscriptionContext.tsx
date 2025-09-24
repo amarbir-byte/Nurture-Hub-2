@@ -79,16 +79,18 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
         .from('users')
         .select('*')
         .eq('id', user.id)
-        .single()
+        .maybeSingle() // Use maybeSingle() instead of single() to handle 0 results gracefully
 
       if (error) {
         console.error('Error fetching subscription:', error)
+        setUserSubscription(null)
         return
       }
 
       setUserSubscription(data)
     } catch (error) {
       console.error('Error fetching subscription:', error)
+      setUserSubscription(null)
     } finally {
       setLoading(false)
     }

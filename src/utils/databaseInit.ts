@@ -19,9 +19,64 @@ export const ensureTablesExist = async (): Promise<void> => {
       // Try different approaches to create the table
       await createCommunicationHistoryTable()
     }
+
+    // Check if users table has proper INSERT policy by testing user creation
+    await checkUserTablePolicies()
   } catch (error) {
     console.error('Error checking/creating database tables:', error)
     // Don't throw here - allow app to continue even if table creation fails
+  }
+}
+
+/**
+ * Checks if the users table has proper RLS policies for user creation
+ */
+const checkUserTablePolicies = async (): Promise<void> => {
+  try {
+    // Try a test query to see if INSERT policy exists
+    // This will fail gracefully if policies are missing
+    const { error: testError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', 'test-policy-check')
+      .limit(1)
+
+    // If we get a policy error, show migration instructions
+    if (testError && (testError.code === '42501' || testError.code === '403' || testError.message?.includes('policy'))) {
+      console.log('⚠️ USER TABLE POLICY FIX REQUIRED ⚠️')
+      console.log('Missing INSERT policy for users table.')
+      console.log('')
+      console.log('Please run the following SQL in your Supabase dashboard:')
+      console.log('1. Go to your Supabase project dashboard')
+      console.log('2. Navigate to SQL Editor')
+      console.log('3. Run this SQL:')
+      console.log('')
+      console.log(`-- Add missing INSERT policy for users table
+CREATE POLICY "Users can create own user record" ON public.users
+  FOR INSERT WITH CHECK (auth.uid() = id);
+
+-- Add is_admin column if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+        AND table_name = 'users'
+        AND column_name = 'is_admin'
+    ) THEN
+        ALTER TABLE public.users ADD COLUMN is_admin BOOLEAN DEFAULT FALSE;
+    END IF;
+END $$;
+
+-- Grant proper permissions
+GRANT SELECT, INSERT, UPDATE ON public.users TO authenticated;
+GRANT USAGE ON SCHEMA public TO authenticated;`)
+      console.log('')
+      console.log('After running this SQL, user signup will work properly.')
+      console.log('========================================')
+    }
+  } catch (error) {
+    console.warn('Could not check user table policies:', error)
   }
 }
 

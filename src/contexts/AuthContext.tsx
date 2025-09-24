@@ -95,27 +95,46 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Separate function to handle user record creation without blocking auth flow
   const createUserRecordIfNeeded = async (user: User) => {
     try {
-      const { data: existingUser } = await supabase
+      // Check if user record already exists using maybeSingle to avoid PGRST116 error
+      const { data: existingUser, error: checkError } = await supabase
         .from('users')
         .select('id')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
+
+      if (checkError) {
+        console.error('Error checking user existence:', checkError)
+        return
+      }
 
       if (!existingUser) {
+        console.log('AuthProvider: Creating user record for', user.email)
         const trialEndDate = new Date()
         trialEndDate.setDate(trialEndDate.getDate() + 14) // 14-day trial
 
-        await supabase.from('users').insert({
+        const { error: insertError } = await supabase.from('users').insert({
           id: user.id,
           email: user.email!,
           subscription_status: 'trialing',
           trial_end_date: trialEndDate.toISOString(),
           unlimited_access: false,
+          is_admin: false,
         })
-        console.log('AuthProvider: User record created for', user.email)
+
+        if (insertError) {
+          console.error('Error creating user record:', insertError)
+          // If insert fails due to missing policy, show helpful message
+          if (insertError.code === '42501' || insertError.code === '403') {
+            console.error('🔒 Database Policy Issue: User creation blocked. Please run the 008_fix_user_policies.sql migration in your Supabase dashboard.')
+          }
+        } else {
+          console.log('AuthProvider: User record created successfully for', user.email)
+        }
+      } else {
+        console.log('AuthProvider: User record already exists for', user.email)
       }
     } catch (error) {
-      console.error('Error creating user record:', error)
+      console.error('Error in createUserRecordIfNeeded:', error)
       // Don't throw - this shouldn't block auth flow
     }
   }

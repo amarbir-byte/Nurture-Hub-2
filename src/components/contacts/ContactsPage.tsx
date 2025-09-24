@@ -5,6 +5,7 @@ import { ContactCard } from './ContactCard'
 import { ContactForm } from './ContactForm'
 import { ContactImport } from './ContactImport'
 import { ContactDetailsModal } from './ContactDetailsModal'
+import { Pagination } from '../common/Pagination'
 
 interface Contact {
   id: string
@@ -40,6 +41,8 @@ export function ContactsPage() {
   const [sourceFilter, setSourceFilter] = useState<'all' | 'manual' | 'import' | 'campaign' | 'referral'>('all')
   const [followUpFilter, setFollowUpFilter] = useState<'all' | 'due' | 'overdue'>('all')
   const [communicationFilter, setCommunicationFilter] = useState<'all' | 'contacted' | 'not_contacted'>('all')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(12)
 
   useEffect(() => {
     if (user) {
@@ -157,6 +160,17 @@ export function ContactsPage() {
     return matchesSearch && matchesSource && matchesFollowUp && matchesCommunication
   })
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredContacts.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedContacts = filteredContacts.slice(startIndex, endIndex)
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, sourceFilter, followUpFilter, communicationFilter])
+
   const stats = {
     total: contacts.length,
     manual: contacts.filter(c => c.contact_source === 'manual').length,
@@ -208,26 +222,51 @@ export function ContactsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="card text-center">
-          <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
-          <div className="text-sm text-gray-600">Total Contacts</div>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+        <div className="card-stats">
+          <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+          <div className="text-3xl font-bold text-primary-900 dark:text-white mb-1">{stats.total}</div>
+          <div className="text-sm font-medium text-primary-600 dark:text-primary-400">Total Contacts</div>
         </div>
-        <div className="card text-center">
-          <div className="text-2xl font-bold text-blue-600">{stats.manual}</div>
-          <div className="text-sm text-gray-600">Manual</div>
+        <div className="card-stats">
+          <div className="w-12 h-12 bg-gradient-to-br from-accent-500 to-accent-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </div>
+          <div className="text-3xl font-bold text-accent-600 dark:text-accent-400 mb-1">{stats.manual}</div>
+          <div className="text-sm font-medium text-primary-600 dark:text-primary-400">Manual</div>
         </div>
-        <div className="card text-center">
-          <div className="text-2xl font-bold text-green-600">{stats.imported}</div>
-          <div className="text-sm text-gray-600">Imported</div>
+        <div className="card-stats">
+          <div className="w-12 h-12 bg-gradient-to-br from-success-500 to-success-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+            </svg>
+          </div>
+          <div className="text-3xl font-bold text-success-600 dark:text-success-400 mb-1">{stats.imported}</div>
+          <div className="text-sm font-medium text-primary-600 dark:text-primary-400">Imported</div>
         </div>
-        <div className="card text-center">
-          <div className="text-2xl font-bold text-purple-600">{stats.campaign}</div>
-          <div className="text-sm text-gray-600">From Campaigns</div>
+        <div className="card-stats">
+          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            </svg>
+          </div>
+          <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1">{stats.campaign}</div>
+          <div className="text-sm font-medium text-primary-600 dark:text-primary-400">From Campaigns</div>
         </div>
-        <div className="card text-center">
-          <div className="text-2xl font-bold text-red-600">{stats.followUpsDue}</div>
-          <div className="text-sm text-gray-600">Follow-ups Due</div>
+        <div className="card-stats">
+          <div className="w-12 h-12 bg-gradient-to-br from-error-500 to-error-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div className="text-3xl font-bold text-error-600 dark:text-error-400 mb-1">{stats.followUpsDue}</div>
+          <div className="text-sm font-medium text-primary-600 dark:text-primary-400">Follow-ups Due</div>
         </div>
       </div>
 
@@ -327,17 +366,28 @@ export function ContactsPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredContacts.map((contact) => (
-            <ContactCard
-              key={contact.id}
-              contact={contact}
-              onEdit={() => handleEditContact(contact)}
-              onDelete={() => handleDeleteContact(contact.id)}
-              onViewDetails={() => setViewingContact(contact)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginatedContacts.map((contact) => (
+              <ContactCard
+                key={contact.id}
+                contact={contact}
+                onEdit={() => handleEditContact(contact)}
+                onDelete={() => handleDeleteContact(contact.id)}
+                onViewDetails={() => setViewingContact(contact)}
+              />
+            ))}
+          </div>
+          
+          {/* Pagination */}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={filteredContacts.length}
+          />
+        </>
       )}
 
       {/* Contact Form Modal */}

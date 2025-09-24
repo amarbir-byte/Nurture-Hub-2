@@ -178,7 +178,10 @@ export function DashboardLayout({ children, currentPage, onNavigate }: Dashboard
           {navigationItems.map((item, index) => (
             <button
               key={item.name}
-              onClick={() => onNavigate(item.page)}
+              onClick={() => {
+                onNavigate(item.page)
+                setSidebarOpen(false) // Close mobile sidebar when navigating
+              }}
               className={`nav-link w-full animate-enter-stagger ${
                 currentPage === item.page
                   ? 'nav-link-active'

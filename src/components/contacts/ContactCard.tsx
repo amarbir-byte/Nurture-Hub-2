@@ -72,31 +72,57 @@ export function ContactCard({ contact, onEdit, onDelete, onViewDetails }: Contac
 
   const followUpStatus = getFollowUpStatus()
 
-  const handleCall = () => {
+  const handleCall = (e: React.MouseEvent) => {
+    e.stopPropagation()
     if (contact.phone) {
       window.location.href = `tel:${contact.phone}`
     }
   }
 
-  const handleEmail = () => {
+  const handleEmail = (e: React.MouseEvent) => {
+    e.stopPropagation()
     if (contact.email) {
       window.location.href = `mailto:${contact.email}`
     }
   }
 
-  const handleSMS = () => {
+  const handleSMS = (e: React.MouseEvent) => {
+    e.stopPropagation()
     if (contact.phone) {
       window.location.href = `sms:${contact.phone}`
     }
   }
 
+  const handleCardClick = () => {
+    if (onViewDetails) {
+      onViewDetails()
+    }
+  }
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onEdit()
+  }
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onDelete()
+  }
+
+  const handleQuickActionClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+  }
+
   return (
-    <div className="card hover:shadow-lg transition-shadow duration-200">
+    <div 
+      className="card-interactive group cursor-pointer"
+      onClick={handleCardClick}
+    >
       {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center space-x-2">
-          <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-            <span className="text-sm font-medium text-primary-600">
+      <div className="flex items-start justify-between mb-6">
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-accent-500 to-accent-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
+            <span className="text-lg font-bold text-white">
               {contact.name.charAt(0).toUpperCase()}
             </span>
           </div>
@@ -107,49 +133,59 @@ export function ContactCard({ contact, onEdit, onDelete, onViewDetails }: Contac
           </div>
         </div>
         {followUpStatus && (
-          <div className={`text-xs font-medium ${followUpStatus.color}`}>
+          <div className={`text-xs font-semibold px-2 py-1 rounded-full ${followUpStatus.color} ${
+            followUpStatus.status === 'overdue' ? 'bg-error-100 dark:bg-error-900/30' :
+            followUpStatus.status === 'due' ? 'bg-warning-100 dark:bg-warning-900/30' :
+            'bg-primary-100 dark:bg-primary-900/30'
+          }`}>
             {followUpStatus.text}
           </div>
         )}
       </div>
 
       {/* Name */}
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+      <h3 className="text-xl font-bold text-primary-900 dark:text-white mb-4 leading-tight group-hover:text-accent-700 dark:group-hover:text-accent-300 transition-colors duration-200">
         {contact.name}
       </h3>
 
       {/* Contact Info */}
-      <div className="space-y-2 mb-4">
+      <div className="space-y-3 mb-6">
         {contact.email && (
-          <div className="flex items-center text-sm text-gray-600">
-            <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 7.89a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            <span className="truncate">{contact.email}</span>
+          <div className="flex items-center text-sm text-primary-600 dark:text-primary-400">
+            <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900/20 rounded-xl flex items-center justify-center mr-3">
+              <svg className="w-4 h-4 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 7.89a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <span className="truncate font-medium">{contact.email}</span>
           </div>
         )}
 
         {contact.phone && (
-          <div className="flex items-center text-sm text-gray-600">
-            <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-            </svg>
-            <span>{contact.phone}</span>
+          <div className="flex items-center text-sm text-primary-600 dark:text-primary-400">
+            <div className="w-8 h-8 bg-accent-100 dark:bg-accent-900/20 rounded-xl flex items-center justify-center mr-3">
+              <svg className="w-4 h-4 text-accent-600 dark:text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              </svg>
+            </div>
+            <span className="font-medium">{contact.phone}</span>
           </div>
         )}
 
-        <div className="flex items-start text-sm text-gray-600">
-          <svg className="w-4 h-4 mr-2 mt-0.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
+        <div className="flex items-start text-sm text-primary-600 dark:text-primary-400">
+          <div className="w-8 h-8 bg-success-100 dark:bg-success-900/20 rounded-xl flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
+            <svg className="w-4 h-4 text-success-600 dark:text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
           <div>
-            <div>{contact.address}</div>
+            <div className="font-medium">{contact.address}</div>
             {(contact.suburb || contact.city) && (
-              <div>{contact.suburb}{contact.suburb && contact.city ? ', ' : ''}{contact.city}</div>
+              <div className="text-primary-500 dark:text-primary-500">{contact.suburb}{contact.suburb && contact.city ? ', ' : ''}{contact.city}</div>
             )}
             {contact.postal_code && (
-              <div>{contact.postal_code}</div>
+              <div className="text-primary-500 dark:text-primary-500">{contact.postal_code}</div>
             )}
           </div>
         </div>
@@ -190,77 +226,65 @@ export function ContactCard({ contact, onEdit, onDelete, onViewDetails }: Contac
       )}
 
       {/* Quick Actions */}
-      <div className="flex space-x-2 mb-4">
+      <div className="flex space-x-2 mb-6">
         {contact.phone && (
           <>
             <button
               onClick={handleCall}
-              className="flex-1 btn-secondary text-xs py-2"
+              className="flex-1 btn-secondary btn-sm group flex items-center justify-center space-x-2"
               title="Call"
             >
-              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
               </svg>
-              Call
+              <span>Call</span>
             </button>
             <button
               onClick={handleSMS}
-              className="flex-1 btn-secondary text-xs py-2"
+              className="flex-1 btn-secondary btn-sm group flex items-center justify-center space-x-2"
               title="SMS"
             >
-              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
-              SMS
+              <span>SMS</span>
             </button>
           </>
         )}
         {contact.email && (
           <button
             onClick={handleEmail}
-            className="flex-1 btn-secondary text-xs py-2"
+            className="flex-1 btn-secondary btn-sm group flex items-center justify-center space-x-2"
             title="Email"
           >
-            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 7.89a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
-            Email
+            <span>Email</span>
           </button>
         )}
       </div>
 
       {/* Actions */}
-      <div className="space-y-2 pt-4 border-t border-gray-200">
-        {onViewDetails && (
+      <div className="pt-6 border-t border-primary-100 dark:border-primary-800">
+        <div className="flex justify-center space-x-2">
           <button
-            onClick={onViewDetails}
-            className="w-full btn-primary text-sm"
+            onClick={handleEditClick}
+            className="btn-secondary btn-sm group flex items-center space-x-1"
           >
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            View Details & Nearby Properties
-          </button>
-        )}
-        <div className="flex space-x-2">
-          <button
-            onClick={onEdit}
-            className="flex-1 btn-secondary text-sm"
-          >
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
-            Edit
+            <span className="text-xs">Edit</span>
           </button>
           <button
-            onClick={onDelete}
-            className="flex-1 btn-ghost text-sm text-red-600 hover:text-red-700 hover:bg-red-50"
+            onClick={handleDeleteClick}
+            className="btn-ghost btn-sm group flex items-center space-x-1 text-error-600 dark:text-error-400 hover:text-error-700 dark:hover:text-error-300 hover:bg-error-50 dark:hover:bg-error-900/20"
           >
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
-            Delete
+            <span className="text-xs">Delete</span>
           </button>
         </div>
       </div>

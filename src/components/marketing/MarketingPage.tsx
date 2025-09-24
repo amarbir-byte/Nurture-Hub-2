@@ -54,11 +54,12 @@ export function MarketingPage() {
 
       if (campaignsError) throw campaignsError
 
-      // Fetch properties for campaign creation
+      // Fetch only active listings for campaign creation
       const { data: propertiesData, error: propertiesError } = await supabase
         .from('properties')
         .select('*')
         .eq('user_id', user?.id)
+        .eq('status', 'listed') // Only show active listings
         .not('lat', 'is', null)
         .not('lng', 'is', null)
         .order('created_at', { ascending: false })

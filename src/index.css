@@ -57,7 +57,7 @@
 @layer components {
   /* Professional Button System */
   .btn-primary {
-    @apply relative overflow-hidden bg-gradient-to-r from-accent-600 to-accent-700 hover:from-accent-700 hover:to-accent-800 active:from-accent-800 active:to-accent-900 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-200 ease-smooth focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0;
+    @apply relative overflow-hidden bg-gradient-to-r from-accent-600 to-accent-700 hover:from-accent-700 hover:to-accent-800 active:from-accent-800 active:to-accent-900 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 ease-smooth focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0;
   }
 
   .btn-primary::before {
@@ -70,15 +70,23 @@
   }
 
   .btn-secondary {
-    @apply relative overflow-hidden bg-white dark:bg-dark-800 hover:bg-primary-50 dark:hover:bg-dark-700 text-primary-700 dark:text-primary-300 border-2 border-primary-200 dark:border-dark-600 hover:border-primary-300 dark:hover:border-dark-500 font-semibold py-2.5 px-6 rounded-xl transition-all duration-200 ease-smooth focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0;
+    @apply relative overflow-hidden bg-white dark:bg-dark-800 hover:bg-primary-50 dark:hover:bg-dark-700 text-primary-700 dark:text-primary-300 border-2 border-primary-200 dark:border-dark-600 hover:border-primary-300 dark:hover:border-dark-500 font-semibold py-3 px-6 rounded-xl transition-all duration-300 ease-smooth focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0;
   }
 
   .btn-ghost {
-    @apply text-primary-600 dark:text-primary-400 hover:text-accent-700 dark:hover:text-accent-300 hover:bg-primary-100 dark:hover:bg-dark-800 font-semibold py-2.5 px-4 rounded-xl transition-all duration-200 ease-smooth focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 transform hover:-translate-y-0.5 active:translate-y-0;
+    @apply text-primary-600 dark:text-primary-400 hover:text-accent-700 dark:hover:text-accent-300 hover:bg-primary-100 dark:hover:bg-dark-800 font-semibold py-3 px-4 rounded-xl transition-all duration-300 ease-smooth focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 transform hover:-translate-y-0.5 active:translate-y-0;
   }
 
   .btn-danger {
-    @apply relative overflow-hidden bg-gradient-to-r from-error-600 to-error-700 hover:from-error-700 hover:to-error-800 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-200 ease-smooth focus:outline-none focus:ring-2 focus:ring-error-500 focus:ring-offset-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0;
+    @apply relative overflow-hidden bg-gradient-to-r from-error-600 to-error-700 hover:from-error-700 hover:to-error-800 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 ease-smooth focus:outline-none focus:ring-2 focus:ring-error-500 focus:ring-offset-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0;
+  }
+
+  .btn-sm {
+    @apply py-2 px-4 text-sm;
+  }
+
+  .btn-lg {
+    @apply py-4 px-8 text-lg;
   }
 
   /* Professional Input System */
@@ -100,11 +108,11 @@
 
   /* Professional Card System */
   .card {
-    @apply bg-white/80 dark:bg-dark-800/80 backdrop-blur-sm rounded-2xl shadow-soft dark:shadow-none border border-primary-100 dark:border-dark-700 p-6 transition-all duration-300 ease-smooth;
+    @apply bg-white/90 dark:bg-dark-800/90 backdrop-blur-sm rounded-2xl shadow-soft dark:shadow-none border border-primary-100 dark:border-dark-700 p-6 transition-all duration-300 ease-smooth;
   }
 
   .card-hover {
-    @apply card hover:shadow-medium dark:hover:shadow-none hover:border-primary-200 dark:hover:border-dark-600 hover:-translate-y-1 hover:bg-white dark:hover:bg-dark-800;
+    @apply card hover:shadow-medium dark:hover:shadow-none hover:border-primary-200 dark:hover:border-dark-600 hover:-translate-y-1 hover:bg-white dark:hover:bg-dark-800 cursor-pointer;
   }
 
   .card-glass {
@@ -113,6 +121,18 @@
 
   .card-elevated {
     @apply bg-white dark:bg-dark-800 rounded-2xl shadow-strong border border-primary-200 dark:border-dark-700 p-8;
+  }
+
+  .card-interactive {
+    @apply card-hover;
+  }
+
+  .card-stats {
+    @apply card text-center p-6 hover:shadow-medium dark:hover:shadow-none transition-all duration-300;
+  }
+
+  .card-feature {
+    @apply card text-center p-8 hover:shadow-medium dark:hover:shadow-none hover:-translate-y-1 transition-all duration-300;
   }
 
   /* Professional Badge System */
@@ -248,4 +268,49 @@
   .animate-enter-stagger:nth-child(3) { animation-delay: 0.3s; }
   .animate-enter-stagger:nth-child(4) { animation-delay: 0.4s; }
   .animate-enter-stagger:nth-child(5) { animation-delay: 0.5s; }
+
+  /* Professional Loading States */
+  .loading-dots {
+    @apply inline-flex space-x-1;
+  }
+
+  .loading-dots > div {
+    @apply w-2 h-2 bg-current rounded-full animate-pulse;
+  }
+
+  .loading-dots > div:nth-child(1) { animation-delay: 0s; }
+  .loading-dots > div:nth-child(2) { animation-delay: 0.1s; }
+  .loading-dots > div:nth-child(3) { animation-delay: 0.2s; }
+
+  /* Professional Status Indicators */
+  .status-online {
+    @apply w-3 h-3 bg-success-500 rounded-full border-2 border-white dark:border-dark-900;
+  }
+
+  .status-offline {
+    @apply w-3 h-3 bg-primary-400 rounded-full border-2 border-white dark:border-dark-900;
+  }
+
+  .status-busy {
+    @apply w-3 h-3 bg-error-500 rounded-full border-2 border-white dark:border-dark-900;
+  }
+
+  /* Professional Tooltips */
+  .tooltip {
+    @apply absolute z-50 px-3 py-2 text-sm font-medium text-white bg-primary-900 dark:bg-dark-800 rounded-lg shadow-lg opacity-0 pointer-events-none transition-opacity duration-200;
+  }
+
+  .tooltip::before {
+    @apply absolute w-2 h-2 bg-primary-900 dark:bg-dark-800 transform rotate-45;
+    content: '';
+  }
+
+  /* Professional Progress Bars */
+  .progress-bar {
+    @apply w-full bg-primary-200 dark:bg-primary-700 rounded-full h-2 overflow-hidden;
+  }
+
+  .progress-fill {
+    @apply h-full bg-gradient-to-r from-accent-500 to-accent-600 rounded-full transition-all duration-300 ease-smooth;
+  }
 }

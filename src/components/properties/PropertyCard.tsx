@@ -98,8 +98,27 @@ export function PropertyCard({ property, onEdit, onDelete, onViewDetails }: Prop
     }
   }
 
+  const handleCardClick = () => {
+    if (onViewDetails) {
+      onViewDetails()
+    }
+  }
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onEdit()
+  }
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onDelete()
+  }
+
   return (
-    <div className="card-hover group animate-enter">
+    <div 
+      className="card-interactive group animate-enter cursor-pointer"
+      onClick={handleCardClick}
+    >
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center space-x-3">
@@ -238,40 +257,25 @@ export function PropertyCard({ property, onEdit, onDelete, onViewDetails }: Prop
       </div>
 
       {/* Actions */}
-      <div className="space-y-3 pt-6 border-t border-primary-100 dark:border-primary-800">
-        {onViewDetails && (
+      <div className="pt-6 border-t border-primary-100 dark:border-primary-800">
+        <div className="flex justify-center space-x-2">
           <button
-            onClick={onViewDetails}
-            className="w-full btn-primary group flex items-center justify-center space-x-2"
+            onClick={handleEditClick}
+            className="btn-secondary btn-sm group flex items-center space-x-1"
           >
-            <svg className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            <span>View Details & Contact Nearby</span>
-            <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </button>
-        )}
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={onEdit}
-            className="btn-secondary group flex items-center justify-center space-x-2"
-          >
-            <svg className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
-            <span>Edit</span>
+            <span className="text-xs">Edit</span>
           </button>
           <button
-            onClick={onDelete}
-            className="btn-ghost group flex items-center justify-center space-x-2 text-error-600 dark:text-error-400 hover:text-error-700 dark:hover:text-error-300 hover:bg-error-50 dark:hover:bg-error-900/20"
+            onClick={handleDeleteClick}
+            className="btn-ghost btn-sm group flex items-center space-x-1 text-error-600 dark:text-error-400 hover:text-error-700 dark:hover:text-error-300 hover:bg-error-50 dark:hover:bg-error-900/20"
           >
-            <svg className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
-            <span>Delete</span>
+            <span className="text-xs">Delete</span>
           </button>
         </div>
       </div>

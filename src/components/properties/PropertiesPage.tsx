@@ -5,6 +5,7 @@ import { PropertyCard } from './PropertyCard'
 import { PropertyForm } from './PropertyForm'
 import { PropertyImport } from './PropertyImport'
 import { PropertyDetailsModal } from './PropertyDetailsModal'
+import { Pagination } from '../common/Pagination'
 
 interface Property {
   id: string
@@ -42,6 +43,8 @@ export function PropertiesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'listed' | 'sold' | 'withdrawn'>('all')
   const [communicationFilter, setCommunicationFilter] = useState<'all' | 'contacted' | 'not_contacted'>('all')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(12)
 
   useEffect(() => {
     if (user) {
@@ -144,6 +147,17 @@ export function PropertiesPage() {
     return matchesSearch && matchesStatus && matchesCommunication
   })
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredProperties.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedProperties = filteredProperties.slice(startIndex, endIndex)
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, statusFilter, communicationFilter])
+
   const stats = {
     total: properties.length,
     listed: properties.filter(p => p.status === 'listed').length,
@@ -191,22 +205,42 @@ export function PropertiesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="card text-center">
-          <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
-          <div className="text-sm text-gray-600">Total Properties</div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="card-stats">
+          <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
+          <div className="text-3xl font-bold text-primary-900 dark:text-white mb-1">{stats.total}</div>
+          <div className="text-sm font-medium text-primary-600 dark:text-primary-400">Total Properties</div>
         </div>
-        <div className="card text-center">
-          <div className="text-2xl font-bold text-green-600">{stats.listed}</div>
-          <div className="text-sm text-gray-600">Listed</div>
+        <div className="card-stats">
+          <div className="w-12 h-12 bg-gradient-to-br from-success-500 to-success-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div className="text-3xl font-bold text-success-600 dark:text-success-400 mb-1">{stats.listed}</div>
+          <div className="text-sm font-medium text-primary-600 dark:text-primary-400">Listed</div>
         </div>
-        <div className="card text-center">
-          <div className="text-2xl font-bold text-blue-600">{stats.sold}</div>
-          <div className="text-sm text-gray-600">Sold</div>
+        <div className="card-stats">
+          <div className="w-12 h-12 bg-gradient-to-br from-accent-500 to-accent-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+            </svg>
+          </div>
+          <div className="text-3xl font-bold text-accent-600 dark:text-accent-400 mb-1">{stats.sold}</div>
+          <div className="text-sm font-medium text-primary-600 dark:text-primary-400">Sold</div>
         </div>
-        <div className="card text-center">
-          <div className="text-2xl font-bold text-yellow-600">{stats.withdrawn}</div>
-          <div className="text-sm text-gray-600">Withdrawn</div>
+        <div className="card-stats">
+          <div className="w-12 h-12 bg-gradient-to-br from-warning-500 to-warning-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <div className="text-3xl font-bold text-warning-600 dark:text-warning-400 mb-1">{stats.withdrawn}</div>
+          <div className="text-sm font-medium text-primary-600 dark:text-primary-400">Withdrawn</div>
         </div>
       </div>
 
@@ -285,17 +319,28 @@ export function PropertiesPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProperties.map((property) => (
-            <PropertyCard
-              key={property.id}
-              property={property}
-              onEdit={() => handleEditProperty(property)}
-              onDelete={() => handleDeleteProperty(property.id)}
-              onViewDetails={() => setViewingProperty(property)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginatedProperties.map((property) => (
+              <PropertyCard
+                key={property.id}
+                property={property}
+                onEdit={() => handleEditProperty(property)}
+                onDelete={() => handleDeleteProperty(property.id)}
+                onViewDetails={() => setViewingProperty(property)}
+              />
+            ))}
+          </div>
+          
+          {/* Pagination */}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={filteredProperties.length}
+          />
+        </>
       )}
 
       {/* Property Form Modal */}

@@ -34,7 +34,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
       <div className="flex min-h-screen items-center justify-center p-4">
         {/* Backdrop */}
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+          className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm transition-opacity"
           onClick={onClose}
         />
 
@@ -43,7 +43,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-10 p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            className="absolute top-6 right-6 z-10 p-2 text-primary-400 hover:text-primary-600 dark:text-primary-500 dark:hover:text-primary-300 hover:bg-primary-100 dark:hover:bg-dark-800 rounded-xl transition-all duration-200"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

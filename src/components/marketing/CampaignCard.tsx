@@ -74,6 +74,12 @@ export function CampaignCard({ campaign, onDelete }: CampaignCardProps) {
     }
   }
 
+  const sendNativeSMS = () => {
+    // Open native SMS app with the message pre-filled
+    const smsUrl = `sms:?body=${encodeURIComponent(campaign.message)}`
+    window.open(smsUrl, '_blank')
+  }
+
   return (
     <div className="card hover:shadow-lg transition-shadow duration-200">
       {/* Header */}
@@ -151,28 +157,30 @@ export function CampaignCard({ campaign, onDelete }: CampaignCardProps) {
         </div>
       </div>
 
-      {/* Campaign Performance (placeholder for future) */}
-      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-        <h4 className="text-sm font-medium text-blue-900 mb-1">Campaign Status</h4>
-        <p className="text-xs text-blue-700">
-          ✅ Campaign created successfully. SMS delivery tracking will be available when integrated with SMS provider.
-        </p>
-      </div>
 
       {/* Actions */}
-      <div className="flex space-x-2 pt-4 border-t border-gray-200">
+      <div className="grid grid-cols-3 gap-2 pt-4 border-t border-gray-200">
         <button
           onClick={copyMessage}
-          className="flex-1 btn-secondary text-sm"
+          className="btn-secondary text-sm"
         >
           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
           </svg>
-          Copy Message
+          Copy
+        </button>
+        <button
+          onClick={sendNativeSMS}
+          className="btn-primary text-sm"
+        >
+          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          Send SMS
         </button>
         <button
           onClick={onDelete}
-          className="flex-1 btn-ghost text-sm text-red-600 hover:text-red-700 hover:bg-red-50"
+          className="btn-ghost text-sm text-red-600 hover:text-red-700 hover:bg-red-50"
         >
           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

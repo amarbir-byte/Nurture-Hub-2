@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from './contexts/AuthContext'
 import { useSubscription } from './contexts/SubscriptionContext'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { supabase } from './lib/supabase'
 import { Header } from './components/layout/Header'
 import { DashboardLayout } from './components/dashboard/DashboardLayout'
 import { PropertiesPage } from './components/properties/PropertiesPage'
@@ -67,73 +68,145 @@ function LandingPage() {
         {/* Features Grid */}
         <div className="mt-20">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="card text-center">
-              <div className="w-12 h-12 bg-primary-100 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="card-feature">
+              <div className="w-16 h-16 bg-gradient-to-br from-accent-500 to-accent-700 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Proximity Marketing</h3>
-              <p className="text-gray-600">Target homeowners within 0.1km to 5km radius of your listings with precision SMS campaigns.</p>
+              <h3 className="text-2xl font-bold text-primary-900 dark:text-white mb-4">Proximity Marketing</h3>
+              <p className="text-primary-600 dark:text-primary-400 leading-relaxed">Target homeowners within 0.1km to 5km radius of your listings with precision SMS campaigns.</p>
             </div>
 
-            <div className="card text-center">
-              <div className="w-12 h-12 bg-primary-100 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="card-feature">
+              <div className="w-16 h-16 bg-gradient-to-br from-success-500 to-success-700 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Contact Management</h3>
-              <p className="text-gray-600">Full CRM with contact history, follow-up reminders, and smart duplicate detection.</p>
+              <h3 className="text-2xl font-bold text-primary-900 dark:text-white mb-4">Contact Management</h3>
+              <p className="text-primary-600 dark:text-primary-400 leading-relaxed">Full CRM with contact history, follow-up reminders, and smart duplicate detection.</p>
             </div>
 
-            <div className="card text-center">
-              <div className="w-12 h-12 bg-primary-100 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="card-feature">
+              <div className="w-16 h-16 bg-gradient-to-br from-warning-500 to-warning-700 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Affordable Pricing</h3>
-              <p className="text-gray-600">Start at $29/month vs $500+ for competitors. Same features, better value.</p>
+              <h3 className="text-2xl font-bold text-primary-900 dark:text-white mb-4">Affordable Pricing</h3>
+              <p className="text-primary-600 dark:text-primary-400 leading-relaxed">Start at $29/month vs $500+ for competitors. Same features, better value.</p>
             </div>
           </div>
         </div>
 
         {/* Pricing Preview */}
         <div className="mt-20 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">Simple, Transparent Pricing</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="card">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Starter</h3>
-              <div className="text-3xl font-bold text-primary-600 mb-4">$29<span className="text-lg text-gray-600">/month</span></div>
-              <ul className="text-left space-y-2 text-gray-600">
-                <li>• 100 contacts</li>
-                <li>• 50 campaigns/month</li>
-                <li>• Basic templates</li>
-                <li>• Email support</li>
+          <h2 className="text-4xl font-bold text-primary-900 dark:text-white mb-4">Simple, Transparent Pricing</h2>
+          <p className="text-xl text-primary-600 dark:text-primary-400 mb-12">Choose the plan that fits your business needs</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <div className="card-elevated">
+              <h3 className="text-2xl font-bold text-primary-900 dark:text-white mb-4">Starter</h3>
+              <div className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent mb-6">
+                $29<span className="text-xl text-primary-500 dark:text-primary-400">/month</span>
+              </div>
+              <ul className="text-left space-y-3 text-primary-600 dark:text-primary-400 mb-8">
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-success-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  100 contacts
+                </li>
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-success-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  50 campaigns/month
+                </li>
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-success-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Basic templates
+                </li>
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-success-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Email support
+                </li>
               </ul>
+              <button className="w-full btn-secondary">Get Started</button>
             </div>
-            <div className="card border-2 border-primary-500">
-              <span className="badge bg-primary-100 text-primary-800 mb-2">Most Popular</span>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Professional</h3>
-              <div className="text-3xl font-bold text-primary-600 mb-4">$79<span className="text-lg text-gray-600">/month</span></div>
-              <ul className="text-left space-y-2 text-gray-600">
-                <li>• 1,000 contacts</li>
-                <li>• 200 campaigns/month</li>
-                <li>• Advanced templates</li>
-                <li>• Priority support</li>
+            <div className="card-elevated border-2 border-accent-500 relative">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <span className="badge bg-gradient-to-r from-accent-500 to-accent-600 text-white px-4 py-2">Most Popular</span>
+              </div>
+              <h3 className="text-2xl font-bold text-primary-900 dark:text-white mb-4">Professional</h3>
+              <div className="text-4xl font-bold bg-gradient-to-r from-accent-600 to-accent-700 bg-clip-text text-transparent mb-6">
+                $79<span className="text-xl text-primary-500 dark:text-primary-400">/month</span>
+              </div>
+              <ul className="text-left space-y-3 text-primary-600 dark:text-primary-400 mb-8">
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-success-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  1,000 contacts
+                </li>
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-success-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  200 campaigns/month
+                </li>
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-success-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Advanced templates
+                </li>
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-success-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Priority support
+                </li>
               </ul>
+              <button className="w-full btn-primary">Get Started</button>
             </div>
-            <div className="card">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Enterprise</h3>
-              <div className="text-3xl font-bold text-primary-600 mb-4">$199<span className="text-lg text-gray-600">/month</span></div>
-              <ul className="text-left space-y-2 text-gray-600">
-                <li>• Unlimited contacts</li>
-                <li>• Unlimited campaigns</li>
-                <li>• Custom templates</li>
-                <li>• White-label options</li>
+            <div className="card-elevated">
+              <h3 className="text-2xl font-bold text-primary-900 dark:text-white mb-4">Enterprise</h3>
+              <div className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent mb-6">
+                $199<span className="text-xl text-primary-500 dark:text-primary-400">/month</span>
+              </div>
+              <ul className="text-left space-y-3 text-primary-600 dark:text-primary-400 mb-8">
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-success-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Unlimited contacts
+                </li>
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-success-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Unlimited campaigns
+                </li>
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-success-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Custom templates
+                </li>
+                <li className="flex items-center">
+                  <svg className="w-5 h-5 text-success-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  White-label options
+                </li>
               </ul>
+              <button className="w-full btn-secondary">Contact Sales</button>
             </div>
           </div>
         </div>
@@ -142,15 +215,73 @@ function LandingPage() {
   )
 }
 
-function DashboardHome() {
+interface DashboardHomeProps {
+  onNavigate?: (page: DashboardPage) => void
+}
+
+function DashboardHome({ onNavigate }: DashboardHomeProps) {
   const { isTrialing, trialDaysRemaining } = useSubscription()
+  const { user } = useAuth()
+  const [stats, setStats] = useState({
+    properties: 0,
+    contacts: 0,
+    campaigns: 0,
+    leadsGenerated: 0
+  })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (user) {
+      fetchDashboardStats()
+    }
+  }, [user])
+
+  const fetchDashboardStats = async () => {
+    try {
+      setLoading(true)
+      
+      // Fetch properties count
+      const { data: propertiesData, error: propertiesError } = await supabase
+        .from('properties')
+        .select('id', { count: 'exact' })
+        .eq('user_id', user?.id)
+
+      // Fetch contacts count
+      const { data: contactsData, error: contactsError } = await supabase
+        .from('contacts')
+        .select('id', { count: 'exact' })
+        .eq('user_id', user?.id)
+
+      // Fetch campaigns count
+      const { data: campaignsData, error: campaignsError } = await supabase
+        .from('campaigns')
+        .select('id', { count: 'exact' })
+        .eq('user_id', user?.id)
+
+      // For now, set leads generated to 0 (can be calculated from campaign results later)
+      const leadsGenerated = 0
+
+      if (!propertiesError && !contactsError && !campaignsError) {
+        setStats({
+          properties: propertiesData?.length || 0,
+          contacts: contactsData?.length || 0,
+          campaigns: campaignsData?.length || 0,
+          leadsGenerated
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
       {/* Welcome header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Welcome to Nurture Hub</h1>
-        <p className="text-gray-600">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Welcome to Nurture Hub</h1>
+        <p className="text-gray-600 dark:text-gray-400">
           {isTrialing
             ? `You have ${trialDaysRemaining} days left in your free trial.`
             : 'Manage your properties, contacts, and marketing campaigns.'
@@ -160,131 +291,139 @@ function DashboardHome() {
 
         {/* Quick stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="card">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Properties</p>
-                <p className="text-2xl font-semibold text-gray-900">-</p>
-              </div>
+          <div className="card-stats">
+            <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
             </div>
+            <div className="text-3xl font-bold text-primary-900 dark:text-white mb-1">
+              {loading ? '...' : stats.properties}
+            </div>
+            <div className="text-sm font-medium text-primary-600 dark:text-primary-400">Properties</div>
           </div>
 
-          <div className="card">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Contacts</p>
-                <p className="text-2xl font-semibold text-gray-900">-</p>
-              </div>
+          <div className="card-stats">
+            <div className="w-12 h-12 bg-gradient-to-br from-success-500 to-success-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
             </div>
+            <div className="text-3xl font-bold text-primary-900 dark:text-white mb-1">
+              {loading ? '...' : stats.contacts}
+            </div>
+            <div className="text-sm font-medium text-primary-600 dark:text-primary-400">Contacts</div>
           </div>
 
-          <div className="card">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Campaigns</p>
-                <p className="text-2xl font-semibold text-gray-900">-</p>
-              </div>
+          <div className="card-stats">
+            <div className="w-12 h-12 bg-gradient-to-br from-accent-500 to-accent-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
             </div>
+            <div className="text-3xl font-bold text-primary-900 dark:text-white mb-1">
+              {loading ? '...' : stats.campaigns}
+            </div>
+            <div className="text-sm font-medium text-primary-600 dark:text-primary-400">Campaigns</div>
           </div>
 
-          <div className="card">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Leads Generated</p>
-                <p className="text-2xl font-semibold text-gray-900">-</p>
-              </div>
+          <div className="card-stats">
+            <div className="w-12 h-12 bg-gradient-to-br from-warning-500 to-warning-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
             </div>
+            <div className="text-3xl font-bold text-primary-900 dark:text-white mb-1">
+              {loading ? '...' : stats.leadsGenerated}
+            </div>
+            <div className="text-sm font-medium text-primary-600 dark:text-primary-400">Leads Generated</div>
           </div>
         </div>
 
         {/* Getting started */}
-        <div className="card">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Getting Started</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="flex items-start">
+        <div className="card-elevated">
+          <h2 className="text-2xl font-bold text-primary-900 dark:text-white mb-8">Getting Started</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="flex items-start group">
               <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
-                  <span className="text-sm font-medium text-primary-600">1</span>
+                <div className="w-12 h-12 bg-gradient-to-br from-accent-500 to-accent-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
+                  <span className="text-lg font-bold text-white">1</span>
                 </div>
               </div>
-              <div className="ml-4">
-                <h3 className="text-sm font-medium text-gray-900">Add Your Properties</h3>
-                <p className="text-sm text-gray-500">Upload your listings and recent sales to start your marketing campaigns.</p>
-                <button className="mt-2 text-sm text-primary-600 hover:text-primary-500">
-                  Add properties →
+              <div className="ml-6">
+                <h3 className="text-lg font-bold text-primary-900 dark:text-white mb-2">Add Your Properties</h3>
+                <p className="text-primary-600 dark:text-primary-400 mb-4">Upload your listings and recent sales to start your marketing campaigns.</p>
+                <button 
+                  onClick={() => onNavigate?.('properties')}
+                  className="btn-ghost group flex items-center space-x-2"
+                >
+                  <span>Add properties</span>
+                  <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
                 </button>
               </div>
             </div>
 
-            <div className="flex items-start">
+            <div className="flex items-start group">
               <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
-                  <span className="text-sm font-medium text-primary-600">2</span>
+                <div className="w-12 h-12 bg-gradient-to-br from-success-500 to-success-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
+                  <span className="text-lg font-bold text-white">2</span>
                 </div>
               </div>
-              <div className="ml-4">
-                <h3 className="text-sm font-medium text-gray-900">Import Contacts</h3>
-                <p className="text-sm text-gray-500">Upload your homeowner database to start proximity marketing.</p>
-                <button className="mt-2 text-sm text-primary-600 hover:text-primary-500">
-                  Import contacts →
+              <div className="ml-6">
+                <h3 className="text-lg font-bold text-primary-900 dark:text-white mb-2">Import Contacts</h3>
+                <p className="text-primary-600 dark:text-primary-400 mb-4">Upload your homeowner database to start proximity marketing.</p>
+                <button 
+                  onClick={() => onNavigate?.('contacts')}
+                  className="btn-ghost group flex items-center space-x-2"
+                >
+                  <span>Import contacts</span>
+                  <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
                 </button>
               </div>
             </div>
 
-            <div className="flex items-start">
+            <div className="flex items-start group">
               <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
-                  <span className="text-sm font-medium text-primary-600">3</span>
+                <div className="w-12 h-12 bg-gradient-to-br from-warning-500 to-warning-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
+                  <span className="text-lg font-bold text-white">3</span>
                 </div>
               </div>
-              <div className="ml-4">
-                <h3 className="text-sm font-medium text-gray-900">Create Templates</h3>
-                <p className="text-sm text-gray-500">Set up reusable SMS templates for your marketing campaigns.</p>
-                <button className="mt-2 text-sm text-primary-600 hover:text-primary-500">
-                  Create templates →
+              <div className="ml-6">
+                <h3 className="text-lg font-bold text-primary-900 dark:text-white mb-2">Create Templates</h3>
+                <p className="text-primary-600 dark:text-primary-400 mb-4">Set up reusable SMS templates for your marketing campaigns.</p>
+                <button 
+                  onClick={() => onNavigate?.('templates')}
+                  className="btn-ghost group flex items-center space-x-2"
+                >
+                  <span>Create templates</span>
+                  <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
                 </button>
               </div>
             </div>
 
-            <div className="flex items-start">
+            <div className="flex items-start group">
               <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
-                  <span className="text-sm font-medium text-primary-600">4</span>
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
+                  <span className="text-lg font-bold text-white">4</span>
                 </div>
               </div>
-              <div className="ml-4">
-                <h3 className="text-sm font-medium text-gray-900">Launch Campaign</h3>
-                <p className="text-sm text-gray-500">Start your first proximity-based SMS marketing campaign.</p>
-                <button className="mt-2 text-sm text-primary-600 hover:text-primary-500">
-                  Start marketing →
+              <div className="ml-6">
+                <h3 className="text-lg font-bold text-primary-900 dark:text-white mb-2">Launch Campaign</h3>
+                <p className="text-primary-600 dark:text-primary-400 mb-4">Start your first proximity-based SMS marketing campaign.</p>
+                <button 
+                  onClick={() => onNavigate?.('marketing')}
+                  className="btn-ghost group flex items-center space-x-2"
+                >
+                  <span>Start marketing</span>
+                  <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -320,11 +459,11 @@ function Dashboard() {
       case 'settings':
         return <SubscriptionPage />
       case 'beta':
-        return isBetaTester ? <BetaDashboard /> : <DashboardHome />
+        return isBetaTester ? <BetaDashboard /> : <DashboardHome onNavigate={setCurrentPage} />
       case 'admin':
         return <AdminPanel />
       default:
-        return <DashboardHome />
+        return <DashboardHome onNavigate={setCurrentPage} />
     }
   }
 

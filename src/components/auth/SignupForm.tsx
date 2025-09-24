@@ -74,35 +74,38 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
   }
 
   return (
-    <div className="card max-w-md mx-auto">
+    <div className="card-elevated max-w-md mx-auto">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900">Start Your Free Trial</h2>
-        <p className="text-gray-600 mt-2">
+        <div className="w-16 h-16 bg-gradient-to-br from-accent-500 to-accent-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+          <span className="text-2xl font-bold text-white">N</span>
+        </div>
+        <h2 className="text-3xl font-bold text-primary-900 dark:text-white">Start Your Free Trial</h2>
+        <p className="text-primary-600 dark:text-primary-400 mt-2">
           Join thousands of agents growing their business with proximity marketing
         </p>
-        <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800">
+        <div className="mt-4 inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-success-100 to-success-200 dark:from-success-900/30 dark:to-success-800/30 text-success-700 dark:text-success-300 border border-success-200 dark:border-success-700">
           🎉 14-day free trial • No credit card required
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-700 rounded-2xl p-4">
             <div className="flex">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <svg className="h-5 w-5 text-error-500" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
               </div>
               <div className="ml-3">
-                <p className="text-sm text-red-800">{error}</p>
+                <p className="text-sm font-medium text-error-700 dark:text-error-300">{error}</p>
               </div>
             </div>
           </div>
         )}
 
         <div>
-          <label htmlFor="signup-email" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="signup-email" className="form-label">
             Email Address
           </label>
           <input
@@ -117,7 +120,7 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
         </div>
 
         <div>
-          <label htmlFor="signup-password" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="signup-password" className="form-label">
             Password
           </label>
           <input
@@ -129,11 +132,11 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <p className="mt-1 text-sm text-gray-500">Must be at least 6 characters long</p>
+          <p className="form-helper">Must be at least 6 characters long</p>
         </div>
 
         <div>
-          <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="confirm-password" className="form-label">
             Confirm Password
           </label>
           <input
@@ -154,17 +157,17 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
               name="terms"
               type="checkbox"
               required
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              className="h-4 w-4 text-accent-600 focus:ring-accent-500 border-primary-300 dark:border-primary-600 rounded"
             />
           </div>
           <div className="ml-3 text-sm">
-            <label htmlFor="terms" className="text-gray-700">
+            <label htmlFor="terms" className="text-primary-700 dark:text-primary-300 font-medium">
               I agree to the{' '}
-              <a href="#" className="text-primary-600 hover:text-primary-500">
+              <a href="#" className="text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 transition-colors duration-200">
                 Terms of Service
               </a>{' '}
               and{' '}
-              <a href="#" className="text-primary-600 hover:text-primary-500">
+              <a href="#" className="text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 transition-colors duration-200">
                 Privacy Policy
               </a>
             </label>
@@ -212,32 +215,40 @@ export function SignupForm({ onSwitchToLogin }: SignupFormProps) {
       </div>
 
       {/* Feature highlights */}
-      <div className="mt-8 border-t border-gray-200 pt-6">
-        <h3 className="text-sm font-medium text-gray-900 mb-4">What you'll get:</h3>
-        <ul className="space-y-2 text-sm text-gray-600">
+      <div className="mt-8 border-t border-primary-200 dark:border-primary-700 pt-6">
+        <h3 className="text-sm font-semibold text-primary-900 dark:text-white mb-4">What you'll get:</h3>
+        <ul className="space-y-3 text-sm text-primary-600 dark:text-primary-400">
           <li className="flex items-center">
-            <svg className="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-            </svg>
-            14-day free trial with full access
+            <div className="w-5 h-5 bg-success-100 dark:bg-success-900/20 rounded-full flex items-center justify-center mr-3">
+              <svg className="w-3 h-3 text-success-600 dark:text-success-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <span className="font-medium">14-day free trial with full access</span>
           </li>
           <li className="flex items-center">
-            <svg className="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-            </svg>
-            Proximity-based SMS campaigns
+            <div className="w-5 h-5 bg-success-100 dark:bg-success-900/20 rounded-full flex items-center justify-center mr-3">
+              <svg className="w-3 h-3 text-success-600 dark:text-success-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <span className="font-medium">Proximity-based SMS campaigns</span>
           </li>
           <li className="flex items-center">
-            <svg className="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-            </svg>
-            Complete CRM for real estate agents
+            <div className="w-5 h-5 bg-success-100 dark:bg-success-900/20 rounded-full flex items-center justify-center mr-3">
+              <svg className="w-3 h-3 text-success-600 dark:text-success-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <span className="font-medium">Complete CRM for real estate agents</span>
           </li>
           <li className="flex items-center">
-            <svg className="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-            </svg>
-            Cancel anytime, no commitments
+            <div className="w-5 h-5 bg-success-100 dark:bg-success-900/20 rounded-full flex items-center justify-center mr-3">
+              <svg className="w-3 h-3 text-success-600 dark:text-success-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <span className="font-medium">Cancel anytime, no commitments</span>
           </li>
         </ul>
       </div>

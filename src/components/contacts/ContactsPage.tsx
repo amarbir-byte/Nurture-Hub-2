@@ -58,22 +58,33 @@ export function ContactsPage() {
 
       if (contactsError) throw contactsError
 
-      // Fetch communication counts for each contact
-      const { data: communicationsData, error: communicationsError } = await supabase
-        .from('communication_history')
-        .select('contact_id')
-        .eq('user_id', user?.id)
-        .not('contact_id', 'is', null)
+      // Try to fetch communication counts for each contact
+      // If communication_history table doesn't exist, continue without communication data
+      let communicationsCount: Record<string, number> = {}
+      try {
+        const { data: communicationsData, error: communicationsError } = await supabase
+          .from('communication_history')
+          .select('contact_id')
+          .eq('user_id', user?.id)
+          .not('contact_id', 'is', null)
 
-      if (communicationsError) throw communicationsError
-
-      // Count communications per contact
-      const communicationsCount: Record<string, number> = {}
-      communicationsData?.forEach(comm => {
-        if (comm.contact_id) {
-          communicationsCount[comm.contact_id] = (communicationsCount[comm.contact_id] || 0) + 1
+        if (communicationsError && communicationsError.code === 'PGRST205') {
+          // Table doesn't exist - continue without communication data
+          console.warn('Communication history table not found. Communication tracking features will be limited.')
+        } else if (communicationsError) {
+          throw communicationsError
+        } else {
+          // Count communications per contact
+          communicationsData?.forEach(comm => {
+            if (comm.contact_id) {
+              communicationsCount[comm.contact_id] = (communicationsCount[comm.contact_id] || 0) + 1
+            }
+          })
         }
-      })
+      } catch (commError) {
+        console.warn('Could not fetch communication history:', commError)
+        // Continue without communication data
+      }
 
       setContacts(contactsData || [])
       setContactsCommunications(communicationsCount)

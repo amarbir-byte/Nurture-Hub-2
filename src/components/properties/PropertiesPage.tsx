@@ -60,22 +60,33 @@ export function PropertiesPage() {
 
       if (propertiesError) throw propertiesError
 
-      // Fetch communication counts for each property
-      const { data: communicationsData, error: communicationsError } = await supabase
-        .from('communication_history')
-        .select('property_id')
-        .eq('user_id', user?.id)
-        .not('property_id', 'is', null)
+      // Try to fetch communication counts for each property
+      // If communication_history table doesn't exist, continue without communication data
+      let communicationsCount: Record<string, number> = {}
+      try {
+        const { data: communicationsData, error: communicationsError } = await supabase
+          .from('communication_history')
+          .select('property_id')
+          .eq('user_id', user?.id)
+          .not('property_id', 'is', null)
 
-      if (communicationsError) throw communicationsError
-
-      // Count communications per property
-      const communicationsCount: Record<string, number> = {}
-      communicationsData?.forEach(comm => {
-        if (comm.property_id) {
-          communicationsCount[comm.property_id] = (communicationsCount[comm.property_id] || 0) + 1
+        if (communicationsError && communicationsError.code === 'PGRST205') {
+          // Table doesn't exist - continue without communication data
+          console.warn('Communication history table not found. Communication tracking features will be limited.')
+        } else if (communicationsError) {
+          throw communicationsError
+        } else {
+          // Count communications per property
+          communicationsData?.forEach(comm => {
+            if (comm.property_id) {
+              communicationsCount[comm.property_id] = (communicationsCount[comm.property_id] || 0) + 1
+            }
+          })
         }
-      })
+      } catch (commError) {
+        console.warn('Could not fetch communication history:', commError)
+        // Continue without communication data
+      }
 
       setProperties(propertiesData || [])
       setPropertiesCommunications(communicationsCount)

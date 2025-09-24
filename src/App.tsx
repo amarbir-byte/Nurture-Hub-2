@@ -1,5 +1,5 @@
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from './contexts/AuthContext'
 import { useSubscription } from './contexts/SubscriptionContext'
 import { Header } from './components/layout/Header'
@@ -14,6 +14,7 @@ import { OfflineIndicator } from './components/common/OfflineIndicator'
 import { PerformanceMonitor } from './components/common/PerformanceMonitor'
 import { FeedbackWidget } from './components/beta/FeedbackWidget'
 import { BetaDashboard } from './components/beta/BetaDashboard'
+import { ensureTablesExist } from './utils/databaseInit'
 
 type DashboardPage = 'dashboard' | 'properties' | 'contacts' | 'marketing' | 'templates' | 'settings' | 'beta' | 'admin'
 
@@ -275,6 +276,11 @@ function DashboardHome() {
 function Dashboard() {
   const [currentPage, setCurrentPage] = useState<DashboardPage>('dashboard')
   const { userSubscription } = useSubscription()
+
+  // Initialize database tables on component mount
+  useEffect(() => {
+    ensureTablesExist()
+  }, [])
 
   // Check if user is beta tester (extended trial)
   const isBetaTester = userSubscription?.trial_end_date &&

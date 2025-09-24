@@ -259,23 +259,27 @@ Interested in similar properties in your area? Let's discuss your requirements.`
 
       // Open communication apps
       if (communicationType === 'email') {
-        const emails = selectedContactsData.map(c => c.email).filter(Boolean).join(',')
-        if (emails) {
+        const emails = selectedContactsData.map(c => c.email).filter(Boolean)
+        if (emails.length > 0) {
           const mailtoLink = `mailto:${emails}?subject=${encodeURIComponent(subject || 'Property Update')}&body=${encodeURIComponent(message)}`
-          window.open(mailtoLink, '_blank')
+          window.open(mailtoLink, '_self')
         }
       } else if (communicationType === 'text') {
         const phones = selectedContactsData.map(c => c.phone).filter(Boolean)
         if (phones.length > 0) {
           phones.forEach(phone => {
-            const smsLink = `sms:${phone}?body=${encodeURIComponent(message)}`
-            window.open(smsLink, '_blank')
+            if (phone) {
+              const cleanPhone = phone.replace(/[^\d+]/g, '')
+              const smsLink = `sms:${cleanPhone}?body=${encodeURIComponent(message)}`
+              window.open(smsLink, '_self')
+            }
           })
         }
       } else if (communicationType === 'call') {
         const phones = selectedContactsData.map(c => c.phone).filter(Boolean)
-        if (phones.length > 0) {
-          window.open(`tel:${phones[0]}`, '_blank')
+        if (phones.length > 0 && phones[0]) {
+          const cleanPhone = phones[0].replace(/[^\d+]/g, '')
+          window.open(`tel:${cleanPhone}`, '_self')
         }
       }
 

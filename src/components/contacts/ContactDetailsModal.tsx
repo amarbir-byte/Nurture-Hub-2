@@ -321,12 +321,14 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
       // Open communication apps
       if (communicationType === 'email' && contact.email) {
         const mailtoLink = `mailto:${contact.email}?subject=${encodeURIComponent(subject || 'Property Update')}&body=${encodeURIComponent(message)}`
-        window.open(mailtoLink, '_blank')
+        window.open(mailtoLink, '_self')
       } else if (communicationType === 'text' && contact.phone) {
-        const smsLink = `sms:${contact.phone}?body=${encodeURIComponent(message)}`
-        window.open(smsLink, '_blank')
+        const cleanPhone = contact.phone.replace(/[^\d+]/g, '')
+        const smsLink = `sms:${cleanPhone}?body=${encodeURIComponent(message)}`
+        window.open(smsLink, '_self')
       } else if (communicationType === 'call' && contact.phone) {
-        window.open(`tel:${contact.phone}`, '_blank')
+        const cleanPhone = contact.phone.replace(/[^\d+]/g, '')
+        window.open(`tel:${cleanPhone}`, '_self')
       }
 
       // Refresh communication history

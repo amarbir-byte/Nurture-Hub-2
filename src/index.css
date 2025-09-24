@@ -128,7 +128,7 @@
   }
 
   .card-stats {
-    @apply card text-center p-6 hover:shadow-medium dark:hover:shadow-none transition-all duration-300;
+    @apply card text-center p-2 hover:shadow-medium dark:hover:shadow-none transition-all duration-300;
   }
 
   .card-feature {

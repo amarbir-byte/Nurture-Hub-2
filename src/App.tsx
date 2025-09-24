@@ -56,7 +56,7 @@ function LandingPage() {
               <button className="btn-secondary text-lg px-10 py-4 w-full sm:w-auto group">
                 <span className="flex items-center justify-center">
                   <svg className="w-5 h-5 mr-2 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-5-14S7 1.5 7 5s1.5 7 5 7 5-3.5 5-7-1.5-3.5-5-3.5z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-5-14S7 1.5 7 5s1.5 7 5 7 5-3.5 5-7-1.5-3.5 5-3.5z" />
                   </svg>
                   Watch Demo
                 </span>
@@ -290,53 +290,33 @@ function DashboardHome({ onNavigate }: DashboardHomeProps) {
       </div>
 
         {/* Quick stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div className="card-stats">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-            </div>
-            <div className="text-3xl font-bold text-primary-900 dark:text-white mb-1">
+            <div className="text-xl font-bold text-primary-900 dark:text-white">
               {loading ? '...' : stats.properties}
             </div>
-            <div className="text-sm font-medium text-primary-600 dark:text-primary-400">Properties</div>
+            <div className="text-xs text-primary-600 dark:text-primary-400">Properties</div>
           </div>
 
           <div className="card-stats">
-            <div className="w-12 h-12 bg-gradient-to-br from-success-500 to-success-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-            <div className="text-3xl font-bold text-primary-900 dark:text-white mb-1">
+            <div className="text-xl font-bold text-primary-900 dark:text-white">
               {loading ? '...' : stats.contacts}
             </div>
-            <div className="text-sm font-medium text-primary-600 dark:text-primary-400">Contacts</div>
+            <div className="text-xs text-primary-600 dark:text-primary-400">Contacts</div>
           </div>
 
           <div className="card-stats">
-            <div className="w-12 h-12 bg-gradient-to-br from-accent-500 to-accent-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-            </div>
-            <div className="text-3xl font-bold text-primary-900 dark:text-white mb-1">
+            <div className="text-xl font-bold text-primary-900 dark:text-white">
               {loading ? '...' : stats.campaigns}
             </div>
-            <div className="text-sm font-medium text-primary-600 dark:text-primary-400">Campaigns</div>
+            <div className="text-xs text-primary-600 dark:text-primary-400">Campaigns</div>
           </div>
 
           <div className="card-stats">
-            <div className="w-12 h-12 bg-gradient-to-br from-warning-500 to-warning-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-            <div className="text-3xl font-bold text-primary-900 dark:text-white mb-1">
+            <div className="text-xl font-bold text-primary-900 dark:text-white">
               {loading ? '...' : stats.leadsGenerated}
             </div>
-            <div className="text-sm font-medium text-primary-600 dark:text-primary-400">Leads Generated</div>
+            <div className="text-xs text-primary-600 dark:text-primary-400">Leads Generated</div>
           </div>
         </div>
 
@@ -346,19 +326,19 @@ function DashboardHome({ onNavigate }: DashboardHomeProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="flex items-start group">
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-gradient-to-br from-accent-500 to-accent-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
-                  <span className="text-lg font-bold text-white">1</span>
+                <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
+                  <span className="text-sm font-bold text-white">1</span>
                 </div>
               </div>
-              <div className="ml-6">
-                <h3 className="text-lg font-bold text-primary-900 dark:text-white mb-2">Add Your Properties</h3>
-                <p className="text-primary-600 dark:text-primary-400 mb-4">Upload your listings and recent sales to start your marketing campaigns.</p>
+              <div className="ml-4">
+                <h3 className="text-base font-bold text-primary-900 dark:text-white mb-1">Add Your Properties</h3>
+                <p className="text-sm text-primary-600 dark:text-primary-400 mb-3">Upload your listings and recent sales to start your marketing campaigns.</p>
                 <button 
                   onClick={() => onNavigate?.('properties')}
-                  className="btn-ghost group flex items-center space-x-2"
+                  className="btn-ghost group flex items-center space-x-2 text-sm"
                 >
                   <span>Add properties</span>
-                  <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                 </button>
@@ -367,19 +347,19 @@ function DashboardHome({ onNavigate }: DashboardHomeProps) {
 
             <div className="flex items-start group">
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-gradient-to-br from-success-500 to-success-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
-                  <span className="text-lg font-bold text-white">2</span>
+                <div className="w-10 h-10 bg-gradient-to-br from-success-500 to-success-700 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
+                  <span className="text-sm font-bold text-white">2</span>
                 </div>
               </div>
-              <div className="ml-6">
-                <h3 className="text-lg font-bold text-primary-900 dark:text-white mb-2">Import Contacts</h3>
-                <p className="text-primary-600 dark:text-primary-400 mb-4">Upload your homeowner database to start proximity marketing.</p>
+              <div className="ml-4">
+                <h3 className="text-base font-bold text-primary-900 dark:text-white mb-1">Import Contacts</h3>
+                <p className="text-sm text-primary-600 dark:text-primary-400 mb-3">Upload your homeowner database to start proximity marketing.</p>
                 <button 
                   onClick={() => onNavigate?.('contacts')}
-                  className="btn-ghost group flex items-center space-x-2"
+                  className="btn-ghost group flex items-center space-x-2 text-sm"
                 >
                   <span>Import contacts</span>
-                  <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                 </button>
@@ -388,19 +368,19 @@ function DashboardHome({ onNavigate }: DashboardHomeProps) {
 
             <div className="flex items-start group">
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-gradient-to-br from-warning-500 to-warning-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
-                  <span className="text-lg font-bold text-white">3</span>
+                <div className="w-10 h-10 bg-gradient-to-br from-warning-500 to-warning-700 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
+                  <span className="text-sm font-bold text-white">3</span>
                 </div>
               </div>
-              <div className="ml-6">
-                <h3 className="text-lg font-bold text-primary-900 dark:text-white mb-2">Create Templates</h3>
-                <p className="text-primary-600 dark:text-primary-400 mb-4">Set up reusable SMS templates for your marketing campaigns.</p>
+              <div className="ml-4">
+                <h3 className="text-base font-bold text-primary-900 dark:text-white mb-1">Create Templates</h3>
+                <p className="text-sm text-primary-600 dark:text-primary-400 mb-3">Set up reusable SMS templates for your marketing campaigns.</p>
                 <button 
                   onClick={() => onNavigate?.('templates')}
-                  className="btn-ghost group flex items-center space-x-2"
+                  className="btn-ghost group flex items-center space-x-2 text-sm"
                 >
                   <span>Create templates</span>
-                  <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                 </button>
@@ -409,19 +389,19 @@ function DashboardHome({ onNavigate }: DashboardHomeProps) {
 
             <div className="flex items-start group">
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
-                  <span className="text-lg font-bold text-white">4</span>
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
+                  <span className="text-sm font-bold text-white">4</span>
                 </div>
               </div>
-              <div className="ml-6">
-                <h3 className="text-lg font-bold text-primary-900 dark:text-white mb-2">Launch Campaign</h3>
-                <p className="text-primary-600 dark:text-primary-400 mb-4">Start your first proximity-based SMS marketing campaign.</p>
+              <div className="ml-4">
+                <h3 className="text-base font-bold text-primary-900 dark:text-white mb-1">Launch Campaign</h3>
+                <p className="text-sm text-primary-600 dark:text-primary-400 mb-3">Start your first proximity-based SMS marketing campaign.</p>
                 <button 
                   onClick={() => onNavigate?.('marketing')}
-                  className="btn-ghost group flex items-center space-x-2"
+                  className="btn-ghost group flex items-center space-x-2 text-sm"
                 >
                   <span>Start marketing</span>
-                  <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                 </button>

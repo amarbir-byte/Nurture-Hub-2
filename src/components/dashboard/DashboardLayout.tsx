@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useSubscription } from '../../contexts/SubscriptionContext'
 import { useTheme } from '../../contexts/ThemeContext'
@@ -88,6 +88,22 @@ export function DashboardLayout({ children, currentPage, onNavigate }: Dashboard
 
   const isAdmin = userSubscription?.is_admin || false
   const navigationItems = getNavigationItems(isAdmin)
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (sidebarOpen) {
+      // Disable body scroll
+      document.body.style.overflow = 'hidden'
+    } else {
+      // Re-enable body scroll
+      document.body.style.overflow = 'unset'
+    }
+
+    // Cleanup function to ensure scroll is re-enabled when component unmounts
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [sidebarOpen])
 
   const handleSignOut = async () => {
     await signOut()

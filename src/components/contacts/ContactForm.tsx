@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
+import { ensureUserExists } from '../../utils/userUtils'
 
 interface Contact {
   id: string
@@ -130,6 +131,11 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
     setLoading(true)
 
     try {
+      // Ensure user exists in users table before creating contact
+      if (user) {
+        await ensureUserExists(user)
+      }
+
       const coordinates = await mockGeocode(formData.address)
       const tags = parseTags(formData.tags)
 

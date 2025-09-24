@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
+import { ensureUserExists } from '../../utils/userUtils'
 
 interface Property {
   id: string
@@ -137,6 +138,11 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
     setLoading(true)
 
     try {
+      // Ensure user exists in users table before creating property
+      if (user) {
+        await ensureUserExists(user)
+      }
+
       const coordinates = await mockGeocode(formData.address)
 
       const propertyData = {

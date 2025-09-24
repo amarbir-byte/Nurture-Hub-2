@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
+import { MapTilerMap } from '../ui/MapTilerMap'
 
 interface Contact {
   id: string
@@ -68,11 +69,12 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
   const [communicationType, setCommunicationType] = useState<'email' | 'text' | 'call'>('email')
   const [communicationHistory, setCommunicationHistory] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
+  const [radius, setRadius] = useState(10) // Default 10km radius
 
   useEffect(() => {
     fetchNearbyProperties()
     fetchCommunicationHistory()
-  }, [contact])
+  }, [contact, radius])
 
   const fetchNearbyProperties = async () => {
     if (!contact.lat || !contact.lng || !user) return
@@ -95,7 +97,7 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
           contact.lat!, contact.lng!,
           property.lat, property.lng
         )
-        return distance <= 10 // 10km radius for properties
+        return distance <= radius // Dynamic radius for properties
       }) || []
 
       // Sort by distance and status (sold properties first as they're good market references)
@@ -190,9 +192,11 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
     let message = `Hi ${contact.first_name || contact.name || 'there'},\n\nI thought you might be interested in these recent property activities in your area:\n\n`
 
     selectedProps.forEach((property, index) => {
-      const priceStr = property.status === 'sold' && property.sale_price
+      const priceStr = property.sale_price
         ? `Sold for ${formatPrice(property.sale_price)}`
-        : `Listed at ${formatPrice(property.price)}`
+        : property.price
+        ? `Listed at ${formatPrice(property.price)}`
+        : 'Price not available'
 
       const details = []
       if (property.bedrooms) details.push(`${property.bedrooms} bed`)
@@ -233,9 +237,11 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
         message = `Hi ${contact.first_name || 'there'}! Recent property activity near you:\n\n`
 
         selectedProps.slice(0, 2).forEach((property, index) => { // Limit to 2 for SMS
-          const priceStr = property.status === 'sold' && property.sale_price
+          const priceStr = property.sale_price
             ? `Sold ${formatPrice(property.sale_price)}`
-            : `Listed ${formatPrice(property.price)}`
+            : property.price
+            ? `Listed ${formatPrice(property.price)}`
+            : 'Price N/A'
           message += `${index + 1}. ${property.address} - ${priceStr}\n`
         })
 
@@ -406,12 +412,85 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                 )}
               </div>
 
+              {/* Map Visualization */}
+              {contact.lat && contact.lng && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Location & Proximity Map
+                    </h3>
+                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                      <MapTilerMap
+                        center={[contact.lng, contact.lat]}
+                        zoom={13}
+                        markers={[
+                          {
+                            id: contact.id,
+                            lat: contact.lat,
+                            lng: contact.lng,
+                            title: contact.first_name && contact.last_name
+                              ? `${contact.first_name} ${contact.last_name}`
+                              : contact.name,
+                            type: 'contact',
+                            color: '#10B981'
+                          },
+                          ...nearbyProperties.map(property => ({
+                            id: property.id,
+                            lat: property.lat!,
+                            lng: property.lng!,
+                            title: property.address,
+                            type: 'property' as const,
+                            color: '#3B82F6'
+                          }))
+                        ]}
+                        showRadius={true}
+                        radiusKm={radius}
+                        radiusCenter={[contact.lng, contact.lat]}
+                        height="400px"
+                        className="border-0"
+                      />
+                    </div>
+                    <div className="mt-2 flex items-center justify-between text-sm text-gray-600">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex items-center">
+                          <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                          <span>Contact</span>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                          <span>Properties ({nearbyProperties.length})</span>
+                        </div>
+                      </div>
+                      <div>
+                        Search radius: {radius.toFixed(1)}km
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Nearby Properties */}
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    Nearby Properties ({nearbyProperties.length})
-                  </h3>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Nearby Properties ({nearbyProperties.length})
+                    </h3>
+                    <div className="flex items-center space-x-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Radius: {radius.toFixed(1)}km
+                      </label>
+                      <input
+                        type="range"
+                        min="0.5"
+                        max="25.0"
+                        step="0.5"
+                        value={radius}
+                        onChange={(e) => setRadius(parseFloat(e.target.value))}
+                        className="w-24 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                      />
+                    </div>
+                  </div>
 
                   {loading ? (
                     <div className="flex items-center justify-center h-32">
@@ -423,7 +502,7 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                       <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                       </svg>
-                      No properties found within 10km of this contact
+                      No properties found within {radius}km of this contact
                     </div>
                   ) : (
                     <>
@@ -458,9 +537,11 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                                   </span>
                                 </div>
                                 <div className="text-sm font-semibold text-primary-600">
-                                  {property.status === 'sold' && property.sale_price
+                                  {property.sale_price
                                     ? `Sold: ${formatPrice(property.sale_price)}`
-                                    : formatPrice(property.price)
+                                    : property.price
+                                    ? formatPrice(property.price)
+                                    : 'Price N/A'
                                   }
                                 </div>
                                 <div className="text-xs text-gray-500 space-x-2">
@@ -624,9 +705,11 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                       <div key={property.id} className="text-sm">
                         <span className="font-medium">{property.address}</span>
                         <span className="text-gray-500 ml-2">
-                          - {property.status === 'sold' && property.sale_price
+                          - {property.sale_price
                             ? `Sold ${formatPrice(property.sale_price)}`
-                            : formatPrice(property.price)
+                            : property.price
+                            ? formatPrice(property.price)
+                            : 'Price N/A'
                           }
                         </span>
                       </div>

@@ -161,7 +161,7 @@ export function PropertyCard({ property, onEdit, onDelete, onViewDetails }: Prop
           </div>
         ) : (
           <div className="text-3xl font-bold bg-gradient-to-r from-accent-600 to-accent-700 bg-clip-text text-transparent">
-            {formatPrice(property.price)}
+            {formatPrice(property.sale_price || property.price)}
           </div>
         )}
       </div>

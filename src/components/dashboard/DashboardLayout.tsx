@@ -94,14 +94,20 @@ export function DashboardLayout({ children, currentPage, onNavigate }: Dashboard
     if (sidebarOpen) {
       // Disable body scroll
       document.body.style.overflow = 'hidden'
+      document.body.style.position = 'fixed'
+      document.body.style.width = '100%'
     } else {
       // Re-enable body scroll
       document.body.style.overflow = 'unset'
+      document.body.style.position = 'unset'
+      document.body.style.width = 'unset'
     }
 
     // Cleanup function to ensure scroll is re-enabled when component unmounts
     return () => {
       document.body.style.overflow = 'unset'
+      document.body.style.position = 'unset'
+      document.body.style.width = 'unset'
     }
   }, [sidebarOpen])
 
@@ -313,7 +319,7 @@ export function DashboardLayout({ children, currentPage, onNavigate }: Dashboard
         </div>
 
         {/* Page content */}
-        <main className="flex-1 p-8 animate-fade-in overflow-x-hidden">
+        <main className={`flex-1 p-8 animate-fade-in overflow-x-hidden ${sidebarOpen ? 'lg:overflow-y-auto overflow-y-hidden' : 'overflow-y-auto'}`}>
           <div className="max-w-7xl mx-auto">
             {children}
           </div>

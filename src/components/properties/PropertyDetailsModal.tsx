@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
+import { MapTilerMap } from '../ui/MapTilerMap'
 
 interface Property {
   id: string
@@ -56,17 +57,18 @@ export function PropertyDetailsModal({ property, onClose }: PropertyDetailsModal
   const [communicationType, setCommunicationType] = useState<'email' | 'text' | 'call'>('email')
   const [communicationHistory, setCommunicationHistory] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
+  const [radius, setRadius] = useState(10) // Default 10km radius
 
   useEffect(() => {
     fetchNearbyContacts()
     fetchCommunicationHistory()
-  }, [property])
+  }, [property, radius])
 
   const fetchNearbyContacts = async () => {
     if (!property.lat || !property.lng || !user) return
 
     try {
-      // Get contacts within 5km radius
+      // Get contacts within 10km radius
       const { data: contacts, error } = await supabase
         .from('contacts')
         .select('*')
@@ -83,7 +85,7 @@ export function PropertyDetailsModal({ property, onClose }: PropertyDetailsModal
           property.lat!, property.lng!,
           contact.lat, contact.lng
         )
-        return distance <= 5 // 5km radius
+        return distance <= radius // Dynamic radius
       }) || []
 
       setNearbyContacts(nearby)
@@ -159,9 +161,11 @@ export function PropertyDetailsModal({ property, onClose }: PropertyDetailsModal
   }
 
   const generatePropertyMessage = () => {
-    const priceStr = property.status === 'sold' && property.sale_price
+    const priceStr = property.sale_price
       ? `Sold for ${formatPrice(property.sale_price)}`
-      : `Listed at ${formatPrice(property.price)}`
+      : property.price
+      ? `Listed at ${formatPrice(property.price)}`
+      : 'Price not available'
 
     const details = []
     if (property.bedrooms) details.push(`${property.bedrooms} bedrooms`)
@@ -285,7 +289,7 @@ Interested in similar properties in your area? Let's discuss your requirements.`
                       </div>
                     ) : (
                       <div className="text-2xl font-bold text-primary-600">
-                        {formatPrice(property.price)}
+                        {formatPrice(property.sale_price || property.price)}
                       </div>
                     )}
                     {property.list_price && property.list_price !== property.price && (
@@ -394,12 +398,83 @@ Interested in similar properties in your area? Let's discuss your requirements.`
                 )}
               </div>
 
+              {/* Map Visualization */}
+              {property.lat && property.lng && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Location & Proximity Map
+                    </h3>
+                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                      <MapTilerMap
+                        center={[property.lng, property.lat]}
+                        zoom={13}
+                        markers={[
+                          {
+                            id: property.id,
+                            lat: property.lat,
+                            lng: property.lng,
+                            title: property.address,
+                            type: 'property',
+                            color: '#3B82F6'
+                          },
+                          ...nearbyContacts.map(contact => ({
+                            id: contact.id,
+                            lat: contact.lat!,
+                            lng: contact.lng!,
+                            title: `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Contact',
+                            type: 'contact' as const,
+                            color: '#10B981'
+                          }))
+                        ]}
+                        showRadius={true}
+                        radiusKm={radius}
+                        radiusCenter={[property.lng, property.lat]}
+                        height="400px"
+                        className="border-0"
+                      />
+                    </div>
+                    <div className="mt-2 flex items-center justify-between text-sm text-gray-600">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex items-center">
+                          <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                          <span>Property</span>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                          <span>Contacts ({nearbyContacts.length})</span>
+                        </div>
+                      </div>
+                      <div>
+                        Search radius: {radius.toFixed(1)}km
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Nearby Contacts */}
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    Nearby Contacts ({nearbyContacts.length})
-                  </h3>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Nearby Contacts ({nearbyContacts.length})
+                    </h3>
+                    <div className="flex items-center space-x-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Radius: {radius.toFixed(1)}km
+                      </label>
+                      <input
+                        type="range"
+                        min="0.5"
+                        max="25.0"
+                        step="0.5"
+                        value={radius}
+                        onChange={(e) => setRadius(parseFloat(e.target.value))}
+                        className="w-24 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                      />
+                    </div>
+                  </div>
 
                   {loading ? (
                     <div className="flex items-center justify-center h-32">
@@ -411,7 +486,7 @@ Interested in similar properties in your area? Let's discuss your requirements.`
                       <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       </svg>
-                      No contacts found within 5km of this property
+                      No contacts found within {radius}km of this property
                     </div>
                   ) : (
                     <>

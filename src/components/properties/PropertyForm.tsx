@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { ensureUserExists } from '../../utils/userUtils'
+import { geocode } from '../../lib/geocoding'
 
 interface Property {
   id: string
@@ -72,21 +73,6 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
     showAdvanced: false,
   })
 
-  const mockGeocode = async (_address: string) => {
-    const nzCities = [
-      { name: 'Auckland', lat: -36.8485, lng: 174.7633 },
-      { name: 'Wellington', lat: -41.2865, lng: 174.7762 },
-      { name: 'Christchurch', lat: -43.5321, lng: 172.6362 },
-      { name: 'Hamilton', lat: -37.7870, lng: 175.2793 },
-      { name: 'Tauranga', lat: -37.6878, lng: 176.1651 },
-    ]
-
-    const randomCity = nzCities[Math.floor(Math.random() * nzCities.length)]
-    return {
-      lat: randomCity.lat + (Math.random() - 0.5) * 0.1,
-      lng: randomCity.lng + (Math.random() - 0.5) * 0.1,
-    }
-  }
 
   const validateForm = (): boolean => {
     const newErrors: Partial<FormData> = {}
@@ -95,9 +81,9 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
       newErrors.address = 'Address is required'
     }
 
-    // Require either price or sale_price
-    if (!formData.price.trim() && !formData.sale_price.trim()) {
-      newErrors.price = 'Either Price or Sale Price is required'
+    // For sold properties, require sale_price. For listed properties, price is optional
+    if (formData.status === 'sold' && !formData.sale_price.trim()) {
+      newErrors.sale_price = 'Sale price is required for sold properties'
     }
 
     if (formData.price && (isNaN(Number(formData.price)) || Number(formData.price) <= 0)) {
@@ -143,7 +129,16 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
         await ensureUserExists(user)
       }
 
-      const coordinates = await mockGeocode(formData.address)
+      // Ensure complete address for accurate geocoding
+      let fullAddress = formData.address.trim()
+
+      // Add New Zealand if not already present
+      if (!fullAddress.toLowerCase().includes('new zealand') && !fullAddress.toLowerCase().includes('nz')) {
+        fullAddress += ', New Zealand'
+      }
+
+      console.log('Geocoding full property address:', fullAddress)
+      const coordinates = await geocode(fullAddress)
 
       const propertyData = {
         address: formData.address.trim(),
@@ -220,15 +215,18 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
             {/* Address */}
             <div>
               <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                Address *
+                Complete Address *
               </label>
+              <p className="text-xs text-gray-500 mb-2">
+                Include street, suburb, city, and postal code for accurate location matching
+              </p>
               <input
                 type="text"
                 id="address"
                 value={formData.address}
                 onChange={(e) => handleInputChange('address', e.target.value)}
                 className={`input-field ${errors.address ? 'border-red-500' : ''}`}
-                placeholder="123 Main Street, Auckland"
+                placeholder="123 Main Street, Ponsonby, Auckland 1011"
               />
               {errors.address && (
                 <p className="mt-1 text-sm text-red-600">{errors.address}</p>
@@ -276,13 +274,15 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-medium text-gray-900">Pricing</h3>
-                <p className="text-sm text-gray-500">* At least one price field required</p>
+                <p className="text-sm text-gray-500">
+                  {formData.status === 'sold' ? '* Sale price required for sold properties' : '* Price is optional for listed properties'}
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
-                    {formData.status === 'listed' ? 'List Price (NZD)' : 'Price (NZD)'}
+                    {formData.status === 'listed' ? 'List Price (NZD)' : 'Sale Price (NZD)'}
                   </label>
                   <input
                     type="number"

@@ -71,29 +71,175 @@ function getCityFromAddress(address: string): keyof typeof NZ_CITY_CENTERS {
 }
 
 /**
+ * Normalize address for consistent geocoding
+ */
+function normalizeAddress(address: string): string {
+  return address
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ') // Multiple spaces to single space
+    .replace(/[,.]/g, '') // Remove commas and periods
+    .replace(/\b(street|st)\b/g, 'street')
+    .replace(/\b(road|rd)\b/g, 'road')
+    .replace(/\b(avenue|ave)\b/g, 'avenue')
+    .replace(/\b(drive|dr)\b/g, 'drive')
+    .replace(/\b(lane|ln)\b/g, 'lane')
+    .replace(/\b(place|pl)\b/g, 'place')
+    .replace(/\b(crescent|cres)\b/g, 'crescent')
+    .replace(/\b(terrace|ter)\b/g, 'terrace')
+}
+
+/**
+ * Extract street and area from address for more consistent geocoding
+ */
+function extractAddressComponents(address: string): { street: string; area: string } {
+  const normalizedAddress = normalizeAddress(address)
+
+  // Common NZ suburb patterns
+  const suburbPatterns = [
+    // Auckland suburbs
+    { pattern: /ponsonby|grey lynn|herne bay|westmere|freemans bay/i, area: 'ponsonby' },
+    { pattern: /remuera|newmarket|epsom|greenlane/i, area: 'remuera' },
+    { pattern: /takapuna|milford|castor bay|campbells bay/i, area: 'takapuna' },
+    { pattern: /mt eden|eden terrace|kingsland|sandringham/i, area: 'mt_eden' },
+    { pattern: /parnell|grafton|newton|kingsland/i, area: 'parnell' },
+    { pattern: /devonport|bayswater|stanley bay/i, area: 'devonport' },
+    { pattern: /mission bay|kohimarama|st heliers|glendowie/i, area: 'mission_bay' },
+    { pattern: /onehunga|one tree hill|royal oak|mt wellington/i, area: 'onehunga' },
+    { pattern: /manukau|otahuhu|papatoetoe|mangere/i, area: 'manukau' },
+    { pattern: /north shore|albany|glenfield|birkenhead/i, area: 'north_shore' },
+
+    // Wellington suburbs
+    { pattern: /thorndon|wadestown|kelburn|northland/i, area: 'thorndon' },
+    { pattern: /cuba street|te aro|mount victoria|newtown/i, area: 'cuba_street' },
+    { pattern: /hataitai|kilbirnie|lyall bay|oriental bay/i, area: 'hataitai' },
+    { pattern: /lower hutt|upper hutt|petone|naenae/i, area: 'lower_hutt' },
+
+    // Christchurch suburbs
+    { pattern: /riccarton|fendalton|merivale|strowan/i, area: 'riccarton' },
+    { pattern: /cashmere|hillsborough|beckenham|somerfield/i, area: 'cashmere' },
+    { pattern: /new brighton|sumner|redcliffs|mount pleasant/i, area: 'new_brighton' },
+  ]
+
+  // Extract street name (usually the first major part of address)
+  let street = ''
+  const words = normalizedAddress.split(/\s+/)
+
+  // Try to find the street name pattern (number + street name)
+  for (let i = 0; i < words.length; i++) {
+    if (words[i].match(/^\d+[a-z]?$/)) {
+      // Found a house number, next words likely form street name
+      const streetWords = []
+      let j = i + 1
+      while (j < words.length && j < i + 4) { // Take up to 3 words after house number
+        const word = words[j]
+        // Stop at common area indicators
+        if (['street', 'road', 'avenue', 'drive', 'lane', 'place', 'way', 'crescent', 'terrace'].includes(word)) {
+          streetWords.push(word)
+          break
+        }
+        streetWords.push(word)
+        j++
+      }
+      street = streetWords.join('_').replace(/[^a-z_]/g, '')
+      break
+    }
+  }
+
+  // If no street pattern found, use first few words
+  if (!street && words.length >= 2) {
+    street = words.slice(0, Math.min(3, words.length - 1)).join('_').replace(/[^a-z_]/g, '')
+  }
+
+  // Find area/suburb
+  let area = 'general'
+  for (const { pattern, area: patternArea } of suburbPatterns) {
+    if (pattern.test(normalizedAddress)) {
+      area = patternArea
+      break
+    }
+  }
+
+  // If no specific suburb found, use last words as area identifier
+  if (area === 'general' && words.length >= 2) {
+    area = words.slice(-2).join('_').replace(/[^a-z_]/g, '')
+  }
+
+  return { street, area }
+}
+
+/**
  * Mock geocoding function that generates consistent coordinates for addresses
+ * Now street and suburb-aware for better proximity matching
+ * Used as fallback when MapTiler API is not available
  */
 export function mockGeocode(address: string): { lat: number; lng: number } {
   if (!address || address.trim().length === 0) {
     return { lat: 0, lng: 0 }
   }
 
-  const normalizedAddress = address.trim().toLowerCase()
-  const hash = hashString(normalizedAddress)
+  // Normalize the address first for consistent results
+  const normalizedAddress = normalizeAddress(address)
 
   // Determine base city
-  const city = getCityFromAddress(address)
+  const city = getCityFromAddress(normalizedAddress)
   const baseCoords = NZ_CITY_CENTERS[city]
 
-  // Generate offset within ~20km radius of city center
-  const maxOffset = 0.18 // Roughly 20km in degrees
-  const latOffset = seededRandom(hash, -maxOffset, maxOffset)
-  const lngOffset = seededRandom(hash + 1000, -maxOffset, maxOffset)
+  // Extract street and area components
+  const { street, area } = extractAddressComponents(normalizedAddress)
+
+  // Create a combined hash for street+area to ensure addresses on same street get very close coordinates
+  const streetHash = hashString(street)
+  const areaHash = hashString(area)
+  const combinedHash = streetHash + areaHash
+
+  // Generate coordinates with two levels:
+  // 1. Area-level offset (within ~2km radius for same area)
+  const areaMaxOffset = 0.018 // Roughly 2km in degrees
+  const areaLatOffset = seededRandom(areaHash, -areaMaxOffset, areaMaxOffset)
+  const areaLngOffset = seededRandom(areaHash + 1000, -areaMaxOffset, areaMaxOffset)
+
+  // 2. Street-level offset (within ~100m radius for same street)
+  const streetMaxOffset = 0.001 // Roughly 100m in degrees
+  const streetLatOffset = seededRandom(streetHash, -streetMaxOffset, streetMaxOffset)
+  const streetLngOffset = seededRandom(streetHash + 2000, -streetMaxOffset, streetMaxOffset)
+
+  // Combine base coordinates with both offsets
+  const finalLat = baseCoords.lat + areaLatOffset + streetLatOffset
+  const finalLng = baseCoords.lng + areaLngOffset + streetLngOffset
 
   return {
-    lat: parseFloat((baseCoords.lat + latOffset).toFixed(6)),
-    lng: parseFloat((baseCoords.lng + lngOffset).toFixed(6))
+    lat: parseFloat(finalLat.toFixed(6)),
+    lng: parseFloat(finalLng.toFixed(6))
   }
+}
+
+/**
+ * Main geocoding function - uses MapTiler API with fallback to mock geocoding
+ */
+export async function geocode(address: string): Promise<{ lat: number; lng: number }> {
+  // Import MapTiler service dynamically to avoid circular dependencies
+  const { geocodeAddress } = await import('./maptiler')
+
+  try {
+    // Try MapTiler API first
+    console.log('Attempting MapTiler geocoding for:', address)
+    const result = await geocodeAddress(address)
+    if (result) {
+      console.log('MapTiler geocoding successful:', result)
+      return {
+        lat: result.lat,
+        lng: result.lng
+      }
+    }
+    console.log('MapTiler returned no results for:', address)
+  } catch (error) {
+    console.warn('MapTiler geocoding failed, falling back to mock:', error)
+  }
+
+  // Fallback to mock geocoding for development/offline use
+  console.warn(`Using mock geocoding for address: ${address}`)
+  return mockGeocode(address)
 }
 
 /**

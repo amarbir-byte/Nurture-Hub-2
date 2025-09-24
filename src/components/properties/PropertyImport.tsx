@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
+import { geocode } from '../../lib/geocoding'
 
 interface ImportProperty {
   // Core address fields
@@ -440,8 +441,29 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
           property.sold_date = property.sale_date
         }
 
-        // Mock geocoding
-        const { lat, lng } = await mockGeocode(property.address)
+        // Construct complete address for accurate geocoding
+        let fullAddress = ''
+
+        if (property.address) {
+          // Use the full address field if available
+          fullAddress = property.address
+        } else {
+          // Construct from components
+          const components = [
+            property.street_number,
+            property.street,
+            property.suburb
+          ].filter(Boolean)
+          fullAddress = components.join(' ')
+        }
+
+        // Add New Zealand if not already present
+        if (fullAddress && !fullAddress.toLowerCase().includes('new zealand') && !fullAddress.toLowerCase().includes('nz')) {
+          fullAddress += ', New Zealand'
+        }
+
+        console.log('Geocoding imported property address:', fullAddress)
+        const { lat, lng } = await geocode(fullAddress)
         property.lat = lat
         property.lng = lng
 

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { ensureUserExists } from '../../utils/userUtils'
+import { geocode } from '../../lib/geocoding'
 
 interface Contact {
   id: string
@@ -65,21 +66,6 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
     tags: contact?.tags?.join(', ') || '',
   })
 
-  const mockGeocode = async (_address: string) => {
-    const nzCities = [
-      { name: 'Auckland', lat: -36.8485, lng: 174.7633 },
-      { name: 'Wellington', lat: -41.2865, lng: 174.7762 },
-      { name: 'Christchurch', lat: -43.5321, lng: 172.6362 },
-      { name: 'Hamilton', lat: -37.7870, lng: 175.2793 },
-      { name: 'Tauranga', lat: -37.6878, lng: 176.1651 },
-    ]
-
-    const randomCity = nzCities[Math.floor(Math.random() * nzCities.length)]
-    return {
-      lat: randomCity.lat + (Math.random() - 0.5) * 0.1,
-      lng: randomCity.lng + (Math.random() - 0.5) * 0.1,
-    }
-  }
 
   const validateForm = (): boolean => {
     const newErrors: Partial<FormData> = {}
@@ -136,7 +122,17 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
         await ensureUserExists(user)
       }
 
-      const coordinates = await mockGeocode(formData.address)
+      // Construct complete address for accurate geocoding
+      const fullAddress = [
+        formData.address.trim(),
+        formData.suburb.trim(),
+        formData.city.trim(),
+        formData.postal_code.trim(),
+        'New Zealand'
+      ].filter(Boolean).join(', ')
+
+      console.log('Geocoding full address:', fullAddress)
+      const coordinates = await geocode(fullAddress)
       const tags = parseTags(formData.tags)
 
       const contactData = {

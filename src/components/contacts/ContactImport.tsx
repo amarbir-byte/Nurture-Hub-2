@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
+import { geocode } from '../../lib/geocoding'
 
 interface ImportContact {
   name: string
@@ -255,7 +256,17 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
       let successCount = 0
       for (const contact of contacts) {
         try {
-          const coordinates = await mockGeocode(contact.address)
+          // Construct complete address for accurate geocoding
+          const fullAddress = [
+            contact.address,
+            contact.suburb,
+            contact.city,
+            contact.postal_code,
+            'New Zealand'
+          ].filter(Boolean).join(', ')
+
+          console.log('Geocoding imported contact address:', fullAddress)
+          const coordinates = await geocode(fullAddress)
 
           const contactData = {
             name: contact.name,

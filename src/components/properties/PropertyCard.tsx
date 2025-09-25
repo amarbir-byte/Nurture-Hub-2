@@ -147,7 +147,7 @@ export function PropertyCard({ property, onEdit, onDelete, onViewDetails }: Prop
               {formatPrice(property.sale_price)}
             </div>
             {property.price && property.price !== property.sale_price && (
-              <div className="text-xs text-primary-400 dark:text-primary-500">
+              <div className="text-xs text-primary-400 dark:text-primary-300">
                 Listed: {formatPrice(property.price)}
               </div>
             )}
@@ -197,7 +197,7 @@ export function PropertyCard({ property, onEdit, onDelete, onViewDetails }: Prop
       </div>
 
       {/* Compact Agency & Dates */}
-      <div className="text-xs text-gray-500 mb-3 space-y-1">
+      <div className="text-xs text-gray-500 dark:text-primary-400 mb-3 space-y-1">
         {property.organisation && (
           <div className="flex items-center">
             <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -218,7 +218,7 @@ export function PropertyCard({ property, onEdit, onDelete, onViewDetails }: Prop
 
       {/* Compact Description */}
       {property.description && (
-        <p className="text-xs text-gray-600 mb-3 line-clamp-2">
+        <p className="text-xs text-gray-600 dark:text-primary-300 mb-3 line-clamp-2">
           {property.description}
         </p>
       )}

@@ -227,14 +227,14 @@ export function CampaignWizard({ properties, onComplete, onCancel }: CampaignWiz
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto dark:bg-dark-800">
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Create Marketing Campaign</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Create Marketing Campaign</h2>
             <button
               onClick={onCancel}
-              className="text-gray-400 hover:text-gray-500"
+              className="text-gray-400 hover:text-gray-500 dark:text-primary-300 dark:hover:text-primary-100"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -250,19 +250,19 @@ export function CampaignWizard({ properties, onComplete, onCancel }: CampaignWiz
                   <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
                     getStepNumber(step) > index + 1 ? 'bg-green-600 text-white' :
                     getStepNumber(step) === index + 1 ? 'bg-primary-600 text-white' :
-                    'bg-gray-300 text-gray-600'
+                    'bg-gray-300 text-gray-600 dark:bg-dark-600 dark:text-primary-300'
                   }`}>
                     {getStepNumber(step) > index + 1 ? '✓' : index + 1}
                   </div>
                   {index < 3 && (
                     <div className={`flex-1 h-1 mx-2 ${
-                      getStepNumber(step) > index + 1 ? 'bg-green-600' : 'bg-gray-300'
+                      getStepNumber(step) > index + 1 ? 'bg-green-600' : 'bg-gray-300 dark:bg-dark-600'
                     }`}></div>
                   )}
                 </div>
               ))}
             </div>
-            <div className="flex justify-between mt-2 text-sm text-gray-600">
+            <div className="flex justify-between mt-2 text-sm text-gray-600 dark:text-primary-400">
               <span>Select Property</span>
               <span>Set Radius</span>
               <span>Compose Message</span>
@@ -275,7 +275,7 @@ export function CampaignWizard({ properties, onComplete, onCancel }: CampaignWiz
             {/* Step 1: Property Selection */}
             {step === 'property' && (
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Select Property for Campaign</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Select Property for Campaign</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
                   {properties.map((property) => (
                     <div
@@ -283,22 +283,22 @@ export function CampaignWizard({ properties, onComplete, onCancel }: CampaignWiz
                       onClick={() => setSelectedProperty(property)}
                       className={`p-4 border rounded-lg cursor-pointer transition-colors ${
                         selectedProperty?.id === property.id
-                          ? 'border-primary-500 bg-primary-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                          : 'border-gray-200 hover:border-gray-300 dark:border-dark-700 dark:hover:border-dark-600'
                       }`}
                     >
                       <div className="flex items-center space-x-2 mb-2">
                         <span className={`badge ${
-                          property.status === 'listed' ? 'bg-green-100 text-green-800' :
-                          property.status === 'sold' ? 'bg-blue-100 text-blue-800' :
-                          'bg-yellow-100 text-yellow-800'
+                          property.status === 'listed' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                          property.status === 'sold' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
+                          'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
                         }`}>
                           {property.status.charAt(0).toUpperCase() + property.status.slice(1)}
                         </span>
-                        <span className="text-sm text-gray-600 capitalize">{property.property_type}</span>
+                        <span className="text-sm text-gray-600 dark:text-primary-300 capitalize">{property.property_type}</span>
                       </div>
-                      <h4 className="font-medium text-gray-900 mb-1">{property.address}</h4>
-                      <p className="text-lg font-semibold text-primary-600">
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-1">{property.address}</h4>
+                      <p className="text-lg font-semibold text-primary-600 dark:text-primary-300">
                         {new Intl.NumberFormat('en-NZ', {
                           style: 'currency',
                           currency: 'NZD',
@@ -315,14 +315,14 @@ export function CampaignWizard({ properties, onComplete, onCancel }: CampaignWiz
             {/* Step 2: Radius Selection */}
             {step === 'radius' && selectedProperty && (
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Set Search Radius</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Set Search Radius</h3>
                 <div className="space-y-6">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-medium text-gray-700">
+                      <label className="text-sm font-medium text-gray-700 dark:text-primary-300">
                         Radius: {radius.toFixed(1)}km
                       </label>
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-gray-600 dark:text-primary-400">
                         {nearbyContacts.length} contacts found
                       </span>
                     </div>
@@ -333,43 +333,43 @@ export function CampaignWizard({ properties, onComplete, onCancel }: CampaignWiz
                       step="0.1"
                       value={radius}
                       onChange={(e) => setRadius(parseFloat(e.target.value))}
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                      className="w-full h-2 bg-gray-200 dark:bg-dark-700 rounded-lg appearance-none cursor-pointer slider"
                     />
-                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <div className="flex justify-between text-xs text-gray-500 dark:text-primary-400 mt-1">
                       <span>0.1km</span>
                       <span>2.5km</span>
                       <span>5.0km</span>
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Campaign Target</h4>
-                    <p className="text-sm text-gray-600 mb-3">
+                  <div className="bg-gray-50 dark:bg-dark-700 rounded-lg p-4">
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-2">Campaign Target</h4>
+                    <p className="text-sm text-gray-600 dark:text-primary-300 mb-3">
                       Property: <span className="font-medium">{selectedProperty.address}</span>
                     </p>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-gray-600">Search Radius:</span>
-                        <span className="ml-2 font-medium">{radius.toFixed(1)}km</span>
+                        <span className="text-gray-600 dark:text-primary-300">Search Radius:</span>
+                        <span className="ml-2 font-medium text-gray-900 dark:text-white">{radius.toFixed(1)}km</span>
                       </div>
                       <div>
-                        <span className="text-gray-600">Contacts Found:</span>
-                        <span className="ml-2 font-medium text-primary-600">{nearbyContacts.length}</span>
+                        <span className="text-gray-600 dark:text-primary-300">Contacts Found:</span>
+                        <span className="ml-2 font-medium text-primary-600 dark:text-primary-300">{nearbyContacts.length}</span>
                       </div>
                     </div>
 
                     {nearbyContacts.length > 0 && (
                       <div className="mt-4">
-                        <h5 className="text-sm font-medium text-gray-700 mb-2">Nearby Contacts Preview:</h5>
+                        <h5 className="text-sm font-medium text-gray-700 dark:text-primary-300 mb-2">Nearby Contacts Preview:</h5>
                         <div className="max-h-32 overflow-y-auto space-y-1">
                           {nearbyContacts.slice(0, 5).map((contact) => (
-                            <div key={contact.id} className="text-xs text-gray-600 flex justify-between">
+                            <div key={contact.id} className="text-xs text-gray-600 dark:text-primary-400 flex justify-between">
                               <span>{contact.name}</span>
                               <span>{contact.address}</span>
                             </div>
                           ))}
                           {nearbyContacts.length > 5 && (
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-gray-500 dark:text-primary-400">
                               +{nearbyContacts.length - 5} more contacts
                             </div>
                           )}
@@ -379,14 +379,14 @@ export function CampaignWizard({ properties, onComplete, onCancel }: CampaignWiz
                   </div>
 
                   {nearbyContacts.length === 0 && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div className="bg-yellow-50 border-yellow-200 rounded-lg p-4 dark:bg-yellow-900/20 dark:border-yellow-700">
                       <div className="flex">
                         <svg className="h-5 w-5 text-yellow-400 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                         </svg>
                         <div className="ml-3">
-                          <h3 className="text-sm font-medium text-yellow-800">No contacts found</h3>
-                          <p className="mt-1 text-sm text-yellow-700">
+                          <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">No contacts found</h3>
+                          <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
                             Try increasing the radius or add more contacts with addresses near this property.
                           </p>
                         </div>
@@ -400,29 +400,29 @@ export function CampaignWizard({ properties, onComplete, onCancel }: CampaignWiz
             {/* Step 3: Message Composition */}
             {step === 'message' && (
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Compose Your Message</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Compose Your Message</h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Templates */}
                   <div>
-                    <h4 className="font-medium text-gray-700 mb-3">Choose Template (Optional)</h4>
+                    <h4 className="font-medium text-gray-700 dark:text-primary-300 mb-3">Choose Template (Optional)</h4>
                     <div className="max-h-64 overflow-y-auto space-y-2">
                       {templates.map((template) => (
                         <button
                           key={template.id}
                           onClick={() => handleTemplateSelect(template)}
-                          className={`w-full p-3 text-left border rounded-lg hover:border-gray-300 ${
-                            selectedTemplate?.id === template.id ? 'border-primary-500 bg-primary-50' : 'border-gray-200'
+                          className={`w-full p-3 text-left border rounded-lg hover:border-gray-300 dark:border-dark-700 dark:hover:border-dark-600 ${
+                            selectedTemplate?.id === template.id ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:bg-dark-800'
                           }`}
                         >
                           <div className="flex items-center justify-between mb-1">
-                            <span className="font-medium text-gray-900">{template.name}</span>
-                            <span className="text-xs text-gray-500 capitalize">{template.category}</span>
+                            <span className="font-medium text-gray-900 dark:text-white">{template.name}</span>
+                            <span className="text-xs text-gray-500 dark:text-primary-400 capitalize">{template.category}</span>
                           </div>
-                          <p className="text-sm text-gray-600 line-clamp-2">{template.content}</p>
+                          <p className="text-sm text-gray-600 dark:text-primary-300 line-clamp-2">{template.content}</p>
                         </button>
                       ))}
                       {templates.length === 0 && (
-                        <p className="text-sm text-gray-500">No templates available. Create some templates first.</p>
+                        <p className="text-sm text-gray-500 dark:text-primary-400">No templates available. Create some templates first.</p>
                       )}
                     </div>
                   </div>
@@ -430,7 +430,7 @@ export function CampaignWizard({ properties, onComplete, onCancel }: CampaignWiz
                   {/* Message Editor */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-gray-700">Message Content</h4>
+                      <h4 className="font-medium text-gray-700 dark:text-primary-300">Message Content</h4>
                       <span className={`text-sm ${
                         message.length <= 160 ? 'text-green-600' :
                         message.length <= 320 ? 'text-yellow-600' : 'text-red-600'
@@ -445,7 +445,7 @@ export function CampaignWizard({ properties, onComplete, onCancel }: CampaignWiz
                       placeholder="Write your SMS message here..."
                       rows={8}
                     />
-                    <p className="mt-2 text-xs text-gray-500">
+                    <p className="mt-2 text-xs text-gray-500 dark:text-primary-400">
                       Tip: Keep under 160 characters for single SMS. Personalization placeholders have been replaced with actual values.
                     </p>
                   </div>
@@ -456,40 +456,40 @@ export function CampaignWizard({ properties, onComplete, onCancel }: CampaignWiz
             {/* Step 4: Confirmation */}
             {step === 'confirm' && selectedProperty && (
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Confirm Campaign Details</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Confirm Campaign Details</h3>
                 <div className="space-y-6">
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <h4 className="font-medium text-gray-900 mb-4">Campaign Summary</h4>
+                  <div className="bg-gray-50 rounded-lg p-6 dark:bg-dark-700">
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-4">Campaign Summary</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-gray-600">Property:</span>
-                        <p className="font-medium">{selectedProperty.address}</p>
+                        <span className="text-gray-600 dark:text-primary-300">Property:</span>
+                        <p className="font-medium text-gray-900 dark:text-white">{selectedProperty.address}</p>
                       </div>
                       <div>
-                        <span className="text-gray-600">Search Radius:</span>
-                        <p className="font-medium">{radius.toFixed(1)}km</p>
+                        <span className="text-gray-600 dark:text-primary-300">Search Radius:</span>
+                        <p className="font-medium text-gray-900 dark:text-white">{radius.toFixed(1)}km</p>
                       </div>
                       <div>
-                        <span className="text-gray-600">Recipients:</span>
-                        <p className="font-medium text-primary-600">{nearbyContacts.length} contacts</p>
+                        <span className="text-gray-600 dark:text-primary-300">Recipients:</span>
+                        <p className="font-medium text-primary-600 dark:text-primary-300">{nearbyContacts.length} contacts</p>
                       </div>
                       <div>
-                        <span className="text-gray-600">Message Length:</span>
-                        <p className="font-medium">{message.length} chars ({Math.ceil(message.length / 160)} SMS)</p>
+                        <span className="text-gray-600 dark:text-primary-300">Message Length:</span>
+                        <p className="font-medium text-gray-900 dark:text-white">{message.length} chars ({Math.ceil(message.length / 160)} SMS)</p>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Message Preview</h4>
-                    <div className="bg-white border border-gray-200 rounded-lg p-4">
-                      <p className="text-sm whitespace-pre-wrap">{message}</p>
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-2">Message Preview</h4>
+                    <div className="bg-white border border-gray-200 rounded-lg p-4 dark:bg-dark-800 dark:border-dark-700">
+                      <p className="text-sm whitespace-pre-wrap text-gray-900 dark:text-white">{message}</p>
                     </div>
                   </div>
 
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h4 className="font-medium text-blue-900 mb-2">Important Note</h4>
-                    <p className="text-sm text-blue-800">
+                  <div className="bg-blue-50 border-blue-200 rounded-lg p-4 dark:bg-blue-900/20 dark:border-blue-700">
+                    <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-2">Important Note</h4>
+                    <p className="text-sm text-blue-800 dark:text-blue-300">
                       This is a demo version. In production, this would integrate with an SMS provider to send actual messages.
                       For now, we'll create the campaign record for tracking purposes.
                     </p>
@@ -516,7 +516,7 @@ export function CampaignWizard({ properties, onComplete, onCancel }: CampaignWiz
                 disabled={loading}
               >
                 {loading ? (
-                  <div className="flex items-center">
+                  <div className="flex items-center justify-center">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                     Creating Campaign...
                   </div>

@@ -139,26 +139,26 @@ export function MarketingPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="card text-center">
-          <div className="text-2xl font-bold text-gray-900">{stats.totalCampaigns}</div>
-          <div className="text-sm text-gray-600">Total Campaigns</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalCampaigns}</div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">Total Campaigns</div>
         </div>
         <div className="card text-center">
-          <div className="text-2xl font-bold text-primary-600">{stats.totalRecipients}</div>
-          <div className="text-sm text-gray-600">SMS Sent</div>
+          <div className="text-2xl font-bold text-primary-600 dark:text-primary-300">{stats.totalRecipients}</div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">SMS Sent</div>
         </div>
         <div className="card text-center">
-          <div className="text-2xl font-bold text-green-600">{stats.avgRadius}km</div>
-          <div className="text-sm text-gray-600">Avg Radius</div>
+          <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.avgRadius}km</div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">Avg Radius</div>
         </div>
         <div className="card text-center">
-          <div className="text-2xl font-bold text-blue-600">{stats.recentCampaigns}</div>
-          <div className="text-sm text-gray-600">This Week</div>
+          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.recentCampaigns}</div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">This Week</div>
         </div>
       </div>
 
       {/* No Properties Warning */}
       {properties.length === 0 && (
-        <div className="card bg-yellow-50 border-yellow-200">
+        <div className="card bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-700">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
@@ -166,10 +166,10 @@ export function MarketingPage() {
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-yellow-800">
+              <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
                 No Properties with Location Data
               </h3>
-              <p className="mt-1 text-sm text-yellow-700">
+              <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
                 You need to add properties with addresses before creating marketing campaigns.
                 The system uses property locations to find nearby contacts.
               </p>
@@ -177,7 +177,7 @@ export function MarketingPage() {
                 <a
                   href="#"
                   onClick={() => window.location.hash = 'properties'}
-                  className="text-sm font-medium text-yellow-800 underline hover:text-yellow-600"
+                  className="text-sm font-medium text-yellow-800 underline hover:text-yellow-600 dark:text-yellow-300 dark:hover:text-yellow-200"
                 >
                   Add properties now →
                 </a>
@@ -190,7 +190,7 @@ export function MarketingPage() {
       {/* Campaign List */}
       {campaigns.length === 0 ? (
         <div className="card text-center py-12">
-          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
           </svg>
           <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">No campaigns yet</h3>

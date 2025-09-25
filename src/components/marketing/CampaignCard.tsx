@@ -46,13 +46,13 @@ export function CampaignCard({ campaign, onDelete }: CampaignCardProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'listed':
-        return 'bg-green-100 text-green-800'
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
       case 'sold':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
       case 'withdrawn':
-        return 'bg-yellow-100 text-yellow-800'
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-100 text-gray-800 dark:bg-dark-600 dark:text-primary-300'
     }
   }
 
@@ -85,14 +85,14 @@ export function CampaignCard({ campaign, onDelete }: CampaignCardProps) {
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-2">
-          <div className="text-primary-600">
+          <div className="text-primary-600 dark:text-primary-300">
             {getCampaignTypeIcon()}
           </div>
-          <span className="text-sm font-medium text-gray-900 uppercase tracking-wide">
+          <span className="text-sm font-medium text-gray-900 dark:text-white uppercase tracking-wide">
             {campaign.campaign_type} Campaign
           </span>
         </div>
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-gray-500 dark:text-primary-400">
           {formatDate(campaign.sent_at)}
         </div>
       </div>
@@ -104,14 +104,14 @@ export function CampaignCard({ campaign, onDelete }: CampaignCardProps) {
             <span className={`badge ${getStatusColor(campaign.property.status)}`}>
               {campaign.property.status.charAt(0).toUpperCase() + campaign.property.status.slice(1)}
             </span>
-            <span className="text-sm text-gray-600 capitalize">
+            <span className="text-sm text-gray-600 dark:text-primary-300 capitalize">
               {campaign.property.property_type}
             </span>
           </div>
-          <h3 className="font-medium text-gray-900 mb-1">
+          <h3 className="font-medium text-gray-900 dark:text-white mb-1">
             {campaign.property.address}
           </h3>
-          <p className="text-lg font-semibold text-primary-600">
+          <p className="text-lg font-semibold text-primary-600 dark:text-primary-300">
             {campaign.property.price
               ? formatPrice(campaign.property.price)
               : 'Price N/A'
@@ -123,14 +123,14 @@ export function CampaignCard({ campaign, onDelete }: CampaignCardProps) {
       {/* Campaign Stats */}
       <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
         <div>
-          <span className="text-gray-600">Recipients:</span>
-          <span className="ml-2 font-medium text-primary-600">
+          <span className="text-gray-600 dark:text-primary-300">Recipients:</span>
+          <span className="ml-2 font-medium text-primary-600 dark:text-primary-300">
             {campaign.recipients_count}
           </span>
         </div>
         <div>
-          <span className="text-gray-600">Radius:</span>
-          <span className="ml-2 font-medium">
+          <span className="text-gray-600 dark:text-primary-300">Radius:</span>
+          <span className="ml-2 font-medium text-gray-900 dark:text-white">
             {campaign.radius.toFixed(1)}km
           </span>
         </div>
@@ -138,9 +138,9 @@ export function CampaignCard({ campaign, onDelete }: CampaignCardProps) {
 
       {/* Message Preview */}
       <div className="mb-4">
-        <h4 className="text-sm font-medium text-gray-700 mb-2">Message:</h4>
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-          <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-3">
+        <h4 className="text-sm font-medium text-gray-700 dark:text-primary-300 mb-2">Message:</h4>
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 dark:bg-dark-700 dark:border-dark-600">
+          <p className="text-sm text-gray-700 dark:text-primary-300 whitespace-pre-wrap line-clamp-3">
             {campaign.message}
           </p>
         </div>
@@ -153,7 +153,7 @@ export function CampaignCard({ campaign, onDelete }: CampaignCardProps) {
           </span>
           <button
             onClick={copyMessage}
-            className="text-primary-600 hover:text-primary-700 font-medium"
+            className="text-primary-600 hover:text-primary-700 dark:text-primary-300 dark:hover:text-primary-100 font-medium"
           >
             Copy
           </button>
@@ -162,7 +162,7 @@ export function CampaignCard({ campaign, onDelete }: CampaignCardProps) {
 
 
       {/* Actions */}
-      <div className="grid grid-cols-3 gap-2 pt-4 border-t border-gray-200">
+      <div className="grid grid-cols-3 gap-2 pt-4 border-t border-gray-200 dark:border-dark-700">
         <button
           onClick={copyMessage}
           className="btn-secondary text-sm"
@@ -177,7 +177,7 @@ export function CampaignCard({ campaign, onDelete }: CampaignCardProps) {
         </button>
         <button
           onClick={onDelete}
-          className="btn-ghost text-sm text-red-600 hover:text-red-700 hover:bg-red-50"
+          className="btn-ghost text-sm text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-error-400 dark:hover:text-error-300 dark:hover:bg-error-900/20"
         >
           Delete
         </button>

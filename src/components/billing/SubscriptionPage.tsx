@@ -92,8 +92,8 @@ export function SubscriptionPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Subscription & Billing</h1>
-          <p className="text-gray-600">Manage your subscription, billing, and usage</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Subscription & Billing</h1>
+          <p className="text-gray-600 dark:text-gray-400">Manage your subscription, billing, and usage</p>
         </div>
         {userSubscription?.subscription_status === 'active' && (
           <button
@@ -144,21 +144,21 @@ export function SubscriptionPage() {
         <div className="card">
           <div className="space-y-4">
             <div>
-              <h3 className="text-lg font-medium text-gray-900">Current Plan</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">Current Plan</h3>
               <div className="mt-1 flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-1 sm:space-y-0">
-                <span className="text-xl sm:text-2xl font-bold text-primary-600">
+                <span className="text-xl sm:text-2xl font-bold text-primary-600 dark:text-primary-300">
                   {userSubscription.unlimited_access ? 'Unlimited Access' :
                    userSubscription.plan_type ?
                    `${userSubscription.plan_type.charAt(0).toUpperCase() + userSubscription.plan_type.slice(1)} Plan` :
                    'No Active Plan'}
                 </span>
                 {!userSubscription.unlimited_access && userSubscription.plan_type && (
-                  <span className="text-lg text-gray-600">
+                  <span className="text-lg text-gray-600 dark:text-primary-400">
                     {getCurrentPlanPrice()}/month
                   </span>
                 )}
               </div>
-              <p className="mt-1 text-sm text-gray-600">
+              <p className="mt-1 text-sm text-gray-600 dark:text-primary-400">
                 Status: <span className={`font-medium ${
                   userSubscription.subscription_status === 'active' ? 'text-green-600' :
                   userSubscription.subscription_status === 'canceled' ? 'text-red-600' :
@@ -190,7 +190,7 @@ export function SubscriptionPage() {
       )}
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-gray-200 dark:border-dark-700">
         <nav className="-mb-px flex space-x-2 sm:space-x-8 overflow-x-auto">
           {[
             { id: 'overview', name: 'Usage Overview', shortName: 'Usage', icon: '📊' },
@@ -202,8 +202,8 @@ export function SubscriptionPage() {
               onClick={() => setActiveTab(tab.id as any)}
               className={`whitespace-nowrap py-2 px-1 sm:px-3 border-b-2 font-medium text-sm flex-shrink-0 ${
                 activeTab === tab.id
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-primary-500 text-primary-600 dark:text-primary-300'
+                  : 'border-transparent text-gray-500 dark:text-primary-400 hover:text-gray-700 dark:hover:text-primary-300 hover:border-gray-300 dark:hover:border-dark-600'
               }`}
             >
               <span className="mr-1 sm:mr-2">{tab.icon}</span>

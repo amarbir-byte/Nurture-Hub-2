@@ -169,7 +169,7 @@ export function PropertiesPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-        <span className="ml-3 text-gray-600">Loading properties...</span>
+        <span className="ml-3 text-gray-600 dark:text-primary-300">Loading properties...</span>
       </div>
     )
   }
@@ -179,8 +179,8 @@ export function PropertiesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Properties</h1>
-          <p className="text-gray-600">Manage your property listings and sales</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Properties</h1>
+          <p className="text-gray-600 dark:text-gray-400">Manage your property listings and sales</p>
         </div>
         <div className="mt-4 sm:mt-0 flex space-x-3">
           <button
@@ -296,8 +296,8 @@ export function PropertiesPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m8 7 4-4 4 4" />
           </svg>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No properties found</h3>
-          <p className="mt-2 text-gray-600">
+          <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">No properties found</h3>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
             {searchTerm || statusFilter !== 'all'
               ? 'Try adjusting your search or filters.'
               : 'Get started by adding your first property.'

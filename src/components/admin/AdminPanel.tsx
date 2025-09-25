@@ -106,8 +106,8 @@ export function AdminPanel() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L5.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
           </svg>
         </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Access Denied</h3>
-        <p className="text-gray-600">You need admin access to view this page.</p>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Access Denied</h3>
+        <p className="text-gray-600 dark:text-gray-400">You need admin access to view this page.</p>
       </div>
     )
   }
@@ -116,7 +116,7 @@ export function AdminPanel() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-        <span className="ml-3 text-gray-600">Loading users...</span>
+        <span className="ml-3 text-gray-600 dark:text-primary-300">Loading users...</span>
       </div>
     )
   }
@@ -125,15 +125,15 @@ export function AdminPanel() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Admin Panel</h1>
-        <p className="text-gray-600">Manage user access and permissions</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Panel</h1>
+        <p className="text-gray-600 dark:text-gray-400">Manage user access and permissions</p>
       </div>
 
       {/* Search */}
       <div className="card">
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-5 w-5 text-gray-400 dark:text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
@@ -150,29 +150,29 @@ export function AdminPanel() {
       {/* Users Table */}
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-700">
+            <thead className="bg-gray-50 dark:bg-dark-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-primary-400 uppercase tracking-wider">
                   User
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-primary-400 uppercase tracking-wider">
                   Plan
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-primary-400 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-primary-400 uppercase tracking-wider">
                   Access Level
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-primary-400 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-dark-800 divide-y divide-gray-200 dark:divide-dark-700">
               {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
+                <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-dark-700">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
@@ -181,25 +181,25 @@ export function AdminPanel() {
                         </span>
                       </div>
                       <div className="ml-3">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
                           {user.email}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-500 dark:text-primary-400">
                           {new Date(user.created_at).toLocaleDateString()}
                         </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-900">
+                    <span className="text-sm text-gray-900 dark:text-white">
                       {user.plan_type ? user.plan_type.charAt(0).toUpperCase() + user.plan_type.slice(1) : 'Trial'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      user.subscription_status === 'active' ? 'bg-green-100 text-green-800' :
-                      user.subscription_status === 'trialing' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
+                      user.subscription_status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                      user.subscription_status === 'trialing' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' :
+                      'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
                     }`}>
                       {user.subscription_status}
                     </span>
@@ -207,17 +207,17 @@ export function AdminPanel() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex flex-col space-y-1">
                       {user.unlimited_access && (
-                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
                           Unlimited Access
                         </span>
                       )}
                       {user.is_admin && (
-                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
                           Admin
                         </span>
                       )}
                       {!user.unlimited_access && !user.is_admin && (
-                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-dark-600 dark:text-primary-300">
                           Standard
                         </span>
                       )}
@@ -229,8 +229,8 @@ export function AdminPanel() {
                         onClick={() => toggleUnlimitedAccess(user.id, user.unlimited_access)}
                         className={`text-xs px-3 py-1 rounded-md font-medium ${
                           user.unlimited_access
-                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                            : 'bg-green-100 text-green-700 hover:bg-green-200'
+                            ? 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50'
+                            : 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50'
                         }`}
                       >
                         {user.unlimited_access ? 'Remove Unlimited' : 'Grant Unlimited'}
@@ -240,10 +240,10 @@ export function AdminPanel() {
                         disabled={user.id === userSubscription?.id}
                         className={`text-xs px-3 py-1 rounded-md font-medium ${
                           user.id === userSubscription?.id
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-dark-600 dark:text-primary-500'
                             : user.is_admin
-                              ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                              : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                              ? 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50'
+                              : 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50'
                         }`}
                       >
                         {user.is_admin ? 'Remove Admin' : 'Make Admin'}
@@ -258,7 +258,7 @@ export function AdminPanel() {
 
         {filteredUsers.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-gray-500">No users found</p>
+            <p className="text-gray-500 dark:text-primary-400">No users found</p>
           </div>
         )}
       </div>
@@ -266,26 +266,20 @@ export function AdminPanel() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="card text-center">
-          <div className="text-2xl font-bold text-gray-900">{users.length}</div>
-          <div className="text-sm text-gray-600">Total Users</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-white">{users.length}</div>
+          <div className="text-sm text-gray-600 dark:text-primary-400">Total Users</div>
         </div>
         <div className="card text-center">
-          <div className="text-2xl font-bold text-green-600">
-            {users.filter(u => u.subscription_status === 'active').length}
-          </div>
-          <div className="text-sm text-gray-600">Active Subscribers</div>
+          <div className="text-2xl font-bold text-green-600">{users.filter(u => u.subscription_status === 'active').length}</div>
+          <div className="text-sm text-gray-600 dark:text-primary-400">Active Subscribers</div>
         </div>
         <div className="card text-center">
-          <div className="text-2xl font-bold text-purple-600">
-            {users.filter(u => u.unlimited_access).length}
-          </div>
-          <div className="text-sm text-gray-600">Unlimited Access</div>
+          <div className="text-2xl font-bold text-purple-600">{users.filter(u => u.unlimited_access).length}</div>
+          <div className="text-sm text-gray-600 dark:text-primary-400">Unlimited Access</div>
         </div>
         <div className="card text-center">
-          <div className="text-2xl font-bold text-red-600">
-            {users.filter(u => u.is_admin).length}
-          </div>
-          <div className="text-sm text-gray-600">Admins</div>
+          <div className="text-2xl font-bold text-red-600">{users.filter(u => u.is_admin).length}</div>
+          <div className="text-sm text-gray-600 dark:text-primary-400">Admins</div>
         </div>
       </div>
     </div>

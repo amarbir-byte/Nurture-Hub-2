@@ -183,7 +183,7 @@ export function TemplatesPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-        <span className="ml-3 text-gray-600">Loading templates...</span>
+        <span className="ml-3 text-gray-600 dark:text-primary-300">Loading templates...</span>
       </div>
     )
   }
@@ -193,8 +193,8 @@ export function TemplatesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">SMS Templates</h1>
-          <p className="text-gray-600">Create and manage reusable SMS templates for your campaigns</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">SMS Templates</h1>
+          <p className="text-gray-600 dark:text-gray-400">Create and manage reusable SMS templates for your campaigns</p>
         </div>
         <div className="mt-4 sm:mt-0 flex space-x-3">
           <button
@@ -288,8 +288,8 @@ export function TemplatesPage() {
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No templates found</h3>
-          <p className="mt-2 text-gray-600">
+          <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">No templates found</h3>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
             {searchTerm || categoryFilter !== 'all'
               ? 'Try adjusting your search or filters.'
               : 'Get started by creating your first template or adding default templates.'

@@ -114,7 +114,7 @@ export function MarketingPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-        <span className="ml-3 text-gray-600">Loading marketing data...</span>
+        <span className="ml-3 text-gray-600 dark:text-primary-300">Loading marketing data...</span>
       </div>
     )
   }
@@ -124,8 +124,8 @@ export function MarketingPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Marketing Campaigns</h1>
-          <p className="text-gray-600">Create proximity-based SMS campaigns for your listings</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Marketing Campaigns</h1>
+          <p className="text-gray-600 dark:text-gray-400">Create proximity-based SMS campaigns for your listings</p>
         </div>
         <button
           onClick={() => setShowWizard(true)}
@@ -193,8 +193,8 @@ export function MarketingPage() {
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
           </svg>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No campaigns yet</h3>
-          <p className="mt-2 text-gray-600">
+          <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">No campaigns yet</h3>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
             {properties.length === 0
               ? 'Add some properties first, then create your first proximity marketing campaign.'
               : 'Create your first proximity marketing campaign to reach nearby homeowners.'
@@ -211,7 +211,7 @@ export function MarketingPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Campaigns</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Campaigns</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {campaigns.map((campaign) => (
               <CampaignCard

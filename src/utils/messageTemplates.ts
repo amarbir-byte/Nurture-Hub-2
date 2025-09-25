@@ -202,19 +202,27 @@ export function replaceTemplateVariables(template: MessageTemplate, variables: R
   let subject = template.subject
   let message = template.message
 
+  // Function to replace placeholders in a string, supporting both {{key}} and [key]
+  const replacePlaceholders = (text: string, vars: Record<string, string>): string => {
+    let result = text;
+    Object.entries(vars).forEach(([key, value]) => {
+      // Replace {{key}}
+      const curlyRegex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+      result = result.replace(curlyRegex, value || '');
+      // Replace [key]
+      const squareRegex = new RegExp(`\\[${key}\\]`, 'g');
+      result = result.replace(squareRegex, value || '');
+    });
+    return result;
+  };
+
   // Replace variables in subject
   if (subject) {
-    Object.entries(variables).forEach(([key, value]) => {
-      const regex = new RegExp(`{{${key}}}`, 'g')
-      subject = subject!.replace(regex, value || '')
-    })
+    subject = replacePlaceholders(subject, variables);
   }
 
   // Replace variables in message
-  Object.entries(variables).forEach(([key, value]) => {
-    const regex = new RegExp(`{{${key}}}`, 'g')
-    message = message.replace(regex, value || '')
-  })
+  message = replacePlaceholders(message, variables);
 
   return { subject, message }
 }

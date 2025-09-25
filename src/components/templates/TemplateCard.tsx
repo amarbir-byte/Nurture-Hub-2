@@ -22,17 +22,17 @@ export function TemplateCard({ template, onEdit, onDelete, onDuplicate }: Templa
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'listing':
-        return 'bg-green-100 text-green-800'
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
       case 'sold':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
       case 'follow_up':
-        return 'bg-purple-100 text-purple-800'
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
       case 'marketing':
-        return 'bg-yellow-100 text-yellow-800'
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
       case 'custom':
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-100 text-gray-800 dark:bg-dark-600 dark:text-primary-300'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-100 text-gray-800 dark:bg-dark-600 dark:text-primary-300'
     }
   }
 
@@ -114,25 +114,25 @@ export function TemplateCard({ template, onEdit, onDelete, onDuplicate }: Templa
             <span className="ml-1 capitalize">{template.category.replace('_', ' ')}</span>
           </span>
           {template.is_default && (
-            <span className="badge bg-blue-100 text-blue-800">
+            <span className="badge bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
               Default
             </span>
           )}
         </div>
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-gray-500 dark:text-primary-400">
           Used {template.usage_count} times
         </div>
       </div>
 
       {/* Template Name */}
-      <h3 className="text-lg font-semibold text-gray-900 mb-3">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
         {template.name}
       </h3>
 
       {/* Template Content */}
       <div className="mb-4">
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 dark:bg-dark-700 dark:border-dark-600">
+          <p className="text-sm text-gray-700 dark:text-primary-300 leading-relaxed whitespace-pre-wrap">
             {template.content}
           </p>
         </div>
@@ -143,7 +143,7 @@ export function TemplateCard({ template, onEdit, onDelete, onDuplicate }: Templa
           <button
             id={`copy-${template.id}`}
             onClick={handleCopyToClipboard}
-            className="text-primary-600 hover:text-primary-700 font-medium"
+            className="text-primary-600 hover:text-primary-700 dark:text-primary-300 dark:hover:text-primary-100 font-medium"
           >
             Copy
           </button>
@@ -153,18 +153,18 @@ export function TemplateCard({ template, onEdit, onDelete, onDuplicate }: Templa
       {/* Placeholders */}
       {template.placeholders && template.placeholders.length > 0 && (
         <div className="mb-4">
-          <h4 className="text-xs font-medium text-gray-700 mb-2">Placeholders:</h4>
+          <h4 className="text-xs font-medium text-gray-700 dark:text-primary-300 mb-2">Placeholders:</h4>
           <div className="flex flex-wrap gap-1">
             {template.placeholders.slice(0, 4).map((placeholder, index) => (
               <span
                 key={index}
-                className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary-100 text-primary-800"
+                className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/20 dark:text-primary-300"
               >
                 [{placeholder}]
               </span>
             ))}
             {template.placeholders.length > 4 && (
-              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800 dark:bg-dark-600 dark:text-primary-300">
                 +{template.placeholders.length - 4} more
               </span>
             )}
@@ -191,7 +191,7 @@ export function TemplateCard({ template, onEdit, onDelete, onDuplicate }: Templa
       </div>
 
       {/* Edit/Delete Actions */}
-      <div className="flex space-x-2 pt-4 border-t border-gray-200">
+      <div className="flex space-x-2 pt-4 border-t border-gray-200 dark:border-dark-700">
         <button
           onClick={onEdit}
           className="flex-1 btn-secondary text-sm"
@@ -200,7 +200,7 @@ export function TemplateCard({ template, onEdit, onDelete, onDuplicate }: Templa
         </button>
         <button
           onClick={onDelete}
-          className="flex-1 btn-ghost text-sm text-red-600 hover:text-red-700 hover:bg-red-50"
+          className="flex-1 btn-ghost text-sm text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-error-400 dark:hover:text-error-300 dark:hover:bg-error-900/20"
           disabled={template.is_default}
           title={template.is_default ? 'Cannot delete default templates' : 'Delete template'}
         >

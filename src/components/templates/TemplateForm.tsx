@@ -199,15 +199,15 @@ export function TemplateForm({ template, onSave, onCancel }: TemplateFormProps) 
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto dark:bg-dark-800">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
               {template ? 'Edit Template' : 'Create New Template'}
             </h2>
             <button
               onClick={onCancel}
-              className="text-gray-400 hover:text-gray-500"
+              className="text-gray-400 hover:text-gray-500 dark:text-primary-300 dark:hover:text-primary-100"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -219,7 +219,7 @@ export function TemplateForm({ template, onSave, onCancel }: TemplateFormProps) 
             {/* Name & Category */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-primary-300 mb-1">
                   Template Name *
                 </label>
                 <input
@@ -231,12 +231,12 @@ export function TemplateForm({ template, onSave, onCancel }: TemplateFormProps) 
                   placeholder="New Listing Alert"
                 />
                 {errors.name && (
-                  <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.name}</p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-primary-300 mb-1">
                   Category
                 </label>
                 <select
@@ -257,14 +257,14 @@ export function TemplateForm({ template, onSave, onCancel }: TemplateFormProps) 
             {/* Content */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label htmlFor="content" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="content" className="block text-sm font-medium text-gray-700 dark:text-primary-300">
                   Message Content *
                 </label>
                 <div className="flex space-x-2">
                   <button
                     type="button"
                     onClick={() => setPreviewMode(!previewMode)}
-                    className="text-sm text-primary-600 hover:text-primary-700"
+                    className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-300 dark:hover:text-primary-100"
                   >
                     {previewMode ? 'Edit' : 'Preview'}
                   </button>
@@ -275,8 +275,8 @@ export function TemplateForm({ template, onSave, onCancel }: TemplateFormProps) 
               </div>
 
               {previewMode ? (
-                <div className="min-h-32 p-3 border border-gray-300 rounded-md bg-gray-50">
-                  <p className="text-sm text-gray-900 whitespace-pre-wrap">
+                <div className="min-h-32 p-3 border border-gray-300 rounded-md bg-gray-50 dark:bg-dark-700 dark:border-dark-600">
+                  <p className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">
                     {renderPreview()}
                   </p>
                 </div>
@@ -292,7 +292,7 @@ export function TemplateForm({ template, onSave, onCancel }: TemplateFormProps) 
               )}
 
               {errors.content && (
-                <p className="mt-1 text-sm text-red-600">{errors.content}</p>
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.content}</p>
               )}
             </div>
 
@@ -300,24 +300,24 @@ export function TemplateForm({ template, onSave, onCancel }: TemplateFormProps) 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Available Placeholders */}
               <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-3">Available Placeholders</h3>
-                <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-primary-300 mb-3">Available Placeholders</h3>
+                <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg dark:border-dark-700">
                   {availablePlaceholders.map((placeholder) => (
                     <button
                       key={placeholder.key}
                       type="button"
                       onClick={() => insertPlaceholder(placeholder.key)}
-                      className="w-full p-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                      className="w-full p-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 dark:hover:bg-dark-700 dark:border-dark-800"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-900">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
                           [{placeholder.key}]
                         </span>
-                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 text-gray-400 dark:text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">{placeholder.description}</p>
+                      <p className="text-xs text-gray-500 dark:text-primary-400 mt-1">{placeholder.description}</p>
                     </button>
                   ))}
                 </div>
@@ -325,12 +325,12 @@ export function TemplateForm({ template, onSave, onCancel }: TemplateFormProps) 
 
               {/* Detected Placeholders */}
               <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-3">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-primary-300 mb-3">
                   Detected Placeholders ({detectedPlaceholders.length})
                 </h3>
-                <div className="border border-gray-200 rounded-lg p-3 min-h-48">
+                <div className="border border-gray-200 rounded-lg p-3 min-h-48 dark:border-dark-700">
                   {detectedPlaceholders.length === 0 ? (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-primary-400">
                       No placeholders detected. Click on placeholders from the left to add them to your template.
                     </p>
                   ) : (
@@ -338,7 +338,7 @@ export function TemplateForm({ template, onSave, onCancel }: TemplateFormProps) 
                       {detectedPlaceholders.map((placeholder, index) => (
                         <span
                           key={index}
-                          className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary-100 text-primary-800"
+                          className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/20 dark:text-primary-300"
                         >
                           [{placeholder}]
                         </span>
@@ -350,9 +350,9 @@ export function TemplateForm({ template, onSave, onCancel }: TemplateFormProps) 
             </div>
 
             {/* Tips */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-medium text-blue-900 mb-2">Template Tips:</h4>
-              <ul className="text-sm text-blue-800 space-y-1">
+            <div className="bg-blue-50 border-blue-200 rounded-lg p-4 dark:bg-blue-900/20 dark:border-blue-700">
+              <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-2">Template Tips:</h4>
+              <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
                 <li>• Keep messages under 160 characters for single SMS</li>
                 <li>• Use placeholders to personalize messages automatically</li>
                 <li>• Include a clear call-to-action</li>
@@ -362,7 +362,7 @@ export function TemplateForm({ template, onSave, onCancel }: TemplateFormProps) 
             </div>
 
             {/* Form Actions */}
-            <div className="flex space-x-3 pt-6 border-t border-gray-200">
+            <div className="flex space-x-3 pt-6 border-t border-gray-200 dark:border-dark-700">
               <button
                 type="button"
                 onClick={onCancel}

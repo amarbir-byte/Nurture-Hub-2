@@ -217,28 +217,28 @@ export function TemplatesPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         <div className="card text-center">
-          <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
-          <div className="text-sm text-gray-600">Total Templates</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</div>
+          <div className="text-sm text-gray-600 dark:text-primary-400">Total Templates</div>
         </div>
         <div className="card text-center">
           <div className="text-2xl font-bold text-green-600">{stats.listing}</div>
-          <div className="text-sm text-gray-600">Listing</div>
+          <div className="text-sm text-gray-600 dark:text-primary-400">Listing</div>
         </div>
         <div className="card text-center">
           <div className="text-2xl font-bold text-blue-600">{stats.sold}</div>
-          <div className="text-sm text-gray-600">Sold</div>
+          <div className="text-sm text-gray-600 dark:text-primary-400">Sold</div>
         </div>
         <div className="card text-center">
           <div className="text-2xl font-bold text-purple-600">{stats.follow_up}</div>
-          <div className="text-sm text-gray-600">Follow-up</div>
+          <div className="text-sm text-gray-600 dark:text-primary-400">Follow-up</div>
         </div>
         <div className="card text-center">
           <div className="text-2xl font-bold text-yellow-600">{stats.marketing}</div>
-          <div className="text-sm text-gray-600">Marketing</div>
+          <div className="text-sm text-gray-600 dark:text-primary-400">Marketing</div>
         </div>
         <div className="card text-center">
-          <div className="text-2xl font-bold text-gray-600">{stats.custom}</div>
-          <div className="text-sm text-gray-600">Custom</div>
+          <div className="text-2xl font-bold text-gray-600 dark:text-primary-400">{stats.custom}</div>
+          <div className="text-sm text-gray-600 dark:text-primary-400">Custom</div>
         </div>
       </div>
 
@@ -249,7 +249,7 @@ export function TemplatesPage() {
             <label htmlFor="search" className="sr-only">Search templates</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-5 w-5 text-gray-400 dark:text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
@@ -285,11 +285,11 @@ export function TemplatesPage() {
       {/* Templates Grid */}
       {filteredTemplates.length === 0 ? (
         <div className="card text-center py-12">
-          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">No templates found</h3>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
+          <p className="mt-2 text-gray-600 dark:text-primary-400">
             {searchTerm || categoryFilter !== 'all'
               ? 'Try adjusting your search or filters.'
               : 'Get started by creating your first template or adding default templates.'

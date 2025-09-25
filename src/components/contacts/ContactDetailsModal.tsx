@@ -443,7 +443,7 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                     <div>
                       <span className="text-gray-600 dark:text-primary-300">Added:</span>
                       <span className="ml-2 font-medium text-gray-900 dark:text-white">{formatDate(contact.created_at)}</span>
-                    </div>
+                      </div>
                   </div>
                 </div>
 
@@ -738,14 +738,14 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
 
               <div className="mb-4">
                 <p className="text-sm text-gray-600 dark:text-primary-300 mb-2">
-                  Selected contacts ({selectedContacts.length}):
+                  Selected contacts ({selectedProperties.length}):
                 </p>
                 <div className="space-y-1">
-                  {nearbyContacts
-                    .filter(c => selectedContacts.includes(c.id))
-                    .map(contact => (
-                      <div key={contact.id} className="text-sm font-medium text-gray-900 dark:text-white">
-                        {contact.first_name} {contact.last_name}
+                  {nearbyProperties
+                    .filter(p => selectedProperties.includes(p.id))
+                    .map((property: Property) => (
+                      <div key={property.id} className="text-sm font-medium text-gray-900 dark:text-white">
+                        {property.address}
                         {communicationType === 'email' && contact.email && (
                           <span className="text-gray-500 dark:text-primary-400 ml-2">({contact.email})</span>
                         )}

@@ -43,7 +43,7 @@ export function Header() {
             </div>
 
             {/* Navigation & User Menu */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               {user ? (
                 <>
                   {/* Trial Status */}
@@ -132,13 +132,13 @@ export function Header() {
                 <>
                   <button
                     onClick={handleSignInClick}
-                    className="btn-ghost"
+                    className="btn-ghost btn-sm"
                   >
                     Sign In
                   </button>
                   <button
                     onClick={handleSignUpClick}
-                    className="btn-primary"
+                    className="btn-primary btn-sm"
                   >
                     Start Free Trial
                   </button>

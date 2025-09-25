@@ -241,8 +241,8 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
     }
 
     if (selectedTemplate) {
-      const { message } = replaceTemplateVariables(selectedTemplate, baseVariables);
-      return message;
+      const templateResult = replaceTemplateVariables(selectedTemplate, baseVariables);
+      return templateResult.message;
     }
 
     // Fallback message for multiple properties if no template is selected
@@ -796,7 +796,7 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                 <div className="mb-4">
                   <TemplateSelector
                     type={communicationType === 'text' ? 'sms' : communicationType}
-                    category="property" // Keep category as 'property' for now, but consider 'contact' or 'general' for broader templates
+                    category="property"
                     selectedTemplateId={selectedTemplate?.id}
                     onTemplateSelect={setSelectedTemplate}
                   />

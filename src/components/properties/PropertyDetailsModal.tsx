@@ -334,11 +334,11 @@ Interested in similar properties in your area? Let's discuss your requirements.`
                   <h4 className="font-medium text-gray-900 dark:text-white mb-3">Price Information</h4>
                   <div className="space-y-2">
                     {property.status === 'sold' && property.sale_price ? (
-                      <div className="text-2xl font-bold text-blue-600">
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                         Sold: {formatPrice(property.sale_price)}
                       </div>
                     ) : (
-                      <div className="text-2xl font-bold text-primary-600">
+                      <div className="text-2xl font-bold text-primary-600 dark:text-primary-300">
                         {formatPrice(property.sale_price || property.price)}
                       </div>
                     )}

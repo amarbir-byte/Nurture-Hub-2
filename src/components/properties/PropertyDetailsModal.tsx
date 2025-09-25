@@ -174,29 +174,42 @@ export function PropertyDetailsModal({ property, onClose }: PropertyDetailsModal
     setShowCommunicationModal(true)
   }
 
-  const generatePropertyMessage = () => {
+  const generatePropertyMessage = (
+    selectedTemplate: MessageTemplate | null,
+    property: Property,
+    contact: Contact | null, // Pass a specific contact if available, or null
+    formatPrice: (price: number) => string
+  ): string => {
+    const baseVariables: Record<string, string> = {
+      contact_name: contact?.first_name || contact?.last_name ? `${contact.first_name || ''} ${contact.last_name || ''}`.trim() : 'there',
+      property_address: property.address,
+      property_price: property.sale_price 
+        ? formatPrice(property.sale_price)
+        : property.price 
+        ? formatPrice(property.price)
+        : 'Price not available',
+      property_type: property.property_type.charAt(0).toUpperCase() + property.property_type.slice(1),
+      bedrooms: property.bedrooms?.toString() || '',
+      bathrooms: property.bathrooms?.toString() || '',
+      floor_area: property.floor_area?.toString() || '',
+      property_description: property.description || '',
+      agent_name: 'Your Agent', // This would come from user profile
+      agent_phone: '+64 21 123 4567', // This would come from user profile
+      old_price: property.price ? formatPrice(property.price) : 'N/A',
+      new_price: property.sale_price ? formatPrice(property.sale_price) : 'N/A',
+      savings_amount: (property.price && property.sale_price) ? formatPrice(property.price - property.sale_price) : 'N/A',
+      contact_address: contact?.address || 'their address',
+      suburb: property.address.split(',')[1]?.trim() || 'the area', // Basic suburb extraction
+      city: property.address.split(',').pop()?.trim() || 'the city', // Basic city extraction
+    };
+    
     if (selectedTemplate) {
-      const variables = {
-        contact_name: 'Contact', // Will be replaced per contact
-        property_address: property.address,
-        property_price: property.sale_price 
-          ? formatPrice(property.sale_price)
-          : property.price 
-          ? formatPrice(property.price)
-          : 'Price not available',
-        property_type: property.property_type.charAt(0).toUpperCase() + property.property_type.slice(1),
-        bedrooms: property.bedrooms?.toString() || '',
-        bathrooms: property.bathrooms?.toString() || '',
-        floor_area: property.floor_area?.toString() || '',
-        property_description: property.description || '',
-        agent_name: 'Your Agent' // This would come from user profile
-      }
-      
-      const { message } = replaceTemplateVariables(selectedTemplate, variables)
-      return message
+      const { message } = replaceTemplateVariables(selectedTemplate, baseVariables);
+      // Using non-null assertion as MessageTemplate.message is defined as string
+      return message!; 
     }
 
-    // Fallback to original message
+    // Fallback to original message if no template is selected
     const priceStr = property.sale_price
       ? `Sold for ${formatPrice(property.sale_price)}`
       : property.price
@@ -217,21 +230,28 @@ ${property.description || ''}
 Interested in similar properties in your area? Let's discuss your requirements.`
   }
 
-  const generatePropertySubject = () => {
+  const generatePropertySubject = (
+    selectedTemplate: MessageTemplate | null,
+    property: Property,
+    contact: Contact | null,
+    formatPrice: (price: number) => string
+  ): string => {
+    const baseVariables: Record<string, string> = {
+      contact_name: contact?.first_name || contact?.last_name ? `${contact.first_name || ''} ${contact.last_name || ''}`.trim() : 'there',
+      property_address: property.address,
+      property_price: property.sale_price 
+        ? formatPrice(property.sale_price)
+        : property.price 
+        ? formatPrice(property.price)
+        : 'Price not available',
+      agent_name: 'Your Agent'
+    };
+
     if (selectedTemplate && selectedTemplate.subject) {
-      const variables = {
-        contact_name: 'Contact',
-        property_address: property.address,
-        property_price: property.sale_price 
-          ? formatPrice(property.sale_price)
-          : property.price 
-          ? formatPrice(property.price)
-          : 'Price not available',
-        agent_name: 'Your Agent'
-      }
-      
-      const { subject } = replaceTemplateVariables(selectedTemplate, variables)
-      return subject
+      const { subject } = replaceTemplateVariables(selectedTemplate, baseVariables);
+      // Using non-null assertion as MessageTemplate.subject is defined as string | undefined,
+      // but if it exists, replaceTemplateVariables ensures it's a string.
+      return subject!;
     }
     
     return `Property Update: ${property.address}`
@@ -241,12 +261,21 @@ Interested in similar properties in your area? Let's discuss your requirements.`
     if (selectedContacts.length === 0) return
 
     const selectedContactsData = nearbyContacts.filter(c => selectedContacts.includes(c.id))
-    const subject = generatePropertySubject()
-    const message = generatePropertyMessage()
+    
+    // For multi-contact send, we'll generate the message for the first contact as a preview
+    // and then generate individually for each contact when opening the app.
+    // The stored message will be the generic one or the template-based one.
+    const genericSubject = generatePropertySubject(selectedTemplate, property, null, formatPrice);
+    const genericMessage = generatePropertyMessage(selectedTemplate, property, null, formatPrice);
+
 
     try {
       // Record communication history for each contact
       const communicationPromises = selectedContactsData.map(contact => {
+        // Generate message specifically for each contact to fill 'contact_name' etc.
+        const personalizedSubject = generatePropertySubject(selectedTemplate, property, contact, formatPrice);
+        const personalizedMessage = generatePropertyMessage(selectedTemplate, property, contact, formatPrice);
+
         return supabase.from('communication_history').insert({
           user_id: user?.id,
           contact_id: contact.id,
@@ -256,8 +285,8 @@ Interested in similar properties in your area? Let's discuss your requirements.`
           property_id: property.id,
           property_address: property.address,
           communication_type: communicationType,
-          subject: communicationType === 'email' ? subject : null,
-          message: message,
+          subject: communicationType === 'email' ? personalizedSubject : null,
+          message: personalizedMessage,
           context: 'property_alert',
           related_properties: [property.id],
           tags: ['property_marketing', 'nearby_contact'],
@@ -271,16 +300,22 @@ Interested in similar properties in your area? Let's discuss your requirements.`
       if (communicationType === 'email') {
         const emails = selectedContactsData.map(c => c.email).filter(Boolean)
         if (emails.length > 0) {
-          const mailtoLink = `mailto:${emails}?subject=${encodeURIComponent(subject || 'Property Update')}&body=${encodeURIComponent(message)}`
+          // For email, we can send a single email to multiple recipients (BCC)
+          // or open multiple mailto links. For simplicity, let's open one with BCC.
+          const mailtoLink = `mailto:?bcc=${emails.join(',')}&subject=${encodeURIComponent(genericSubject || 'Property Update')}&body=${encodeURIComponent(genericMessage)}`
           window.open(mailtoLink, '_self')
         }
       } else if (communicationType === 'text') {
         const phones = selectedContactsData.map(c => c.phone).filter(Boolean)
         if (phones.length > 0) {
+          // For SMS, typically one message per recipient.
+          // We'll open the first one, user can manually send others.
+          // Or, for a more integrated solution, this would hit an SMS API.
           phones.forEach(phone => {
             if (phone) {
               const cleanPhone = phone.replace(/[^\d+]/g, '')
-              const smsLink = `sms:${cleanPhone}?body=${encodeURIComponent(message)}`
+              const personalizedMessage = generatePropertyMessage(selectedTemplate, property, selectedContactsData.find(c => c.phone === phone) || null, formatPrice);
+              const smsLink = `sms:${cleanPhone}?body=${encodeURIComponent(personalizedMessage)}`
               window.open(smsLink, '_self')
             }
           })
@@ -304,6 +339,23 @@ Interested in similar properties in your area? Let's discuss your requirements.`
 
     setShowCommunicationModal(false)
     setSelectedContacts([])
+  }
+
+  const formatPreviewMessage = (contact: Contact | null) => {
+    return generatePropertyMessage(selectedTemplate, property, contact, formatPrice);
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'listed':
+        return 'bg-green-100 text-green-800'
+      case 'sold':
+        return 'bg-blue-100 text-blue-800'
+      case 'withdrawn':
+        return 'bg-yellow-100 text-yellow-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
   }
 
   return (
@@ -712,9 +764,8 @@ Interested in similar properties in your area? Let's discuss your requirements.`
                   Selected contacts ({selectedContacts.length}):
                 </p>
                 <div className="space-y-1">
-                  {nearbyContacts
-                    .filter(c => selectedContacts.includes(c.id))
-                    .map(contact => (
+                  {selectedContactsData
+                    .map((contact) => (
                       <div key={contact.id} className="text-sm font-medium text-gray-900 dark:text-white">
                         {contact.first_name} {contact.last_name}
                         {communicationType === 'email' && contact.email && (
@@ -750,7 +801,8 @@ Interested in similar properties in your area? Let's discuss your requirements.`
                       Using template: {selectedTemplate.name}
                     </div>
                   )}
-                  <div className="mt-2 whitespace-pre-line">{generatePropertyMessage()}</div>
+                  {/* Display preview message for the first selected contact, or a generic one */}
+                  <div className="mt-2 whitespace-pre-line">{formatPreviewMessage(selectedContactsData[0] || null)}</div>
                 </div>
               )}
 

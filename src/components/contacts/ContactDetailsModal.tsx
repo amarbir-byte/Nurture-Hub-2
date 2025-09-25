@@ -241,8 +241,9 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
     }
 
     if (selectedTemplate) {
-      const templateResult = replaceTemplateVariables(selectedTemplate, baseVariables);
-      return templateResult.message;
+      const { message } = replaceTemplateVariables(selectedTemplate, baseVariables);
+      // Using non-null assertion as MessageTemplate.message is defined as string
+      return message!; 
     }
 
     // Fallback message for multiple properties if no template is selected
@@ -328,7 +329,9 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
 
     if (selectedTemplate && selectedTemplate.subject) {
       const { subject } = replaceTemplateVariables(selectedTemplate, baseVariables);
-      return subject;
+      // Using non-null assertion as MessageTemplate.subject is defined as string | undefined,
+      // but if it exists, replaceTemplateVariables ensures it's a string.
+      return subject!; 
     }
     
     return `Properties Near You - ${contact.first_name || contact.name || 'Contact'}`;

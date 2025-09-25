@@ -369,14 +369,14 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
   return (
     <>
       <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="bg-white dark:bg-dark-800 rounded-lg shadow-xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
           <div className="p-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Contact Details</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Contact Details</h2>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded-md"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-md text-primary-400 dark:text-primary-300 hover:text-primary-600 dark:hover:text-primary-100"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -388,13 +388,13 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
               {/* Contact Information */}
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                     {contact.first_name && contact.last_name
                       ? `${contact.first_name} ${contact.last_name}`
                       : contact.name
                     }
                   </h3>
-                  <div className="space-y-2 text-sm text-gray-600">
+                  <div className="space-y-2 text-sm text-gray-600 dark:text-primary-300">
                     {contact.email && (
                       <div className="flex items-center">
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -421,39 +421,39 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                 </div>
 
                 {/* Contact Details */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-3">Contact Information</h4>
+                <div className="bg-gray-50 dark:bg-dark-700 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-3">Contact Information</h4>
                   <div className="space-y-2 text-sm">
                     <div>
-                      <span className="text-gray-600">Source:</span>
-                      <span className="ml-2 font-medium capitalize">{contact.contact_source}</span>
+                      <span className="text-gray-600 dark:text-primary-300">Source:</span>
+                      <span className="ml-2 font-medium capitalize text-gray-900 dark:text-white">{contact.contact_source}</span>
                     </div>
                     {contact.last_contact_date && (
                       <div>
-                        <span className="text-gray-600">Last Contact:</span>
-                        <span className="ml-2 font-medium">{formatDate(contact.last_contact_date)}</span>
+                        <span className="text-gray-600 dark:text-primary-300">Last Contact:</span>
+                        <span className="ml-2 font-medium text-gray-900 dark:text-white">{formatDate(contact.last_contact_date)}</span>
                       </div>
                     )}
                     {contact.follow_up_date && (
                       <div>
-                        <span className="text-gray-600">Follow Up:</span>
-                        <span className="ml-2 font-medium">{formatDate(contact.follow_up_date)}</span>
+                        <span className="text-gray-600 dark:text-primary-300">Follow Up:</span>
+                        <span className="ml-2 font-medium text-gray-900 dark:text-white">{formatDate(contact.follow_up_date)}</span>
                       </div>
                     )}
                     <div>
-                      <span className="text-gray-600">Added:</span>
-                      <span className="ml-2 font-medium">{formatDate(contact.created_at)}</span>
+                      <span className="text-gray-600 dark:text-primary-300">Added:</span>
+                      <span className="ml-2 font-medium text-gray-900 dark:text-white">{formatDate(contact.created_at)}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Tags */}
                 {contact.tags && contact.tags.length > 0 && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Tags</h4>
+                  <div className="bg-gray-50 dark:bg-dark-700 rounded-lg p-4">
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-2">Tags</h4>
                     <div className="flex flex-wrap gap-2">
                       {contact.tags.map((tag, index) => (
-                        <span key={index} className="badge bg-blue-100 text-blue-800">
+                        <span key={index} className="badge bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                           {tag}
                         </span>
                       ))}
@@ -463,9 +463,9 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
 
                 {/* Notes */}
                 {contact.notes && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Notes</h4>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{contact.notes}</p>
+                  <div className="bg-gray-50 dark:bg-dark-700 rounded-lg p-4">
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-2">Notes</h4>
+                    <p className="text-sm text-gray-700 dark:text-primary-300 whitespace-pre-wrap">{contact.notes}</p>
                   </div>
                 )}
               </div>
@@ -474,10 +474,10 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
               {contact.lat && contact.lng && (
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                       Location & Proximity Map
                     </h3>
-                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="bg-white dark:bg-dark-800 rounded-lg border border-gray-200 dark:border-dark-700 overflow-hidden">
                       <MapTilerMap
                         center={[contact.lng, contact.lat]}
                         zoom={13}
@@ -508,7 +508,7 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                         className="border-0"
                       />
                     </div>
-                    <div className="mt-2 flex items-center justify-between text-sm text-gray-600">
+                    <div className="mt-2 flex items-center justify-between text-sm text-gray-600 dark:text-primary-300">
                       <div className="flex items-center space-x-4">
                         <div className="flex items-center">
                           <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
@@ -531,11 +531,11 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
               <div className="space-y-6">
                 <div>
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                       Nearby Properties ({nearbyProperties.length})
                     </h3>
                     <div className="flex items-center space-x-2">
-                      <label className="text-sm font-medium text-gray-700">
+                      <label className="text-sm font-medium text-gray-700 dark:text-primary-300">
                         Radius: {radius.toFixed(1)}km
                       </label>
                       <input
@@ -545,7 +545,7 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                         step="0.5"
                         value={radius}
                         onChange={(e) => setRadius(parseFloat(e.target.value))}
-                        className="w-24 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                        className="w-24 h-2 bg-gray-200 dark:bg-dark-700 rounded-lg appearance-none cursor-pointer slider"
                       />
                     </div>
                   </div>
@@ -553,11 +553,11 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                   {loading ? (
                     <div className="flex items-center justify-center h-32">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-                      <span className="ml-3 text-gray-600">Loading properties...</span>
+                      <span className="ml-3 text-gray-600 dark:text-primary-300">Loading properties...</span>
                     </div>
                   ) : nearbyProperties.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="text-center py-8 text-gray-500 dark:text-primary-400">
+                      <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-primary-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                       </svg>
                       No properties found within {radius}km of this contact
@@ -570,8 +570,8 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                             key={property.id}
                             className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                               selectedProperties.includes(property.id)
-                                ? 'border-primary-500 bg-primary-50'
-                                : 'border-gray-200 hover:border-gray-300'
+                                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                                : 'border-gray-200 hover:border-gray-300 dark:border-dark-700 dark:hover:border-dark-600'
                             }`}
                             onClick={() => handlePropertySelection(property.id)}
                           >
@@ -579,7 +579,7 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                               <div className={`w-4 h-4 border-2 rounded ${
                                 selectedProperties.includes(property.id)
                                   ? 'bg-primary-600 border-primary-600'
-                                  : 'border-gray-300'
+                                  : 'border-gray-300 dark:border-dark-600'
                               }`}>
                                 {selectedProperties.includes(property.id) && (
                                   <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -589,12 +589,12 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                               </div>
                               <div className="flex-1">
                                 <div className="flex items-center justify-between">
-                                  <div className="font-medium text-gray-900">{property.address}</div>
+                                  <div className="font-medium text-gray-900 dark:text-white">{property.address}</div>
                                   <span className={`badge text-xs ${getStatusColor(property.status)}`}>
                                     {property.status}
                                   </span>
                                 </div>
-                                <div className="text-sm font-semibold text-primary-600">
+                                <div className="text-sm font-semibold text-primary-600 dark:text-primary-300">
                                   {property.sale_price
                                     ? `Sold: ${formatPrice(property.sale_price)}`
                                     : property.price
@@ -602,14 +602,14 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                                     : 'Price N/A'
                                   }
                                 </div>
-                                <div className="text-xs text-gray-500 space-x-2">
+                                <div className="text-xs text-gray-500 dark:text-primary-400 space-x-2">
                                   <span className="capitalize">{property.property_type}</span>
                                   {property.bedrooms && <span>• {property.bedrooms} bed</span>}
                                   {property.bathrooms && <span>• {property.bathrooms} bath</span>}
                                   {property.floor_area && <span>• {property.floor_area}m²</span>}
                                 </div>
                                 {property.sold_date && (
-                                  <div className="text-xs text-gray-500">
+                                  <div className="text-xs text-gray-500 dark:text-primary-400">
                                     Sold: {formatDate(property.sold_date)}
                                   </div>
                                 )}
@@ -620,8 +620,8 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                       </div>
 
                       {selectedProperties.length > 0 && (
-                        <div className="mt-6 p-4 bg-primary-50 rounded-lg">
-                          <h4 className="font-medium text-gray-900 mb-3">
+                        <div className="mt-6 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+                          <h4 className="font-medium text-gray-900 dark:text-white mb-3">
                             Properties Selected ({selectedProperties.length})
                           </h4>
                           <div className="flex space-x-2">
@@ -655,18 +655,18 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
 
                 {/* Communication History */}
                 <div className="mt-8">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                     Communication History
                   </h3>
 
                   {loadingHistory ? (
                     <div className="flex items-center justify-center h-20">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
-                      <span className="ml-3 text-gray-600">Loading history...</span>
+                      <span className="ml-3 text-gray-600 dark:text-primary-300">Loading history...</span>
                     </div>
                   ) : communicationHistory.length === 0 ? (
-                    <div className="text-center py-6 text-gray-500">
-                      <svg className="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="text-center py-6 text-gray-500 dark:text-primary-400">
+                      <svg className="mx-auto h-8 w-8 text-gray-400 dark:text-primary-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                       </svg>
                       <p className="text-sm">No communications yet</p>
@@ -674,42 +674,42 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                   ) : (
                     <div className="max-h-64 overflow-y-auto space-y-3">
                       {communicationHistory.map((comm) => (
-                        <div key={comm.id} className="p-3 bg-gray-50 rounded-lg">
+                        <div key={comm.id} className="p-3 bg-gray-50 dark:bg-dark-700 rounded-lg">
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center space-x-2">
                               <span className={`badge text-xs ${
-                                comm.communication_type === 'email' ? 'bg-blue-100 text-blue-800' :
-                                comm.communication_type === 'text' ? 'bg-green-100 text-green-800' :
-                                comm.communication_type === 'call' ? 'bg-purple-100 text-purple-800' :
-                                'bg-gray-100 text-gray-800'
+                                comm.communication_type === 'email' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
+                                comm.communication_type === 'text' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                                comm.communication_type === 'call' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' :
+                                'bg-gray-100 text-gray-800 dark:bg-dark-600 dark:text-primary-300'
                               }`}>
                                 {comm.communication_type}
                               </span>
-                              <span className="text-sm font-medium text-gray-900">
+                              <span className="text-sm font-medium text-gray-900 dark:text-white">
                                 {comm.contact_name}
                               </span>
                             </div>
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-gray-500 dark:text-primary-400">
                               {formatDate(comm.sent_at)}
                             </span>
                           </div>
                           {comm.subject && (
-                            <div className="text-sm font-medium text-gray-800 mb-1">
+                            <div className="text-sm font-medium text-gray-800 dark:text-primary-200 mb-1">
                               {comm.subject}
                             </div>
                           )}
-                          <div className="text-xs text-gray-600 line-clamp-2">
+                          <div className="text-xs text-gray-600 dark:text-primary-300 line-clamp-2">
                             {comm.message}
                           </div>
                           {comm.related_properties && comm.related_properties.length > 0 && (
-                            <div className="mt-2 text-xs text-blue-600">
+                            <div className="mt-2 text-xs text-blue-600 dark:text-blue-400">
                               Related to {comm.related_properties.length} property{comm.related_properties.length !== 1 ? 'ies' : ''}
                             </div>
                           )}
                           {comm.tags && comm.tags.length > 0 && (
                             <div className="mt-2 flex flex-wrap gap-1">
                               {comm.tags.map((tag: string, index: number) => (
-                                <span key={index} className="badge text-xs bg-gray-100 text-gray-600">
+                                <span key={index} className="badge text-xs bg-gray-100 dark:bg-dark-600 text-gray-600 dark:text-primary-300">
                                   {tag}
                                 </span>
                               ))}
@@ -729,28 +729,28 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
       {/* Communication Confirmation Modal */}
       {showCommunicationModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4">
+          <div className="bg-white dark:bg-dark-800 rounded-lg shadow-xl max-w-lg w-full mx-4">
             <div className="p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                 {communicationType === 'email' ? 'Send Email' :
                  communicationType === 'text' ? 'Send Text Message' : 'Make Call'}
               </h3>
 
               <div className="mb-4">
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-gray-600 dark:text-primary-300 mb-2">
                   Selected contacts ({selectedContacts.length}):
                 </p>
                 <div className="space-y-1">
                   {nearbyContacts
                     .filter(c => selectedContacts.includes(c.id))
                     .map(contact => (
-                      <div key={contact.id} className="text-sm font-medium text-gray-900">
+                      <div key={contact.id} className="text-sm font-medium text-gray-900 dark:text-white">
                         {contact.first_name} {contact.last_name}
                         {communicationType === 'email' && contact.email && (
-                          <span className="text-gray-500 ml-2">({contact.email})</span>
+                          <span className="text-gray-500 dark:text-primary-400 ml-2">({contact.email})</span>
                         )}
                         {(communicationType === 'text' || communicationType === 'call') && contact.phone && (
-                          <span className="text-gray-500 ml-2">({contact.phone})</span>
+                          <span className="text-gray-500 dark:text-primary-400 ml-2">({contact.phone})</span>
                         )}
                       </div>
                     ))
@@ -772,14 +772,14 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
 
               {/* Message Preview */}
               {(communicationType === 'email' || communicationType === 'text') && (
-                <div className="mb-4 p-3 bg-gray-50 rounded text-sm text-gray-900">
+                <div className="mb-4 p-3 bg-gray-50 dark:bg-dark-700 rounded text-sm text-gray-900 dark:text-white">
                   <strong>Preview:</strong>
                   {selectedTemplate && (
-                    <div className="text-xs text-gray-600 mb-2">
+                    <div className="text-xs text-gray-600 dark:text-primary-300 mb-2">
                       Using template: {selectedTemplate.name}
                     </div>
                   )}
-                  <div className="mt-2 whitespace-pre-line">{generatePropertyMessage()}</div>
+                  <div className="mt-2 whitespace-pre-line">{generatePropertiesMessage()}</div>
                 </div>
               )}
 

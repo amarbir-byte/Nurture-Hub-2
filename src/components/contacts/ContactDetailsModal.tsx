@@ -75,6 +75,16 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
   const [selectedTemplate, setSelectedTemplate] = useState<MessageTemplate | null>(null)
 
   useEffect(() => {
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      // Restore body scroll when modal is closed
+      document.body.style.overflow = 'unset'
+    }
+  }, []) // Empty dependency array means this runs once on mount and once on unmount
+
+  useEffect(() => {
     fetchNearbyProperties()
     fetchCommunicationHistory()
   }, [contact, radius])
@@ -676,9 +686,7 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                                 {comm.communication_type}
                               </span>
                               <span className="text-sm font-medium text-gray-900">
-                                {comm.context === 'property_alert' ? 'Property Alert' :
-                                 comm.context === 'market_update' ? 'Market Update' :
-                                 comm.context || 'Communication'}
+                                {comm.contact_name}
                               </span>
                             </div>
                             <span className="text-xs text-gray-500">
@@ -721,36 +729,29 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
       {/* Communication Confirmation Modal */}
       {showCommunicationModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4">
             <div className="p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {communicationType === 'email' ? 'Send Property Update Email' :
-                 communicationType === 'text' ? 'Send Property Update Text' : 'Call Contact'}
+                {communicationType === 'email' ? 'Send Email' :
+                 communicationType === 'text' ? 'Send Text Message' : 'Make Call'}
               </h3>
 
               <div className="mb-4">
                 <p className="text-sm text-gray-600 mb-2">
-                  Contact: {contact.first_name && contact.last_name
-                    ? `${contact.first_name} ${contact.last_name}`
-                    : contact.name}
+                  Selected contacts ({selectedContacts.length}):
                 </p>
-                <p className="text-sm text-gray-600 mb-4">
-                  Selected properties ({selectedProperties.length}):
-                </p>
-                <div className="space-y-1 mb-4 max-h-32 overflow-y-auto">
-                  {nearbyProperties
-                    .filter(p => selectedProperties.includes(p.id))
-                    .map(property => (
-                      <div key={property.id} className="text-sm">
-                        <span className="font-medium">{property.address}</span>
-                        <span className="text-gray-500 ml-2">
-                          - {property.sale_price
-                            ? `Sold ${formatPrice(property.sale_price)}`
-                            : property.price
-                            ? formatPrice(property.price)
-                            : 'Price N/A'
-                          }
-                        </span>
+                <div className="space-y-1">
+                  {nearbyContacts
+                    .filter(c => selectedContacts.includes(c.id))
+                    .map(contact => (
+                      <div key={contact.id} className="text-sm font-medium text-gray-900">
+                        {contact.first_name} {contact.last_name}
+                        {communicationType === 'email' && contact.email && (
+                          <span className="text-gray-500 ml-2">({contact.email})</span>
+                        )}
+                        {(communicationType === 'text' || communicationType === 'call') && contact.phone && (
+                          <span className="text-gray-500 ml-2">({contact.phone})</span>
+                        )}
                       </div>
                     ))
                   }
@@ -762,7 +763,7 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                 <div className="mb-4">
                   <TemplateSelector
                     type={communicationType === 'text' ? 'sms' : communicationType}
-                    category="contact"
+                    category="property"
                     selectedTemplateId={selectedTemplate?.id}
                     onTemplateSelect={setSelectedTemplate}
                   />
@@ -771,14 +772,14 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
 
               {/* Message Preview */}
               {(communicationType === 'email' || communicationType === 'text') && (
-                <div className="mb-4 p-3 bg-gray-50 rounded text-sm max-h-64 overflow-y-auto">
-                  <strong>Message Preview:</strong>
+                <div className="mb-4 p-3 bg-gray-50 rounded text-sm text-gray-900">
+                  <strong>Preview:</strong>
                   {selectedTemplate && (
                     <div className="text-xs text-gray-600 mb-2">
                       Using template: {selectedTemplate.name}
                     </div>
                   )}
-                  <div className="mt-2 whitespace-pre-line">{generatePropertiesMessage()}</div>
+                  <div className="mt-2 whitespace-pre-line">{generatePropertyMessage()}</div>
                 </div>
               )}
 

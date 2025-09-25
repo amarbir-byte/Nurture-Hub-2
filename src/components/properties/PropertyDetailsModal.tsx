@@ -36,8 +36,9 @@ interface Property {
 
 interface Contact {
   id: string
-  first_name: string
-  last_name: string
+  first_name?: string // Made optional as per Contact interface in ContactDetailsModal
+  last_name?: string // Made optional as per Contact interface in ContactDetailsModal
+  name: string // Added as per Contact interface in ContactDetailsModal
   email?: string
   phone?: string
   address?: string
@@ -181,7 +182,7 @@ export function PropertyDetailsModal({ property, onClose }: PropertyDetailsModal
     formatPrice: (price: number) => string
   ): string => {
     const baseVariables: Record<string, string> = {
-      contact_name: contact?.first_name || contact?.last_name ? `${contact.first_name || ''} ${contact.last_name || ''}`.trim() : 'there',
+      contact_name: contact?.first_name || contact?.name || 'there',
       property_address: property.address,
       property_price: property.sale_price 
         ? formatPrice(property.sale_price)
@@ -237,7 +238,7 @@ Interested in similar properties in your area? Let's discuss your requirements.`
     formatPrice: (price: number) => string
   ): string => {
     const baseVariables: Record<string, string> = {
-      contact_name: contact?.first_name || contact?.last_name ? `${contact.first_name || ''} ${contact.last_name || ''}`.trim() : 'there',
+      contact_name: contact?.first_name || contact?.name ? `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || contact.name : 'there',
       property_address: property.address,
       property_price: property.sale_price 
         ? formatPrice(property.sale_price)
@@ -260,7 +261,7 @@ Interested in similar properties in your area? Let's discuss your requirements.`
   const handleSendCommunication = async () => {
     if (selectedContacts.length === 0) return
 
-    const selectedContactsData = nearbyContacts.filter(c => selectedContacts.includes(c.id))
+    const selectedContactsData = nearbyContacts.filter((c: Contact) => selectedContacts.includes(c.id))
     
     // For multi-contact send, we'll generate the message for the first contact as a preview
     // and then generate individually for each contact when opening the app.
@@ -271,7 +272,7 @@ Interested in similar properties in your area? Let's discuss your requirements.`
 
     try {
       // Record communication history for each contact
-      const communicationPromises = selectedContactsData.map(contact => {
+      const communicationPromises = selectedContactsData.map((contact: Contact) => {
         // Generate message specifically for each contact to fill 'contact_name' etc.
         const personalizedSubject = generatePropertySubject(selectedTemplate, property, contact, formatPrice);
         const personalizedMessage = generatePropertyMessage(selectedTemplate, property, contact, formatPrice);
@@ -279,7 +280,7 @@ Interested in similar properties in your area? Let's discuss your requirements.`
         return supabase.from('communication_history').insert({
           user_id: user?.id,
           contact_id: contact.id,
-          contact_name: `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Unknown',
+          contact_name: `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || contact.name || 'Unknown',
           contact_email: contact.email,
           contact_phone: contact.phone,
           property_id: property.id,
@@ -298,7 +299,7 @@ Interested in similar properties in your area? Let's discuss your requirements.`
 
       // Open communication apps
       if (communicationType === 'email') {
-        const emails = selectedContactsData.map(c => c.email).filter(Boolean)
+        const emails = selectedContactsData.map((c: Contact) => c.email).filter(Boolean)
         if (emails.length > 0) {
           // For email, we can send a single email to multiple recipients (BCC)
           // or open multiple mailto links. For simplicity, let's open one with BCC.
@@ -306,22 +307,22 @@ Interested in similar properties in your area? Let's discuss your requirements.`
           window.open(mailtoLink, '_self')
         }
       } else if (communicationType === 'text') {
-        const phones = selectedContactsData.map(c => c.phone).filter(Boolean)
+        const phones = selectedContactsData.map((c: Contact) => c.phone).filter(Boolean)
         if (phones.length > 0) {
           // For SMS, typically one message per recipient.
           // We'll open the first one, user can manually send others.
           // Or, for a more integrated solution, this would hit an SMS API.
-          phones.forEach(phone => {
+          phones.forEach((phone: string | undefined) => {
             if (phone) {
               const cleanPhone = phone.replace(/[^\d+]/g, '')
-              const personalizedMessage = generatePropertyMessage(selectedTemplate, property, selectedContactsData.find(c => c.phone === phone) || null, formatPrice);
+              const personalizedMessage = generatePropertyMessage(selectedTemplate, property, selectedContactsData.find((c: Contact) => c.phone === phone) || null, formatPrice);
               const smsLink = `sms:${cleanPhone}?body=${encodeURIComponent(personalizedMessage)}`
               window.open(smsLink, '_self')
             }
           })
         }
       } else if (communicationType === 'call') {
-        const phones = selectedContactsData.map(c => c.phone).filter(Boolean)
+        const phones = selectedContactsData.map((c: Contact) => c.phone).filter(Boolean)
         if (phones.length > 0 && phones[0]) {
           const cleanPhone = phones[0].replace(/[^\d+]/g, '')
           window.open(`tel:${cleanPhone}`, '_self')
@@ -341,22 +342,7 @@ Interested in similar properties in your area? Let's discuss your requirements.`
     setSelectedContacts([])
   }
 
-  const formatPreviewMessage = (contact: Contact | null) => {
-    return generatePropertyMessage(selectedTemplate, property, contact, formatPrice);
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'listed':
-        return 'bg-green-100 text-green-800'
-      case 'sold':
-        return 'bg-blue-100 text-blue-800'
-      case 'withdrawn':
-        return 'bg-yellow-100 text-yellow-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
+  // Removed unused getStatusColor function
 
   return (
     <>
@@ -534,7 +520,7 @@ Interested in similar properties in your area? Let's discuss your requirements.`
                             id: contact.id,
                             lat: contact.lat!,
                             lng: contact.lng!,
-                            title: `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Contact',
+                            title: `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || contact.name,
                             type: 'contact' as const,
                             color: '#10B981'
                           }))
@@ -765,7 +751,7 @@ Interested in similar properties in your area? Let's discuss your requirements.`
                 </p>
                 <div className="space-y-1">
                   {selectedContactsData
-                    .map((contact) => (
+                    .map((contact: Contact) => (
                       <div key={contact.id} className="text-sm font-medium text-gray-900 dark:text-white">
                         {contact.first_name} {contact.last_name}
                         {communicationType === 'email' && contact.email && (

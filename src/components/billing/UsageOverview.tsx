@@ -1,8 +1,11 @@
+import { useSubscription } from '../../contexts/SubscriptionContext'
+
 interface UsageStats {
   contacts: number
   campaigns_this_month: number
   templates: number
   properties: number
+  storage_mb: number
 }
 
 interface UserSubscription {
@@ -121,24 +124,24 @@ export function UsageOverview({ usageStats, userSubscription, isTrialing }: Usag
   return (
     <div className="space-y-6">
       {/* Current Plan Summary */}
-      <div className="card bg-gradient-to-r from-primary-50 to-primary-100 border-primary-200">
+      <div className="card bg-gradient-to-r from-primary-50 to-primary-100 border-primary-200 dark:from-primary-900/20 dark:to-primary-800/20 dark:border-primary-700">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
           <div>
-            <h3 className="text-lg font-medium text-primary-900">
+            <h3 className="text-lg font-medium text-primary-900 dark:text-white">
               {userSubscription?.unlimited_access ? 'Unlimited Access' :
                isTrialing ? 'Free Trial' :
                userSubscription?.plan_type ?
                `${userSubscription.plan_type.charAt(0).toUpperCase() + userSubscription.plan_type.slice(1)} Plan` :
                'No Active Plan'}
             </h3>
-            <p className="text-sm text-primary-700 mt-1">
+            <p className="text-sm text-primary-700 dark:text-primary-300 mt-1">
               {userSubscription?.unlimited_access ? 'All features included with no limits' :
                isTrialing ? 'Explore all features with trial limits' :
                'Your current subscription plan and usage'}
             </p>
           </div>
           <div className="text-left sm:text-right">
-            <div className="text-2xl font-bold text-primary-900">
+            <div className="text-2xl font-bold text-primary-900 dark:text-white">
               {userSubscription?.unlimited_access ? '∞' :
                isTrialing ? 'Trial' :
                userSubscription?.plan_type === 'starter' ? '$29' :
@@ -146,7 +149,7 @@ export function UsageOverview({ usageStats, userSubscription, isTrialing }: Usag
                userSubscription?.plan_type === 'enterprise' ? '$199' : '$0'}
             </div>
             {!userSubscription?.unlimited_access && userSubscription?.plan_type && (
-              <div className="text-sm text-primary-700">/month</div>
+              <div className="text-sm text-primary-700 dark:text-primary-300">/month</div>
             )}
           </div>
         </div>
@@ -154,7 +157,7 @@ export function UsageOverview({ usageStats, userSubscription, isTrialing }: Usag
 
       {/* Usage Breakdown */}
       <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Usage Overview</h3>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Usage Overview</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {usageItems.map((item) => {
             const percentage = getUsagePercentage(item.used, item.limit)
@@ -165,7 +168,7 @@ export function UsageOverview({ usageStats, userSubscription, isTrialing }: Usag
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-2">
                     <span className="text-lg">{item.icon}</span>
-                    <span className="font-medium text-gray-900">{item.name}</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{item.name}</span>
                   </div>
                   <span className={`text-sm font-medium ${status.color}`}>
                     {status.text}
@@ -174,15 +177,15 @@ export function UsageOverview({ usageStats, userSubscription, isTrialing }: Usag
 
                 <div className="mb-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">{item.description}</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-gray-600 dark:text-primary-300">{item.description}</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
                       {item.used.toLocaleString()} / {formatLimit(item.limit)}
                     </span>
                   </div>
                 </div>
 
                 {typeof item.limit === 'number' && (
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-gray-200 dark:bg-dark-700 rounded-full h-2">
                     <div
                       className={`h-2 rounded-full transition-all duration-300 ${getUsageColor(percentage)}`}
                       style={{ width: `${percentage}%` }}
@@ -191,7 +194,7 @@ export function UsageOverview({ usageStats, userSubscription, isTrialing }: Usag
                 )}
 
                 {typeof item.limit === 'string' && (
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-xs text-gray-500 dark:text-primary-400 mt-1">
                     No limits on this feature
                   </div>
                 )}
@@ -203,7 +206,7 @@ export function UsageOverview({ usageStats, userSubscription, isTrialing }: Usag
 
       {/* Upgrade Suggestions */}
       {(isTrialing || userSubscription?.plan_type === 'starter') && (
-        <div className="card bg-blue-50 border-blue-200">
+        <div className="card bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -211,10 +214,10 @@ export function UsageOverview({ usageStats, userSubscription, isTrialing }: Usag
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-800">
+              <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300">
                 {isTrialing ? 'Upgrade to Continue' : 'Consider Upgrading'}
               </h3>
-              <div className="mt-1 text-sm text-blue-700">
+              <div className="mt-1 text-sm text-blue-700 dark:text-blue-300">
                 {isTrialing ? (
                   <p>
                     Your trial limits are designed to help you explore Nurture Hub.
@@ -228,7 +231,7 @@ export function UsageOverview({ usageStats, userSubscription, isTrialing }: Usag
                 )}
               </div>
               <div className="mt-3">
-                <button className="text-sm font-medium text-blue-800 underline hover:text-blue-600">
+                <button className="text-sm font-medium text-blue-800 underline hover:text-blue-600 dark:text-blue-300 dark:hover:text-blue-200">
                   View upgrade options →
                 </button>
               </div>
@@ -239,8 +242,8 @@ export function UsageOverview({ usageStats, userSubscription, isTrialing }: Usag
 
       {/* Usage Tips */}
       <div className="card">
-        <h4 className="font-medium text-gray-900 mb-3">💡 Usage Tips</h4>
-        <div className="space-y-2 text-sm text-gray-600">
+        <h4 className="font-medium text-gray-900 dark:text-white mb-3">💡 Usage Tips</h4>
+        <div className="space-y-2 text-sm text-gray-600 dark:text-primary-300">
           <div className="flex items-start">
             <span className="mr-2">•</span>
             <span>

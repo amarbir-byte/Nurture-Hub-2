@@ -111,7 +111,7 @@ export function SubscriptionPage() {
 
       {/* Trial Warning */}
       {isTrialing && (
-        <div className="card bg-yellow-50 border-yellow-200">
+        <div className="card bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-700">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
@@ -119,17 +119,17 @@ export function SubscriptionPage() {
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-yellow-800">
+              <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
                 Free Trial Ending Soon
               </h3>
-              <p className="mt-1 text-sm text-yellow-700">
+              <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
                 You have {trialDaysRemaining} days left in your free trial.
                 Choose a plan below to continue using Nurture Hub after your trial ends.
               </p>
               <div className="mt-3">
                 <button
                   onClick={() => setActiveTab('plans')}
-                  className="text-sm font-medium text-yellow-800 underline hover:text-yellow-600"
+                  className="text-sm font-medium text-yellow-800 underline hover:text-yellow-600 dark:text-yellow-300 dark:hover:text-yellow-200"
                 >
                   View pricing plans →
                 </button>

@@ -76,20 +76,20 @@ export function BillingHistory({ userSubscription }: BillingHistoryProps) {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h3 className="text-lg font-medium text-gray-900">Billing History</h3>
-        <p className="text-sm text-gray-600 mt-1">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Billing History</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
           View and download your past invoices and payment history.
         </p>
       </div>
 
       {/* Current Billing Info */}
       {userSubscription && (
-        <div className="card bg-gray-50">
-          <h4 className="font-medium text-gray-900 mb-3">Current Billing Information</h4>
+        <div className="card bg-gray-50 dark:bg-dark-700">
+          <h4 className="font-medium text-gray-900 dark:text-white mb-3">Current Billing Information</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-gray-600">Plan:</span>
-              <span className="ml-2 font-medium">
+              <span className="text-gray-600 dark:text-primary-300">Plan:</span>
+              <span className="ml-2 font-medium text-gray-900 dark:text-white">
                 {userSubscription.unlimited_access ? 'Unlimited Access' :
                  userSubscription.plan_type ?
                  `${userSubscription.plan_type.charAt(0).toUpperCase() + userSubscription.plan_type.slice(1)} Plan` :
@@ -97,18 +97,18 @@ export function BillingHistory({ userSubscription }: BillingHistoryProps) {
               </span>
             </div>
             <div>
-              <span className="text-gray-600">Status:</span>
-              <span className="ml-2 font-medium capitalize">
+              <span className="text-gray-600 dark:text-primary-300">Status:</span>
+              <span className="ml-2 font-medium capitalize text-gray-900 dark:text-white">
                 {userSubscription.subscription_status}
               </span>
             </div>
             <div>
-              <span className="text-gray-600">Billing Cycle:</span>
-              <span className="ml-2 font-medium">Monthly</span>
+              <span className="text-gray-600 dark:text-primary-300">Billing Cycle:</span>
+              <span className="ml-2 font-medium text-gray-900 dark:text-white">Monthly</span>
             </div>
             <div>
-              <span className="text-gray-600">Next Payment:</span>
-              <span className="ml-2 font-medium">
+              <span className="text-gray-600 dark:text-primary-300">Next Payment:</span>
+              <span className="ml-2 font-medium text-gray-900 dark:text-white">
                 {userSubscription.subscription_status === 'active' ? 'February 15, 2024' : 'N/A'}
               </span>
             </div>
@@ -119,7 +119,7 @@ export function BillingHistory({ userSubscription }: BillingHistoryProps) {
       {/* Invoice History */}
       <div className="card">
         <div className="flex items-center justify-between mb-4">
-          <h4 className="font-medium text-gray-900">Invoice History</h4>
+          <h4 className="font-medium text-gray-900 dark:text-white">Invoice History</h4>
           <button className="btn-secondary text-sm">
             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -130,52 +130,52 @@ export function BillingHistory({ userSubscription }: BillingHistoryProps) {
 
         {mockBillingHistory.length === 0 ? (
           <div className="text-center py-8">
-            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No invoices yet</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No invoices yet</h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-primary-400">
               Your billing history will appear here once you have a paid subscription.
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-700">
+              <thead className="bg-gray-50 dark:bg-dark-700">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-primary-400 uppercase tracking-wider">
                     Date
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-primary-400 uppercase tracking-wider">
                     Description
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-primary-400 uppercase tracking-wider">
                     Amount
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-primary-400 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-primary-400 uppercase tracking-wider">
                     Invoice
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-dark-800 divide-y divide-gray-200 dark:divide-dark-700">
                 {mockBillingHistory.map((invoice) => (
-                  <tr key={invoice.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <tr key={invoice.id} className="hover:bg-gray-50 dark:hover:bg-dark-700">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                       {formatDate(invoice.date)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                       {invoice.description}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                       {formatAmount(invoice.amount)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(invoice.status)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-primary-400">
                       <button
                         onClick={() => downloadInvoice(invoice.id)}
                         className="text-primary-600 hover:text-primary-900 font-medium"
@@ -194,7 +194,7 @@ export function BillingHistory({ userSubscription }: BillingHistoryProps) {
       {/* Payment Methods */}
       <div className="card">
         <div className="flex items-center justify-between mb-4">
-          <h4 className="font-medium text-gray-900">Payment Methods</h4>
+          <h4 className="font-medium text-gray-900 dark:text-white">Payment Methods</h4>
           <button className="btn-secondary text-sm">
             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -205,30 +205,30 @@ export function BillingHistory({ userSubscription }: BillingHistoryProps) {
 
         <div className="space-y-3">
           {/* Mock credit card */}
-          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+          <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-dark-700 rounded-lg">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+              <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded flex items-center justify-center">
                 <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
               </div>
               <div>
-                <div className="text-sm font-medium text-gray-900">
+                <div className="text-sm font-medium text-gray-900 dark:text-white">
                   •••• •••• •••• 4242
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-gray-500 dark:text-primary-400">
                   Expires 12/25 • Default payment method
                 </div>
               </div>
             </div>
             <div className="flex space-x-2">
-              <button className="text-sm text-gray-600 hover:text-gray-900">Edit</button>
+              <button className="text-sm text-gray-600 hover:text-gray-900 dark:text-primary-300 dark:hover:text-white">Edit</button>
               <button className="text-sm text-red-600 hover:text-red-900">Remove</button>
             </div>
           </div>
         </div>
 
-        <div className="mt-4 text-xs text-gray-500">
+        <div className="mt-4 text-xs text-gray-500 dark:text-primary-400">
           <p>
             💳 All payments are securely processed by Stripe. We never store your credit card information.
           </p>
@@ -236,7 +236,7 @@ export function BillingHistory({ userSubscription }: BillingHistoryProps) {
       </div>
 
       {/* Billing Support */}
-      <div className="card bg-blue-50 border-blue-200">
+      <div className="card bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700">
         <div className="flex">
           <div className="flex-shrink-0">
             <svg className="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -244,13 +244,13 @@ export function BillingHistory({ userSubscription }: BillingHistoryProps) {
             </svg>
           </div>
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-blue-800">Need help with billing?</h3>
-            <p className="mt-1 text-sm text-blue-700">
+            <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300">Need help with billing?</h3>
+            <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
               Contact our support team if you have questions about your subscription,
               need to update payment information, or want to discuss enterprise options.
             </p>
             <div className="mt-3">
-              <button className="text-sm font-medium text-blue-800 underline hover:text-blue-600">
+              <button className="text-sm font-medium text-blue-800 underline hover:text-blue-600 dark:text-blue-300 dark:hover:text-blue-200">
                 Contact billing support →
               </button>
             </div>

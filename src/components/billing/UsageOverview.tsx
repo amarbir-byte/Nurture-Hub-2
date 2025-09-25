@@ -1,4 +1,4 @@
-import { useSubscription } from '../../contexts/SubscriptionContext'
+// import { useSubscription } from '../../contexts/SubscriptionContext' // This import is not needed as data is passed via props
 
 interface UsageStats {
   contacts: number

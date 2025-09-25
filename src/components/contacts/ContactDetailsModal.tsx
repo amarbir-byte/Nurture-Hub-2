@@ -198,118 +198,150 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
     setShowCommunicationModal(true)
   }
 
-  const generatePropertiesMessage = () => {
-    if (selectedTemplate) {
-      const selectedProps = nearbyProperties.filter(p => selectedProperties.includes(p.id))
-      const propertiesList = selectedProps.map(prop => {
-        const priceStr = prop.sale_price
-          ? formatPrice(prop.sale_price)
-          : prop.price
-          ? formatPrice(prop.price)
-          : 'Price not available'
-        return `${prop.address} - ${priceStr} • ${prop.property_type}`
-      }).join(', ')
+  // Refactored message generation to be a pure function
+  const generateMessageContent = (
+    selectedTemplate: MessageTemplate | null,
+    contact: Contact,
+    nearbyProperties: Property[],
+    selectedProperties: string[],
+    formatPrice: (price: number) => string,
+    formatDate: (dateString?: string) => string | null,
+    communicationType: 'email' | 'text' | 'call' // Added for SMS specific fallback
+  ): string => {
+    const selectedProps = nearbyProperties.filter(p => selectedProperties.includes(p.id));
+    const firstSelectedProperty = selectedProps.length > 0 ? selectedProps[0] : null;
 
-      const variables = {
-        contact_name: contact.first_name || contact.name || 'there',
-        area: 'your area', // Could be derived from contact address
-        properties_list: propertiesList,
-        agent_name: 'Your Agent'
-      }
-      
-      const { message } = replaceTemplateVariables(selectedTemplate, variables)
-      return message
+    const baseVariables: Record<string, string> = {
+      contact_name: contact.first_name || contact.name || 'there',
+      agent_name: 'Your Agent', // Placeholder, should come from user profile
+      agent_phone: '+64 21 123 4567', // Placeholder
+      company_name: 'Your Company', // Placeholder
+      date: new Date().toLocaleDateString('en-NZ'),
+      time: new Date().toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit' }),
+      area: contact.suburb || contact.city || 'your area', // Derived from contact address
+    };
+
+    if (firstSelectedProperty) {
+      Object.assign(baseVariables, {
+        property_address: firstSelectedProperty.address,
+        property_price: firstSelectedProperty.sale_price
+          ? formatPrice(firstSelectedProperty.sale_price)
+          : firstSelectedProperty.price
+          ? formatPrice(firstSelectedProperty.price)
+          : 'Price not available',
+        property_type: firstSelectedProperty.property_type.charAt(0).toUpperCase() + firstSelectedProperty.property_type.slice(1),
+        bedrooms: firstSelectedProperty.bedrooms?.toString() || '',
+        bathrooms: firstSelectedProperty.bathrooms?.toString() || '',
+        floor_area: firstSelectedProperty.floor_area?.toString() || '',
+        property_description: firstSelectedProperty.description || '',
+        old_price: firstSelectedProperty.price ? formatPrice(firstSelectedProperty.price) : 'N/A',
+        new_price: firstSelectedProperty.sale_price ? formatPrice(firstSelectedProperty.sale_price) : 'N/A',
+        savings_amount: (firstSelectedProperty.price && firstSelectedProperty.sale_price) ? formatPrice(firstSelectedProperty.price - firstSelectedProperty.sale_price) : 'N/A',
+      });
     }
 
-    // Fallback to original message
-    const selectedProps = nearbyProperties.filter(p => selectedProperties.includes(p.id))
+    if (selectedTemplate) {
+      const { message } = replaceTemplateVariables(selectedTemplate, baseVariables);
+      return message;
+    }
 
-    if (selectedProps.length === 0) return ''
+    // Fallback message for multiple properties if no template is selected
+    if (selectedProps.length === 0) return '';
 
-    let message = `Hi ${contact.first_name || contact.name || 'there'},\n\nI thought you might be interested in these recent property activities in your area:\n\n`
+    // SMS-specific fallback for multiple properties (shorter)
+    if (communicationType === 'text') {
+      let smsMessage = `Hi ${baseVariables.contact_name}! Recent property activity near you:\n\n`;
+      selectedProps.slice(0, 2).forEach((property, index) => {
+        const priceStr = property.sale_price
+          ? `Sold ${formatPrice(property.sale_price)}`
+          : property.price
+          ? `Listed ${formatPrice(property.price)}`
+          : 'Price N/A';
+        smsMessage += `${index + 1}. ${property.address} - ${priceStr}\n`;
+      });
+      if (selectedProps.length > 2) {
+        smsMessage += `...and ${selectedProps.length - 2} more properties.\n`;
+      }
+      smsMessage += `\nInterested in your property value? Let's chat!`;
+      return smsMessage;
+    }
 
+    // Email-specific fallback for multiple properties (longer)
+    let emailMessage = `Hi ${baseVariables.contact_name},\n\nI thought you might be interested in these recent property activities in your area:\n\n`;
     selectedProps.forEach((property, index) => {
       const priceStr = property.sale_price
         ? `Sold for ${formatPrice(property.sale_price)}`
         : property.price
         ? `Listed at ${formatPrice(property.price)}`
-        : 'Price not available'
+        : 'Price not available';
 
-      const details = []
-      if (property.bedrooms) details.push(`${property.bedrooms} bed`)
-      if (property.bathrooms) details.push(`${property.bathrooms} bath`)
-      if (property.floor_area) details.push(`${property.floor_area}m²`)
+      const details = [];
+      if (property.bedrooms) details.push(`${property.bedrooms} bed`);
+      if (property.bathrooms) details.push(`${property.bathrooms} bath`);
+      if (property.floor_area) details.push(`${property.floor_area}m²`);
 
-      message += `${index + 1}. ${property.address}\n`
-      message += `   ${priceStr} - ${property.property_type.charAt(0).toUpperCase() + property.property_type.slice(1)}\n`
+      emailMessage += `${index + 1}. ${property.address}\n`;
+      emailMessage += `   ${priceStr} - ${property.property_type.charAt(0).toUpperCase() + property.property_type.slice(1)}\n`;
       if (details.length > 0) {
-        message += `   ${details.join(' • ')}\n`
+        emailMessage += `   ${details.join(' • ')}\n`;
       }
       if (property.sold_date) {
-        message += `   Sold: ${formatDate(property.sold_date)}\n`
+        emailMessage += `   Sold: ${formatDate(property.sold_date)}\n`;
       }
-      message += '\n'
-    })
+      emailMessage += '\n';
+    });
+    emailMessage += `These recent sales/listings show the current market activity in your neighborhood. `;
+    emailMessage += `If you're considering buying or selling, I'd be happy to discuss how these compare to your property value and current market opportunities.\n\n`;
+    emailMessage += `Would you like to schedule a brief call to discuss your property goals?\n\n`;
+    emailMessage += `Best regards`;
 
-    message += `These recent sales/listings show the current market activity in your neighborhood. `
-    message += `If you're considering buying or selling, I'd be happy to discuss how these compare to your property value and current market opportunities.\n\n`
-    message += `Would you like to schedule a brief call to discuss your property goals?\n\n`
-    message += `Best regards`
+    return emailMessage;
+  };
 
-    return message
-  }
+  // Refactored subject generation to be a pure function
+  const generateSubjectContent = (
+    selectedTemplate: MessageTemplate | null,
+    contact: Contact,
+    nearbyProperties: Property[],
+    selectedProperties: string[],
+    formatPrice: (price: number) => string
+  ): string => {
+    const selectedProps = nearbyProperties.filter(p => selectedProperties.includes(p.id));
+    const firstSelectedProperty = selectedProps.length > 0 ? selectedProps[0] : null;
 
-  const generatePropertiesSubject = () => {
+    const baseVariables: Record<string, string> = {
+      contact_name: contact.first_name || contact.name || 'there',
+      area: contact.suburb || contact.city || 'your area',
+      agent_name: 'Your Agent'
+    };
+
+    if (firstSelectedProperty) {
+      Object.assign(baseVariables, {
+        property_address: firstSelectedProperty.address,
+        property_price: firstSelectedProperty.sale_price
+          ? formatPrice(firstSelectedProperty.sale_price)
+          : firstSelectedProperty.price
+          ? formatPrice(firstSelectedProperty.price)
+          : 'Price not available',
+      });
+    }
+
     if (selectedTemplate && selectedTemplate.subject) {
-      const variables = {
-        contact_name: contact.first_name || contact.name || 'there',
-        area: 'your area',
-        agent_name: 'Your Agent'
-      }
-      
-      const { subject } = replaceTemplateVariables(selectedTemplate, variables)
-      return subject
+      const { subject } = replaceTemplateVariables(selectedTemplate, baseVariables);
+      return subject;
     }
     
-    return `Properties Near You - ${contact.first_name || contact.name || 'Contact'}`
-  }
+    return `Properties Near You - ${contact.first_name || contact.name || 'Contact'}`;
+  };
+
 
   const handleSendCommunication = async () => {
     if (selectedProperties.length === 0) return
 
-    const selectedProps = nearbyProperties.filter(p => selectedProperties.includes(p.id))
-    const subject = generatePropertiesSubject()
-    let message = ''
+    const subject = generateSubjectContent(selectedTemplate, contact, nearbyProperties, selectedProperties, formatPrice);
+    const message = generateMessageContent(selectedTemplate, contact, nearbyProperties, selectedProperties, formatPrice, formatDate, communicationType);
 
     try {
-      if (communicationType === 'email') {
-        message = generatePropertiesMessage()
-      } else if (communicationType === 'text') {
-        if (selectedTemplate) {
-          message = generatePropertiesMessage()
-        } else {
-          // Create SMS with property details (shorter version)
-          message = `Hi ${contact.first_name || 'there'}! Recent property activity near you:\n\n`
-
-          selectedProps.slice(0, 2).forEach((property, index) => { // Limit to 2 for SMS
-            const priceStr = property.sale_price
-              ? `Sold ${formatPrice(property.sale_price)}`
-              : property.price
-              ? `Listed ${formatPrice(property.price)}`
-              : 'Price N/A'
-          message += `${index + 1}. ${property.address} - ${priceStr}\n`
-        })
-
-        if (selectedProps.length > 2) {
-          message += `...and ${selectedProps.length - 2} more properties.\n`
-        }
-
-        message += `\nInterested in your property value? Let's chat!`
-        }
-      } else if (communicationType === 'call') {
-        message = `Called regarding ${selectedProps.length} nearby properties: ${selectedProps.map(p => p.address).join(', ')}`
-      }
-
       // Record communication history
       await supabase.from('communication_history').insert({
         user_id: user?.id,
@@ -317,13 +349,13 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
         contact_name: `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || contact.name || 'Unknown',
         contact_email: contact.email,
         contact_phone: contact.phone,
-        property_id: selectedProps.length === 1 ? selectedProps[0].id : null,
-        property_address: selectedProps.length === 1 ? selectedProps[0].address : null,
+        property_id: selectedProperties.length === 1 ? selectedProperties[0] : null, // Use first selected property if only one
+        property_address: selectedProperties.length === 1 ? nearbyProperties.find(p => p.id === selectedProperties[0])?.address : null,
         communication_type: communicationType,
         subject: communicationType === 'email' ? subject : null,
         message: message,
         context: 'market_update',
-        related_properties: selectedProps.map(p => p.id),
+        related_properties: selectedProperties,
         tags: ['market_update', 'nearby_properties'],
         sent_at: new Date().toISOString()
       })
@@ -346,6 +378,7 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
 
     } catch (error) {
       console.error('Error recording communication:', error)
+      // Still allow the communication to proceed even if recording fails
       alert('Communication sent but there was an issue saving the record.')
     }
 
@@ -738,7 +771,7 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
 
               <div className="mb-4">
                 <p className="text-sm text-gray-600 dark:text-primary-300 mb-2">
-                  Selected contacts ({selectedProperties.length}):
+                  Selected properties ({selectedProperties.length}):
                 </p>
                 <div className="space-y-1">
                   {nearbyProperties
@@ -763,7 +796,7 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                 <div className="mb-4">
                   <TemplateSelector
                     type={communicationType === 'text' ? 'sms' : communicationType}
-                    category="property"
+                    category="property" // Keep category as 'property' for now, but consider 'contact' or 'general' for broader templates
                     selectedTemplateId={selectedTemplate?.id}
                     onTemplateSelect={setSelectedTemplate}
                   />
@@ -779,7 +812,7 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                       Using template: {selectedTemplate.name}
                     </div>
                   )}
-                  <div className="mt-2 whitespace-pre-line">{generatePropertiesMessage()}</div>
+                  <div className="mt-2 whitespace-pre-line">{generateMessageContent(selectedTemplate, contact, nearbyProperties, selectedProperties, formatPrice, formatDate, communicationType)}</div>
                 </div>
               )}
 

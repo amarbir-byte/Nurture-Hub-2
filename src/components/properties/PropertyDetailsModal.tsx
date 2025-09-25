@@ -63,6 +63,16 @@ export function PropertyDetailsModal({ property, onClose }: PropertyDetailsModal
   const [selectedTemplate, setSelectedTemplate] = useState<MessageTemplate | null>(null)
 
   useEffect(() => {
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      // Restore body scroll when modal is closed
+      document.body.style.overflow = 'unset'
+    }
+  }, []) // Empty dependency array means this runs once on mount and once on unmount
+
+  useEffect(() => {
     fetchNearbyContacts()
     fetchCommunicationHistory()
   }, [property, radius])

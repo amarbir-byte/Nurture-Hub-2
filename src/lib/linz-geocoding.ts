@@ -123,23 +123,6 @@ function buildAddressCqlFilter(query: string): string {
   return `full_address_ascii ILIKE '%${cleanQuery}%'`
 }
 
-/**
- * Check if a word is likely a suburb/city name
- */
-function isCommonSuburb(word: string): boolean {
-  const commonSuburbs = [
-    'auckland', 'wellington', 'christchurch', 'hamilton', 'tauranga',
-    'dunedin', 'palmerston', 'napier', 'hastings', 'rotorua',
-    'new plymouth', 'whangarei', 'invercargill', 'nelson', 'timaru',
-    'takanini', 'flatbush', 'howick', 'manukau', 'ponsonby', 'remuera',
-    'takapuna', 'devonport', 'mission bay', 'newmarket', 'epsom',
-    'mt eden', 'parnell', 'onehunga', 'glen innes', 'st heliers'
-  ]
-
-  return commonSuburbs.some(suburb =>
-    suburb.includes(word.toLowerCase()) || word.toLowerCase().includes(suburb)
-  )
-}
 
 /**
  * Convert LINZ WFS feature to our geocoding result format

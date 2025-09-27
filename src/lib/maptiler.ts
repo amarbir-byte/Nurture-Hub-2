@@ -114,9 +114,9 @@ async function tryMapTilerGeocode(address: string): Promise<GeocodingResult | nu
 
       // For exact address search, look for best matching result
       if (strategy.name === 'exact_address') {
-        const bestMatch = findBestAddressMatch(data.features, address)
+        const bestMatch = findBestAddressMatch(data.features)
         if (bestMatch) {
-          console.log(`Found exact address match: ${bestMatch.place_name}`)
+          console.log(`Found exact address match: ${bestMatch.formatted_address}`)
           return bestMatch
         }
         // If no exact match in address search, continue to standard search
@@ -163,9 +163,7 @@ async function tryMapTilerGeocode(address: string): Promise<GeocodingResult | nu
 /**
  * Find the best address match from multiple results
  */
-function findBestAddressMatch(features: any[], originalAddress: string): GeocodingResult | null {
-  const normalizedOriginal = originalAddress.toLowerCase().trim()
-
+function findBestAddressMatch(features: any[]): GeocodingResult | null {
   for (const feature of features) {
     const placeName = feature.place_name?.toLowerCase() || ''
 

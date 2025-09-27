@@ -31,20 +31,37 @@ export const ensureTablesExist = async (): Promise<void> => {
  */
 const checkUserTablePolicies = async (): Promise<void> => {
   try {
-    // Try a test query to see if INSERT policy exists
-    // This will fail gracefully if policies are missing
+    // Try a test query to see if table exists and policies work
+    // This will fail gracefully if table doesn't exist or policies are missing
     const { error: testError } = await supabase
       .from('users')
       .select('id')
       .eq('id', 'test-policy-check')
       .limit(1)
 
-    // If we get a policy error, silently continue
-    // (Policies should be set up via proper migrations)
-    if (testError && (testError.code === '42501' || testError.code === '403' || testError.message?.includes('policy'))) {
-      // Silently handle policy errors - they should be resolved via proper database setup
+    // Handle all types of errors that indicate table/policy issues
+    if (testError) {
+      // Common error codes:
+      // PGRST106: table not found
+      // PGRST204: no result/access denied
+      // 42501: insufficient privileges
+      // 403: forbidden
+      if (testError.code === 'PGRST106' ||
+          testError.code === 'PGRST204' ||
+          testError.code === '42501' ||
+          testError.code === '403' ||
+          testError.message?.includes('policy') ||
+          testError.message?.includes('table') ||
+          testError.message?.includes('not found')) {
+        // Silently handle these errors - they should be resolved via proper database setup
+        return
+      }
+
+      // Log unexpected errors but don't throw
+      console.warn('Unexpected error checking user table policies:', testError)
     }
   } catch (error) {
+    // Catch all other errors and silently continue
     console.warn('Could not check user table policies:', error)
   }
 }

@@ -56,27 +56,27 @@ export async function geocodeAddress(address: string): Promise<GeocodingResult |
   // Strategy 1: Try the address exactly as provided
   let result = await tryGeocode(address)
 
-  // Strategy 2: If confidence is low or no result, try with improved addressing
-  if (!result || result.confidence < 0.8) {
-    console.log('Initial geocoding had low confidence, trying improved strategies...')
+  // Only use fallback strategies if we got NO result at all
+  if (!result) {
+    console.log('No result found, trying improved strategies...')
 
     // Try with common Auckland area improvements
     const improvedAddress = improveAucklandAddress(address)
     if (improvedAddress !== address) {
       console.log('Trying improved address:', improvedAddress)
       const improvedResult = await tryGeocode(improvedAddress)
-      if (improvedResult && (!result || improvedResult.confidence > result.confidence)) {
+      if (improvedResult) {
         result = improvedResult
       }
     }
 
-    // Strategy 3: Try removing house numbers for street-level geocoding
-    if (!result || result.confidence < 0.7) {
+    // Only try street-level geocoding if still no result
+    if (!result) {
       const streetOnlyAddress = removeHouseNumber(address)
       if (streetOnlyAddress !== address) {
         console.log('Trying street-only address:', streetOnlyAddress)
         const streetResult = await tryGeocode(streetOnlyAddress)
-        if (streetResult && (!result || streetResult.confidence > result.confidence)) {
+        if (streetResult) {
           result = streetResult
         }
       }
@@ -120,11 +120,38 @@ async function tryGeocode(address: string): Promise<GeocodingResult | null> {
     const feature = data.features[0]
     const [lng, lat] = feature.center
 
+    // Preserve the original address if MapTiler returns a generic location
+    // This happens when the exact address isn't found and MapTiler falls back to suburb/area
+    const returnedPlaceName = feature.place_name || address
+    const shouldPreserveOriginal =
+      // If the returned place name doesn't contain street/road indicators
+      !returnedPlaceName.toLowerCase().includes('street') &&
+      !returnedPlaceName.toLowerCase().includes('road') &&
+      !returnedPlaceName.toLowerCase().includes('avenue') &&
+      !returnedPlaceName.toLowerCase().includes('drive') &&
+      !returnedPlaceName.toLowerCase().includes('lane') &&
+      !returnedPlaceName.toLowerCase().includes('place') &&
+      !returnedPlaceName.toLowerCase().includes(' st') &&
+      !returnedPlaceName.toLowerCase().includes(' rd') &&
+      !returnedPlaceName.toLowerCase().includes(' ave') &&
+      !returnedPlaceName.toLowerCase().includes(' dr') &&
+      // But the original address does contain street indicators
+      (address.toLowerCase().includes('street') ||
+       address.toLowerCase().includes('road') ||
+       address.toLowerCase().includes('avenue') ||
+       address.toLowerCase().includes('drive') ||
+       address.toLowerCase().includes('lane') ||
+       address.toLowerCase().includes('place') ||
+       address.toLowerCase().includes(' st') ||
+       address.toLowerCase().includes(' rd') ||
+       address.toLowerCase().includes(' ave') ||
+       address.toLowerCase().includes(' dr'))
+
     const result: GeocodingResult = {
       lat,
       lng,
       confidence: feature.relevance || 0,
-      formatted_address: feature.place_name || address,
+      formatted_address: shouldPreserveOriginal ? address : returnedPlaceName,
       place_type: feature.place_type?.[0] || 'unknown'
     }
 

@@ -91,12 +91,12 @@ export function MapTilerMap({
       el.style.cursor = 'pointer';
       el.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.2)';
 
-      new maplibregl.Marker(el) // Removed unused 'marker' variable
+      new maplibregl.Marker(el)
         .setLngLat([markerData.lng, markerData.lat])
         .setPopup(
           new maplibregl.Popup({ offset: 25 })
             .setHTML(
-              `<div class="p-2 text-gray-800 dark:text-gray-200">` +
+              `<div class="p-2 text-primary-900 dark:text-primary-100">` + // Updated text color classes here
               `<strong>${markerData.title}</strong>` +
               `</div>`
             )
@@ -163,7 +163,7 @@ const turf = {
     }
     coords.push(coords[0]); // Close the circle
     return {
-      type: 'Feature', // Corrected type to "Feature"
+      type: 'Feature',
       geometry: {
         type: 'Polygon',
         coordinates: [coords],
@@ -171,7 +171,7 @@ const turf = {
       properties: {},
     };
   },
-  destination: (origin: [number, number], distance: number, bearing: number, _options: { units: 'kilometers' }) => { // Removed unused 'options' parameter
+  destination: (origin: [number, number], distance: number, bearing: number, _options: { units: 'kilometers' }) => {
     const R = 6371; // Earth's radius in km
     const lat = (origin[1] * Math.PI) / 180;
     const lon = (origin[0] * Math.PI) / 180;

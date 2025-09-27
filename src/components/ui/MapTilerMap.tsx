@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -67,15 +67,10 @@ export function MapTilerMap({
     if (!mapLoaded || !map.current) return;
 
     // Clear existing markers and circles
-    const existingMarkers = map.current.queryRenderedFeatures({ layers: ['markers'] });
-    existingMarkers.forEach(feature => {
-      if (feature.properties?.markerId) {
-        const markerElement = document.getElementById(feature.properties.markerId);
-        if (markerElement) {
-          markerElement.remove();
-        }
-      }
-    });
+    // Note: maplibre-gl markers are not features, they are DOM elements.
+    // We need to manually remove them.
+    const currentMarkers = document.querySelectorAll('.map-marker');
+    currentMarkers.forEach(markerEl => markerEl.remove());
 
     if (map.current.getSource('radius-source')) {
       map.current.removeLayer('radius-fill');
@@ -96,12 +91,12 @@ export function MapTilerMap({
       el.style.cursor = 'pointer';
       el.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.2)';
 
-      const marker = new maplibregl.Marker(el)
+      new maplibregl.Marker(el) // Removed unused 'marker' variable
         .setLngLat([markerData.lng, markerData.lat])
         .setPopup(
           new maplibregl.Popup({ offset: 25 })
             .setHTML(
-              `<div class="p-2 text-gray-800 dark:text-gray-200">` + // Added text color classes here
+              `<div class="p-2 text-gray-800 dark:text-gray-200">` +
               `<strong>${markerData.title}</strong>` +
               `</div>`
             )
@@ -116,7 +111,7 @@ export function MapTilerMap({
 
       map.current.addSource('radius-source', {
         type: 'geojson',
-        data: circle,
+        data: circle as GeoJSON.Feature<GeoJSON.Polygon>, // Cast to correct type
       });
 
       map.current.addLayer({
@@ -168,7 +163,7 @@ const turf = {
     }
     coords.push(coords[0]); // Close the circle
     return {
-      type: 'Feature',
+      type: 'Feature', // Corrected type to "Feature"
       geometry: {
         type: 'Polygon',
         coordinates: [coords],
@@ -176,7 +171,7 @@ const turf = {
       properties: {},
     };
   },
-  destination: (origin: [number, number], distance: number, bearing: number, options: { units: 'kilometers' }) => {
+  destination: (origin: [number, number], distance: number, bearing: number, _options: { units: 'kilometers' }) => { // Removed unused 'options' parameter
     const R = 6371; // Earth's radius in km
     const lat = (origin[1] * Math.PI) / 180;
     const lon = (origin[0] * Math.PI) / 180;

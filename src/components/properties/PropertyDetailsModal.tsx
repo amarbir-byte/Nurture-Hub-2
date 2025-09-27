@@ -319,6 +319,7 @@ Interested in similar properties in your area? Let's discuss your requirements.`
               const smsLink = `sms:${cleanPhone}?body=${encodeURIComponent(personalizedMessage)}`
               window.open(smsLink, '_self')
             }
+            // No need to return anything here, just perform the side effect
           })
         }
       } else if (communicationType === 'call') {
@@ -341,8 +342,6 @@ Interested in similar properties in your area? Let's discuss your requirements.`
     setShowCommunicationModal(false)
     setSelectedContacts([])
   }
-
-  // Removed unused getStatusColor function
 
   return (
     <>
@@ -788,7 +787,7 @@ Interested in similar properties in your area? Let's discuss your requirements.`
                     </div>
                   )}
                   {/* Display preview message for the first selected contact, or a generic one */}
-                  <div className="mt-2 whitespace-pre-line">{formatPreviewMessage(selectedContactsData[0] || null)}</div>
+                  <div className="mt-2 whitespace-pre-line">{generatePropertyMessage(selectedTemplate, property, selectedContactsData[0] || null, formatPrice)}</div>
                 </div>
               )}
 

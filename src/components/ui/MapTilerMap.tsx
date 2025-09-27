@@ -1,310 +1,151 @@
-import { useEffect, useRef, useState } from 'react'
+import React, { useRef, useEffect, useState } from 'react';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
-// MapTiler Web SDK types (we'll use the CDN version)
-declare global {
-  interface Window {
-    maptilersdk: any
-  }
+interface Marker {
+  id: string;
+  lat: number;
+  lng: number;
+  title: string;
+  type: 'contact' | 'property';
+  color?: string;
 }
 
-export interface MapMarker {
-  id: string
-  lat: number
-  lng: number
-  title: string
-  type: 'property' | 'contact'
-  color?: string
-  onClick?: () => void
+interface MapTilerMapProps {
+  center: [number, number]; // [lng, lat]
+  zoom: number;
+  markers?: Marker[];
+  showRadius?: boolean;
+  radiusKm?: number;
+  radiusCenter?: [number, number]; // [lng, lat]
+  height?: string;
+  width?: string;
+  className?: string;
 }
-
-export interface MapProps {
-  center?: [number, number] // [lng, lat]
-  zoom?: number
-  markers?: MapMarker[]
-  height?: string
-  width?: string
-  showRadius?: boolean
-  radiusKm?: number
-  radiusCenter?: [number, number]
-  className?: string
-}
-
-const MAPTILER_API_KEY = import.meta.env.VITE_MAPTILER_API_KEY
 
 export function MapTilerMap({
-  center = [174.7633, -36.8485], // Auckland, NZ
-  zoom = 10,
+  center,
+  zoom,
   markers = [],
-  height = '400px',
-  width = '100%',
   showRadius = false,
-  radiusKm = 5,
+  radiusKm = 10,
   radiusCenter,
-  className = ''
-}: MapProps) {
-  const mapContainer = useRef<HTMLDivElement>(null)
-  const map = useRef<any>(null)
-  const [isLoaded, setIsLoaded] = useState(false)
-  const [mapStyleLoaded, setMapStyleLoaded] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const markersRef = useRef<any[]>([])
-  const radiusCircleRef = useRef<any>(null)
+  height = '300px',
+  width = '100%',
+  className = '',
+}: MapTilerMapProps) {
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<maplibregl.Map | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
-  // Load MapTiler SDK
   useEffect(() => {
-    if (window.maptilersdk) {
-      setIsLoaded(true)
-      return
-    }
+    if (map.current) return; // Initialize map only once
 
-    const script = document.createElement('script')
-    script.src = 'https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.umd.js'
-    script.onload = () => {
-      const link = document.createElement('link')
-      link.rel = 'stylesheet'
-      link.href = 'https://cdn.maptiler.com/maptiler-sdk-js/v2.0.3/maptiler-sdk.css'
-      document.head.appendChild(link)
+    map.current = new maplibregl.Map({
+      container: mapContainer.current!,
+      style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY}`,
+      center: center,
+      zoom: zoom,
+      attributionControl: false, // Disable default attribution
+    });
 
-      setIsLoaded(true)
-    }
-    script.onerror = () => {
-      setError('Failed to load MapTiler SDK')
-    }
-    document.head.appendChild(script)
+    map.current.on('load', () => {
+      setMapLoaded(true);
+      // Add custom attribution
+      map.current?.addControl(new maplibregl.AttributionControl({
+        customAttribution: '© MapTiler © OpenStreetMap contributors',
+      }), 'bottom-left');
+    });
 
     return () => {
-      script.remove()
-    }
-  }, [])
+      map.current?.remove();
+      map.current = null;
+    };
+  }, []);
 
-  // Initialize map
   useEffect(() => {
-    if (!isLoaded || !mapContainer.current || map.current) return
+    if (!mapLoaded || !map.current) return;
 
-    if (!MAPTILER_API_KEY) {
-      setError('MapTiler API key not configured')
-      return
-    }
-
-    try {
-      window.maptilersdk.config.apiKey = MAPTILER_API_KEY
-
-      map.current = new window.maptilersdk.Map({
-        container: mapContainer.current,
-        style: window.maptilersdk.MapStyle.STREETS,
-        center: center,
-        zoom: zoom,
-      })
-
-      map.current.on('load', () => {
-        console.log('Map loaded successfully')
-        setMapStyleLoaded(true)
-      })
-
-      map.current.on('error', (e: any) => {
-        console.error('Map error:', e)
-        setError('Failed to load map')
-      })
-
-    } catch (err) {
-      console.error('Map initialization error:', err)
-      setError('Failed to initialize map')
-    }
-
-    return () => {
-      if (map.current) {
-        map.current.remove()
-        map.current = null
-        setMapStyleLoaded(false)
+    // Clear existing markers and circles
+    const existingMarkers = map.current.queryRenderedFeatures({ layers: ['markers'] });
+    existingMarkers.forEach(feature => {
+      if (feature.properties?.markerId) {
+        const markerElement = document.getElementById(feature.properties.markerId);
+        if (markerElement) {
+          markerElement.remove();
+        }
       }
+    });
+
+    if (map.current.getSource('radius-source')) {
+      map.current.removeLayer('radius-fill');
+      map.current.removeLayer('radius-border');
+      map.current.removeSource('radius-source');
     }
-  }, [isLoaded, center, zoom])
-
-  // Update markers
-  useEffect(() => {
-    if (!map.current || !window.maptilersdk) return
-
-    // Clear existing markers
-    markersRef.current.forEach(marker => marker.remove())
-    markersRef.current = []
 
     // Add new markers
     markers.forEach(markerData => {
-      try {
-        const el = document.createElement('div')
-        el.className = 'marker'
-        el.style.cssText = `
-          background-color: ${markerData.color || (markerData.type === 'property' ? '#3B82F6' : '#10B981')};
-          width: 20px;
-          height: 20px;
-          border-radius: 50%;
-          border: 2px solid white;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          cursor: pointer;
-        `
+      const el = document.createElement('div');
+      el.id = `marker-${markerData.id}`;
+      el.className = 'map-marker';
+      el.style.backgroundColor = markerData.color || '#FF0000';
+      el.style.width = '16px';
+      el.style.height = '16px';
+      el.style.borderRadius = '50%';
+      el.style.border = '2px solid #FFFFFF';
+      el.style.cursor = 'pointer';
+      el.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.2)';
 
-        const marker = new window.maptilersdk.Marker({ element: el })
-          .setLngLat([markerData.lng, markerData.lat])
-          .addTo(map.current)
+      const marker = new maplibregl.Marker(el)
+        .setLngLat([markerData.lng, markerData.lat])
+        .setPopup(
+          new maplibregl.Popup({ offset: 25 })
+            .setHTML(
+              `<div class="p-2 text-gray-800 dark:text-gray-200">` + // Added text color classes here
+              `<strong>${markerData.title}</strong>` +
+              `</div>`
+            )
+        )
+        .addTo(map.current!);
+    });
 
-        // Add click handler
-        if (markerData.onClick) {
-          el.addEventListener('click', markerData.onClick)
-        }
+    // Add radius circle
+    if (showRadius && radiusCenter && radiusKm) {
+      const options = { steps: 64, units: 'kilometers' as const };
+      const circle = turf.circle(radiusCenter, radiusKm, options);
 
-        // Add popup
-        const popup = new window.maptilersdk.Popup({ offset: 25 })
-          .setHTML(`
-            <div class="p-2">
-              <div class="font-medium text-sm">${markerData.title}</div>
-              <div class="text-xs text-gray-600 mt-1 capitalize">${markerData.type}</div>
-            </div>
-          `)
+      map.current.addSource('radius-source', {
+        type: 'geojson',
+        data: circle,
+      });
 
-        marker.setPopup(popup)
+      map.current.addLayer({
+        id: 'radius-fill',
+        type: 'fill',
+        source: 'radius-source',
+        paint: {
+          'fill-color': '#3B82F6',
+          'fill-opacity': 0.1,
+        },
+      });
 
-        markersRef.current.push(marker)
-      } catch (err) {
-        console.error('Error adding marker:', err)
-      }
-    })
-
-    // Fit bounds to markers if there are any
-    if (markers.length > 0) {
-      const bounds = new window.maptilersdk.LngLatBounds()
-      markers.forEach(marker => {
-        bounds.extend([marker.lng, marker.lat])
-      })
-
-      map.current.fitBounds(bounds, {
-        padding: 50,
-        maxZoom: 15
-      })
+      map.current.addLayer({
+        id: 'radius-border',
+        type: 'line',
+        source: 'radius-source',
+        paint: {
+          'line-color': '#3B82F6',
+          'line-width': 2,
+          'line-opacity': 0.6,
+        },
+      });
     }
 
-  }, [markers])
+    // Center map if center prop changes
+    map.current.setCenter(center);
+    map.current.setZoom(zoom);
 
-  // Update radius circle
-  useEffect(() => {
-    if (!map.current || !window.maptilersdk || !showRadius || !mapStyleLoaded) return
-
-    // Add a small delay to ensure the map is fully ready
-    const addRadiusCircle = () => {
-      if (!map.current?.loaded()) {
-        // If map is not fully loaded, retry after a short delay
-        setTimeout(addRadiusCircle, 100)
-        return
-      }
-
-      try {
-        // Remove existing circle
-        if (radiusCircleRef.current) {
-          if (map.current.getSource('radius-circle')) {
-            map.current.removeLayer('radius-fill')
-            map.current.removeLayer('radius-border')
-            map.current.removeSource('radius-circle')
-          }
-          radiusCircleRef.current = null
-        }
-
-        if (!radiusCenter) return
-
-        // Create circle geometry
-        const center_point = radiusCenter
-        const radius_in_km = radiusKm
-        const points = 64
-        const coords = []
-
-        for (let i = 0; i < points; i++) {
-          const angle = (i / points) * 2 * Math.PI
-          const dx = radius_in_km * 0.009 * Math.cos(angle) // Approximate degrees per km
-          const dy = radius_in_km * 0.009 * Math.sin(angle) / Math.cos(center_point[1] * Math.PI / 180)
-          coords.push([center_point[0] + dx, center_point[1] + dy])
-        }
-        coords.push(coords[0]) // Close the polygon
-
-        const circleGeoJSON = {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            geometry: {
-              type: 'Polygon',
-              coordinates: [coords]
-            }
-          }
-        }
-
-        map.current.addSource('radius-circle', circleGeoJSON)
-
-        // Add fill layer
-        map.current.addLayer({
-          id: 'radius-fill',
-          type: 'fill',
-          source: 'radius-circle',
-          paint: {
-            'fill-color': '#3B82F6',
-            'fill-opacity': 0.1
-          }
-        })
-
-        // Add border layer
-        map.current.addLayer({
-          id: 'radius-border',
-          type: 'line',
-          source: 'radius-circle',
-          paint: {
-            'line-color': '#3B82F6',
-            'line-width': 2,
-            'line-opacity': 0.5
-          }
-        })
-
-        radiusCircleRef.current = true
-
-      } catch (err) {
-        console.error('Error adding radius circle:', err)
-      }
-    }
-
-    // Start the process
-    addRadiusCircle()
-
-  }, [showRadius, radiusKm, radiusCenter, mapStyleLoaded])
-
-  if (error) {
-    return (
-      <div
-        className={`flex items-center justify-center bg-gray-100 rounded-lg ${className}`}
-        style={{ height, width }}
-      >
-        <div className="text-center p-4">
-          <svg className="mx-auto h-12 w-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <p className="text-sm text-gray-600">{error}</p>
-          {!MAPTILER_API_KEY && (
-            <p className="text-xs text-gray-500 mt-1">
-              Configure VITE_MAPTILER_API_KEY in your .env file
-            </p>
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  if (!isLoaded) {
-    return (
-      <div
-        className={`flex items-center justify-center bg-gray-100 rounded-lg ${className}`}
-        style={{ height, width }}
-      >
-        <div className="text-center p-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-blue-600 mx-auto mb-2"></div>
-          <p className="text-sm text-gray-600">Loading map...</p>
-        </div>
-      </div>
-    )
-  }
+  }, [mapLoaded, markers, showRadius, radiusKm, radiusCenter, center, zoom]);
 
   return (
     <div
@@ -312,5 +153,47 @@ export function MapTilerMap({
       className={`rounded-lg ${className}`}
       style={{ height, width }}
     />
-  )
+  );
 }
+
+// Dummy turf.js implementation for circle if not installed
+// In a real project, you would install @turf/turf
+const turf = {
+  circle: (center: [number, number], radius: number, options: { steps: number, units: 'kilometers' }) => {
+    const points = options.steps;
+    const units = options.units;
+    const coords = [];
+    for (let i = 0; i < points; i++) {
+      coords.push(turf.destination(center, radius, i * -360 / points, { units }).geometry.coordinates);
+    }
+    coords.push(coords[0]); // Close the circle
+    return {
+      type: 'Feature',
+      geometry: {
+        type: 'Polygon',
+        coordinates: [coords],
+      },
+      properties: {},
+    };
+  },
+  destination: (origin: [number, number], distance: number, bearing: number, options: { units: 'kilometers' }) => {
+    const R = 6371; // Earth's radius in km
+    const lat = (origin[1] * Math.PI) / 180;
+    const lon = (origin[0] * Math.PI) / 180;
+    const brng = (bearing * Math.PI) / 180;
+
+    const lat2 = Math.asin(Math.sin(lat) * Math.cos(distance / R) +
+      Math.cos(lat) * Math.sin(distance / R) * Math.cos(brng));
+    const lon2 = lon + Math.atan2(Math.sin(brng) * Math.sin(distance / R) * Math.cos(lat),
+      Math.cos(distance / R) - Math.sin(lat) * Math.sin(lat2));
+
+    return {
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [(lon2 * 180) / Math.PI, (lat2 * 180) / Math.PI],
+      },
+      properties: {},
+    };
+  },
+};

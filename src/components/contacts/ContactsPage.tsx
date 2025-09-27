@@ -18,7 +18,6 @@ export function ContactsPage() {
   const [editingContact, setEditingContact] = useState<Contact | null>(null)
   const [viewingContact, setViewingContact] = useState<Contact | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [sourceFilter, setSourceFilter] = useState<'all' | 'manual' | 'import' | 'campaign' | 'referral'>('all')
   const [followUpFilter, setFollowUpFilter] = useState<'all' | 'due' | 'overdue'>('all')
   const [communicationFilter, setCommunicationFilter] = useState<'all' | 'contacted' | 'not_contacted'>('all')
   const [contactTypeFilter, setContactTypeFilter] = useState<'all' | 'buyer' | 'seller' | 'both'>('all')
@@ -127,7 +126,6 @@ export function ContactsPage() {
       contact.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contact.suburb?.toLowerCase().includes(searchTerm.toLowerCase())
 
-    const matchesSource = sourceFilter === 'all' || contact.contact_source === sourceFilter
 
     const matchesFollowUp =
       followUpFilter === 'all' ||
@@ -143,7 +141,7 @@ export function ContactsPage() {
     const matchesContactType = contactTypeFilter === 'all' || contact.contact_type === contactTypeFilter
     const matchesTemperature = temperatureFilter === 'all' || contact.temperature === temperatureFilter
 
-    return matchesSearch && matchesSource && matchesFollowUp && matchesCommunication && matchesContactType && matchesTemperature
+    return matchesSearch && matchesFollowUp && matchesCommunication && matchesContactType && matchesTemperature
   })
 
   // Sort contacts based on selected sort option
@@ -187,13 +185,10 @@ export function ContactsPage() {
   // Reset to first page when filters or sort change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, sourceFilter, followUpFilter, communicationFilter, contactTypeFilter, temperatureFilter, sortBy])
+  }, [searchTerm, followUpFilter, communicationFilter, contactTypeFilter, temperatureFilter, sortBy])
 
   const stats = {
     total: contacts.length,
-    manual: contacts.filter(c => c.contact_source === 'manual').length,
-    imported: contacts.filter(c => c.contact_source === 'import').length,
-    campaign: contacts.filter(c => c.contact_source === 'campaign').length,
     followUpsDue: contacts.filter(c => {
       const followUpDate = c.follow_up_date ? new Date(c.follow_up_date) : null
       return followUpDate && followUpDate <= new Date()
@@ -234,7 +229,7 @@ export function ContactsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="card-stats">
           <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -243,34 +238,6 @@ export function ContactsPage() {
           </div>
           <div className="text-3xl font-bold text-primary-900 dark:text-white mb-1">{stats.total}</div>
           <div className="text-sm font-medium text-primary-600 dark:text-primary-400">Total Contacts</div>
-        </div>
-        <div className="card-stats">
-          <div className="w-12 h-12 bg-gradient-to-br from-accent-500 to-accent-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          </div>
-          <div className="text-3xl font-bold text-accent-600 dark:text-accent-400 mb-1">{stats.manual}</div>
-          <div className="text-sm font-medium text-primary-600 dark:text-primary-400">Manual</div>
-        </div>
-        <div className="card-stats">
-          <div className="w-12 h-12 bg-gradient-to-br from-success-500 to-success-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-            </svg>
-          </div>
-          <div className="text-3xl font-bold text-success-600 dark:text-success-400 mb-1">{stats.imported}</div>
-          <div className="text-sm font-medium text-primary-600 dark:text-primary-400">Imported</div>
-        </div>
-        <div className="card-stats">
-          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </div>
-          <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1">{stats.campaign}</div>
-          <div className="text-sm font-medium text-primary-600 dark:text-primary-400">From Campaigns</div>
         </div>
         <div className="card-stats">
           <div className="w-12 h-12 bg-gradient-to-br from-error-500 to-error-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -285,7 +252,7 @@ export function ContactsPage() {
 
       {/* Filters and Sort */}
       <div className="card">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label htmlFor="search" className="sr-only">Search contacts</label>
             <div className="relative">
@@ -303,21 +270,6 @@ export function ContactsPage() {
                 className="input-field pl-10"
               />
             </div>
-          </div>
-          <div>
-            <label htmlFor="source-filter" className="sr-only">Filter by source</label>
-            <select
-              id="source-filter"
-              value={sourceFilter}
-              onChange={(e) => setSourceFilter(e.target.value as any)}
-              className="input-field"
-            >
-              <option value="all">All Sources</option>
-              <option value="manual">Manual Entry</option>
-              <option value="import">Imported</option>
-              <option value="campaign">From Campaign</option>
-              <option value="referral">Referral</option>
-            </select>
           </div>
           <div>
             <label htmlFor="followup-filter" className="sr-only">Filter by follow-up</label>
@@ -355,7 +307,7 @@ export function ContactsPage() {
             </select>
           </div>
         </div>
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label htmlFor="communication-filter" className="sr-only">Filter by communication</label>
             <select
@@ -434,12 +386,13 @@ export function ContactsPage() {
           </svg>
           <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">No contacts found</h3>
           <p className="mt-2 text-gray-600 dark:text-primary-400">
-            {searchTerm || sourceFilter !== 'all' || followUpFilter !== 'all' || communicationFilter !== 'all'
+            {searchTerm || followUpFilter !== 'all' || communicationFilter !== 'all'
+              || contactTypeFilter !== 'all' || temperatureFilter !== 'all'
               ? 'Try adjusting your search or filters.'
               : 'Get started by adding your first contact or importing a CSV file.'
             }
           </p>
-          {!searchTerm && sourceFilter === 'all' && followUpFilter === 'all' && communicationFilter === 'all' && (
+          {!searchTerm && followUpFilter === 'all' && communicationFilter === 'all' && contactTypeFilter === 'all' && temperatureFilter === 'all' && (
             <div className="mt-6 flex justify-center space-x-3">
               <button
                 onClick={() => setShowForm(true)}

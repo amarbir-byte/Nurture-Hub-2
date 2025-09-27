@@ -403,7 +403,7 @@ export function ContactsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
               </svg>
               Showing {sortedContacts.length} of {contacts.length} contacts
-              {sortBy !== 'created_desc' && (
+              {sortBy !== 'created_desc' && sortBy !== 'updated_desc' && (
                 <span className="ml-2 text-primary-600 dark:text-primary-300">
                   • Sorted by {
                     sortBy === 'name_asc' ? 'Name (A-Z)' :

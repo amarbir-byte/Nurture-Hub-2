@@ -197,7 +197,7 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
       const coordinates = await geocode(fullAddress)
       
       // Geocode property address if provided
-      let propertyCoordinates = { lat: null, lng: null }
+      let propertyCoordinates: { lat: number | null; lng: number | null } = { lat: null, lng: null }
       if (formData.property_address) {
         const propertyFullAddress = [
           formData.property_address.trim(),
@@ -281,7 +281,7 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
       const coordinates = await geocode(fullAddress)
       
       // Geocode property address if provided
-      let propertyCoordinates = { lat: null, lng: null }
+      let propertyCoordinates: { lat: number | null; lng: number | null } = { lat: null, lng: null }
       if (formData.property_address) {
         const propertyFullAddress = [
           formData.property_address.trim(),
@@ -468,7 +468,7 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
                       value={formData.property_address}
                       onChange={(value) => handleInputChange('property_address', value)}
                       onSelect={(result) => {
-                        const mainAddress = result.address
+                        const mainAddress = result.formatted_address || result.address
                         const addressComponents = parseNZAddress(mainAddress)
                         
                         setFormData(prev => ({
@@ -864,7 +864,7 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
                     
                     <div className="bg-blue-50 p-4 rounded-lg">
                       <div className="space-y-2">
-                        {duplicateCheck.samePropertyContacts?.map((contact, index) => (
+                        {duplicateCheck.samePropertyContacts?.map((contact) => (
                           <div key={contact.id} className="flex justify-between items-center">
                             <div>
                               <span className="font-medium text-blue-700">{contact.name}</span>

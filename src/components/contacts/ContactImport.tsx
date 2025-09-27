@@ -12,7 +12,16 @@ interface ImportContact {
   city?: string
   postal_code?: string
   notes?: string
+  contact_type?: 'buyer' | 'seller' | 'both'
+  temperature?: 'hot' | 'warm' | 'cold'
   tags?: string[]
+  // Property purchase information (for sellers)
+  property_purchase_date?: string
+  property_purchase_price?: number
+  property_address?: string
+  property_suburb?: string
+  property_city?: string
+  property_postal_code?: string
   [key: string]: any
 }
 
@@ -32,7 +41,7 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
   const [csvHeaders, setCsvHeaders] = useState<string[]>([])
 
   const requiredFields = ['name', 'address']
-  const optionalFields = ['email', 'phone', 'suburb', 'city', 'postal_code', 'notes', 'tags']
+  const optionalFields = ['email', 'phone', 'suburb', 'city', 'postal_code', 'notes', 'contact_type', 'temperature', 'tags', 'property_purchase_date', 'property_purchase_price', 'property_address', 'property_suburb', 'property_city', 'property_postal_code']
   const allFields = [...requiredFields, ...optionalFields]
 
   // const mockGeocode = async (_address: string) => {
@@ -117,6 +126,14 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
       'city': ['city', 'town', 'municipality'],
       'postal_code': ['postal code', 'postcode', 'zip code', 'zip', 'pincode'],
       'notes': ['notes', 'comments', 'remarks', 'description', 'additional info'],
+      'contact_type': ['contact type', 'type', 'buyer', 'seller', 'client type', 'customer type'],
+      'temperature': ['temperature', 'lead temperature', 'hot', 'warm', 'cold', 'interest level', 'priority'],
+      'property_purchase_date': ['property purchase date', 'purchase date', 'bought date', 'acquisition date'],
+      'property_purchase_price': ['property purchase price', 'purchase price', 'bought price', 'acquisition price', 'property price'],
+      'property_address': ['property address', 'owned property address', 'property location'],
+      'property_suburb': ['property suburb', 'owned property suburb', 'property area'],
+      'property_city': ['property city', 'owned property city', 'property town'],
+      'property_postal_code': ['property postal code', 'property postcode', 'property zip', 'owned property postal code'],
       'tags': ['tags', 'categories', 'labels', 'groups']
     }
 
@@ -139,6 +156,14 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
       'city': ['city', 'town', 'municipality'],
       'postal_code': ['postal', 'postcode', 'zip', 'pin'],
       'notes': ['note', 'comment', 'remark', 'description', 'info'],
+      'contact_type': ['type', 'buyer', 'seller', 'client', 'customer'],
+      'temperature': ['temperature', 'hot', 'warm', 'cold', 'interest', 'priority'],
+      'property_purchase_date': ['purchase', 'bought', 'acquisition', 'date'],
+      'property_purchase_price': ['purchase', 'bought', 'acquisition', 'price'],
+      'property_address': ['property', 'owned', 'address'],
+      'property_suburb': ['property', 'owned', 'suburb', 'area'],
+      'property_city': ['property', 'owned', 'city', 'town'],
+      'property_postal_code': ['property', 'owned', 'postal', 'postcode', 'zip'],
       'tags': ['tag', 'category', 'label', 'group']
     }
 
@@ -488,9 +513,20 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
             city: contact.city || null,
             postal_code: contact.postal_code || null,
             notes: contact.notes || null,
+            contact_type: contact.contact_type || 'buyer',
+            temperature: contact.temperature || 'warm',
             tags: contact.tags || null,
             lat: coordinates.lat,
             lng: coordinates.lng,
+            // Property purchase information
+            property_purchase_date: contact.property_purchase_date || null,
+            property_purchase_price: contact.property_purchase_price || null,
+            property_address: contact.property_address || null,
+            property_suburb: contact.property_suburb || null,
+            property_city: contact.property_city || null,
+            property_postal_code: contact.property_postal_code || null,
+            property_lat: null, // Will be geocoded if property address is provided
+            property_lng: null,
             contact_source: 'import' as const,
             user_id: user?.id,
             created_at: new Date().toISOString(),
@@ -628,7 +664,7 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
                     <li>• <strong>Auto-detection:</strong> Automatically maps columns to contact fields</li>
                     <li>• <strong>Address parsing:</strong> Handles both single address column and separate components</li>
                     <li>• <strong>Required fields:</strong> Name + Address (or Street Number/Name)</li>
-                    <li>• <strong>Optional fields:</strong> Email, Phone, Suburb, City, Postal Code, Notes, Tags</li>
+                    <li>• <strong>Optional fields:</strong> Email, Phone, Suburb, City, Postal Code, Notes, Contact Type, Temperature, Tags, Property Purchase Date, Property Purchase Price, Property Address, Property Suburb, Property City, Property Postal Code</li>
                     <li>• <strong>Flexible headers:</strong> Recognizes variations like "Full Name", "Email Address", etc.</li>
                     <li>• <strong>Tags:</strong> Separate multiple tags with semicolons (;)</li>
                   </ul>
@@ -759,6 +795,8 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Temperature</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
                         </tr>
                       </thead>
@@ -768,6 +806,30 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{contact.name}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.email || '-'}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.phone || '-'}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {contact.contact_type ? (
+                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                  contact.contact_type === 'buyer' ? 'bg-blue-100 text-blue-800' :
+                                  contact.contact_type === 'seller' ? 'bg-green-100 text-green-800' :
+                                  'bg-purple-100 text-purple-800'
+                                }`}>
+                                  {contact.contact_type === 'buyer' ? '👤 Buyer' :
+                                   contact.contact_type === 'seller' ? '🏠 Seller' : '🔄 Both'}
+                                </span>
+                              ) : '-'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {contact.temperature ? (
+                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                  contact.temperature === 'hot' ? 'bg-red-100 text-red-800' :
+                                  contact.temperature === 'warm' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-blue-100 text-blue-800'
+                                }`}>
+                                  {contact.temperature === 'hot' ? '🔥 Hot' :
+                                   contact.temperature === 'warm' ? '🟡 Warm' : '🔵 Cold'}
+                                </span>
+                              ) : '-'}
+                            </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contact.address}</td>
                           </tr>
                         ))}

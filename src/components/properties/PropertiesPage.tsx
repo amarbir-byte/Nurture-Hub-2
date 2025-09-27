@@ -65,7 +65,7 @@ export function PropertiesPage() {
 
       // Try to fetch communication counts for each property
       // If communication_history table doesn't exist, continue without communication data
-      let communicationsCount: Record<string, number> = {}
+      const communicationsCount: Record<string, number> = {}
       try {
         const { data: communicationsData, error: communicationsError } = await supabase
           .from('communication_history')

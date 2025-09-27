@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { CampaignWizard } from './CampaignWizard'
 import { CampaignCard } from './CampaignCard'
+import { GeocodingTest } from '../testing/GeocodingTest'
 
 interface Property {
   id: string
@@ -121,6 +122,12 @@ export function MarketingPage() {
 
   return (
     <div className="space-y-6">
+      {/* Development Testing Section - Remove before production */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <h2 className="text-lg font-semibold text-yellow-800 mb-2">🧪 Development Testing</h2>
+        <GeocodingTest />
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>

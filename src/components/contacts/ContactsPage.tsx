@@ -6,27 +6,7 @@ import { ContactForm } from './ContactForm'
 import { ContactImport } from './ContactImport'
 import { ContactDetailsModal } from './ContactDetailsModal'
 import { Pagination } from '../common/Pagination'
-
-interface Contact {
-  id: string
-  user_id: string
-  name: string
-  email?: string
-  phone?: string
-  address: string
-  suburb?: string
-  city?: string
-  postal_code?: string
-  lat?: number
-  lng?: number
-  notes?: string
-  last_contact_date?: string
-  follow_up_date?: string
-  contact_source: 'manual' | 'import' | 'campaign' | 'referral'
-  tags?: string[]
-  created_at: string
-  updated_at: string
-}
+import type { Contact } from '../../types/contact'
 
 export function ContactsPage() {
   const { user } = useAuth()
@@ -41,6 +21,9 @@ export function ContactsPage() {
   const [sourceFilter, setSourceFilter] = useState<'all' | 'manual' | 'import' | 'campaign' | 'referral'>('all')
   const [followUpFilter, setFollowUpFilter] = useState<'all' | 'due' | 'overdue'>('all')
   const [communicationFilter, setCommunicationFilter] = useState<'all' | 'contacted' | 'not_contacted'>('all')
+  const [contactTypeFilter, setContactTypeFilter] = useState<'all' | 'buyer' | 'seller' | 'both'>('all')
+  const [temperatureFilter, setTemperatureFilter] = useState<'all' | 'hot' | 'warm' | 'cold'>('all')
+  const [sortBy, setSortBy] = useState<'name_asc' | 'name_desc' | 'email_asc' | 'email_desc' | 'contact_type_asc' | 'contact_type_desc' | 'temperature_asc' | 'temperature_desc' | 'created_desc' | 'created_asc' | 'updated_desc' | 'updated_asc'>('created_desc')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(12)
 
@@ -63,7 +46,7 @@ export function ContactsPage() {
 
       // Try to fetch communication counts for each contact
       // If communication_history table doesn't exist, continue without communication data
-      let communicationsCount: Record<string, number> = {}
+      const communicationsCount: Record<string, number> = {}
       try {
         const { data: communicationsData, error: communicationsError } = await supabase
           .from('communication_history')
@@ -157,19 +140,54 @@ export function ContactsPage() {
       (communicationFilter === 'contacted' && communicationCount > 0) ||
       (communicationFilter === 'not_contacted' && communicationCount === 0)
 
-    return matchesSearch && matchesSource && matchesFollowUp && matchesCommunication
+    const matchesContactType = contactTypeFilter === 'all' || contact.contact_type === contactTypeFilter
+    const matchesTemperature = temperatureFilter === 'all' || contact.temperature === temperatureFilter
+
+    return matchesSearch && matchesSource && matchesFollowUp && matchesCommunication && matchesContactType && matchesTemperature
+  })
+
+  // Sort contacts based on selected sort option
+  const sortedContacts = [...filteredContacts].sort((a, b) => {
+    switch (sortBy) {
+      case 'name_asc':
+        return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+      case 'name_desc':
+        return b.name.toLowerCase().localeCompare(a.name.toLowerCase())
+      case 'email_asc':
+        return (a.email || '').toLowerCase().localeCompare((b.email || '').toLowerCase())
+      case 'email_desc':
+        return (b.email || '').toLowerCase().localeCompare((a.email || '').toLowerCase())
+      case 'created_asc':
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      case 'created_desc':
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      case 'updated_asc':
+        return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()
+      case 'updated_desc':
+        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      case 'contact_type_asc':
+        return a.contact_type.localeCompare(b.contact_type)
+      case 'contact_type_desc':
+        return b.contact_type.localeCompare(a.contact_type)
+      case 'temperature_asc':
+        return a.temperature.localeCompare(b.temperature)
+      case 'temperature_desc':
+        return b.temperature.localeCompare(a.temperature)
+      default:
+        return 0
+    }
   })
 
   // Pagination logic
-  const totalPages = Math.ceil(filteredContacts.length / itemsPerPage)
+  const totalPages = Math.ceil(sortedContacts.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
-  const paginatedContacts = filteredContacts.slice(startIndex, endIndex)
+  const paginatedContacts = sortedContacts.slice(startIndex, endIndex)
 
-  // Reset to first page when filters change
+  // Reset to first page when filters or sort change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, sourceFilter, followUpFilter, communicationFilter])
+  }, [searchTerm, sourceFilter, followUpFilter, communicationFilter, contactTypeFilter, temperatureFilter, sortBy])
 
   const stats = {
     total: contacts.length,
@@ -265,9 +283,9 @@ export function ContactsPage() {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Filters and Sort */}
       <div className="card">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label htmlFor="search" className="sr-only">Search contacts</label>
             <div className="relative">
@@ -315,6 +333,30 @@ export function ContactsPage() {
             </select>
           </div>
           <div>
+            <label htmlFor="sort-filter" className="sr-only">Sort contacts</label>
+            <select
+              id="sort-filter"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="input-field"
+            >
+              <option value="created_desc">Newest First</option>
+              <option value="created_asc">Oldest First</option>
+              <option value="updated_desc">Recently Modified</option>
+              <option value="updated_asc">Least Modified</option>
+              <option value="name_asc">Name A-Z</option>
+              <option value="name_desc">Name Z-A</option>
+              <option value="email_asc">Email A-Z</option>
+              <option value="email_desc">Email Z-A</option>
+              <option value="contact_type_asc">Contact Type A-Z</option>
+              <option value="contact_type_desc">Contact Type Z-A</option>
+              <option value="temperature_asc">Temperature A-Z</option>
+              <option value="temperature_desc">Temperature Z-A</option>
+            </select>
+          </div>
+        </div>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
             <label htmlFor="communication-filter" className="sr-only">Filter by communication</label>
             <select
               id="communication-filter"
@@ -327,11 +369,65 @@ export function ContactsPage() {
               <option value="not_contacted">Not Contacted</option>
             </select>
           </div>
+          <div>
+            <label htmlFor="contact-type-filter" className="sr-only">Filter by contact type</label>
+            <select
+              id="contact-type-filter"
+              value={contactTypeFilter}
+              onChange={(e) => setContactTypeFilter(e.target.value as any)}
+              className="input-field"
+            >
+              <option value="all">All Types</option>
+              <option value="buyer">👤 Buyers</option>
+              <option value="seller">🏠 Sellers</option>
+              <option value="both">🔄 Both</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor="temperature-filter" className="sr-only">Filter by temperature</label>
+            <select
+              id="temperature-filter"
+              value={temperatureFilter}
+              onChange={(e) => setTemperatureFilter(e.target.value as any)}
+              className="input-field"
+            >
+              <option value="all">All Temperatures</option>
+              <option value="hot">🔥 Hot</option>
+              <option value="warm">🟡 Warm</option>
+              <option value="cold">🔵 Cold</option>
+            </select>
+          </div>
+          <div>
+            <div className="text-sm text-gray-600 dark:text-primary-400 flex items-center">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+              </svg>
+              Showing {sortedContacts.length} of {contacts.length} contacts
+              {sortBy !== 'created_desc' && (
+                <span className="ml-2 text-primary-600 dark:text-primary-300">
+                  • Sorted by {
+                    sortBy === 'name_asc' ? 'Name (A-Z)' :
+                    sortBy === 'name_desc' ? 'Name (Z-A)' :
+                    sortBy === 'email_asc' ? 'Email (A-Z)' :
+                    sortBy === 'email_desc' ? 'Email (Z-A)' :
+                    sortBy === 'contact_type_asc' ? 'Contact Type (A-Z)' :
+                    sortBy === 'contact_type_desc' ? 'Contact Type (Z-A)' :
+                    sortBy === 'temperature_asc' ? 'Temperature (A-Z)' :
+                    sortBy === 'temperature_desc' ? 'Temperature (Z-A)' :
+                    sortBy === 'created_asc' ? 'Date Created (Oldest)' :
+                    sortBy === 'created_desc' ? 'Date Created (Newest)' :
+                    sortBy === 'updated_asc' ? 'Date Modified (Oldest)' :
+                    sortBy === 'updated_desc' ? 'Date Modified (Newest)' : 'Default'
+                  }
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Contacts Grid */}
-      {filteredContacts.length === 0 ? (
+      {sortedContacts.length === 0 ? (
         <div className="card text-center py-12">
           <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -380,7 +476,7 @@ export function ContactsPage() {
             totalPages={totalPages}
             onPageChange={setCurrentPage}
             itemsPerPage={itemsPerPage}
-            totalItems={filteredContacts.length}
+            totalItems={sortedContacts.length}
           />
         </>
       )}

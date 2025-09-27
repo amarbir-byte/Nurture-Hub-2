@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
+import { findContactsInRadius } from '../../lib/geocoding'
 
 interface Property {
   id: string
@@ -53,6 +54,13 @@ export function CampaignWizard({ properties, onComplete, onCancel }: CampaignWiz
     fetchTemplates()
   }, [])
 
+  // Refresh templates when component becomes visible (e.g., when user navigates back to message step)
+  useEffect(() => {
+    if (step === 'message') {
+      fetchTemplates()
+    }
+  }, [step])
+
   useEffect(() => {
     if (selectedProperty && step === 'radius') {
       findNearbyContacts()
@@ -74,17 +82,6 @@ export function CampaignWizard({ properties, onComplete, onCancel }: CampaignWiz
     }
   }
 
-  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
-    const R = 6371 // Earth's radius in kilometers
-    const dLat = (lat2 - lat1) * Math.PI / 180
-    const dLng = (lng2 - lng1) * Math.PI / 180
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLng / 2) * Math.sin(dLng / 2)
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-    return R * c
-  }
-
   const findNearbyContacts = async () => {
     if (!selectedProperty) return
 
@@ -99,18 +96,17 @@ export function CampaignWizard({ properties, onComplete, onCancel }: CampaignWiz
 
       if (error) throw error
 
-      // Filter contacts within radius
-      const contactsInRadius = (data || []).filter(contact => {
-        const distance = calculateDistance(
-          selectedProperty.lat,
-          selectedProperty.lng,
-          contact.lat,
-          contact.lng
-        )
-        return distance <= radius
-      })
+      // Use the optimized function from geocoding lib
+      const contactsInRadius = findContactsInRadius(
+        selectedProperty.lat,
+        selectedProperty.lng,
+        data || [],
+        radius
+      )
 
-      setNearbyContacts(contactsInRadius)
+      // Extract just the contact data (remove distance property)
+      const contactsOnly = contactsInRadius.map(({ distance, ...contact }) => contact as unknown as Contact)
+      setNearbyContacts(contactsOnly)
     } catch (error) {
       console.error('Error finding nearby contacts:', error)
     }
@@ -404,7 +400,19 @@ export function CampaignWizard({ properties, onComplete, onCancel }: CampaignWiz
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Templates */}
                   <div>
-                    <h4 className="font-medium text-gray-700 dark:text-primary-300 mb-3">Choose Template (Optional)</h4>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-medium text-gray-700 dark:text-primary-300">Choose Template (Optional)</h4>
+                      <button
+                        onClick={fetchTemplates}
+                        className="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 flex items-center"
+                        title="Refresh templates"
+                      >
+                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Refresh
+                      </button>
+                    </div>
                     <div className="max-h-64 overflow-y-auto space-y-2">
                       {templates.map((template) => (
                         <button

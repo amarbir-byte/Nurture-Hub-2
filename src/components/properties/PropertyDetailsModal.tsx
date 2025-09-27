@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { MapTilerMap } from '../ui/MapTilerMap'
 import { TemplateSelector } from '../common/TemplateSelector'
 import { type MessageTemplate, replaceTemplateVariables } from '../../utils/messageTemplates'
+import { findContactsInRadius } from '../../lib/geocoding'
 
 interface Property {
   id: string
@@ -63,6 +64,9 @@ export function PropertyDetailsModal({ property, onClose }: PropertyDetailsModal
   const [radius, setRadius] = useState(10) // Default 10km radius
   const [selectedTemplate, setSelectedTemplate] = useState<MessageTemplate | null>(null)
 
+  // Computed value for selected contacts data
+  const selectedContactsData = nearbyContacts.filter((c: Contact) => selectedContacts.includes(c.id))
+
   useEffect(() => {
     // Prevent body scroll when modal is open
     document.body.style.overflow = 'hidden'
@@ -82,7 +86,7 @@ export function PropertyDetailsModal({ property, onClose }: PropertyDetailsModal
     if (!property.lat || !property.lng || !user) return
 
     try {
-      // Get contacts within 10km radius
+      // Get contacts within radius
       const { data: contacts, error } = await supabase
         .from('contacts')
         .select('*')
@@ -92,34 +96,22 @@ export function PropertyDetailsModal({ property, onClose }: PropertyDetailsModal
 
       if (error) throw error
 
-      // Filter by distance (simple approximation for nearby contacts)
-      const nearby = contacts?.filter(contact => {
-        if (!contact.lat || !contact.lng) return false
-        const distance = calculateDistance(
-          property.lat!, property.lng!,
-          contact.lat, contact.lng
-        )
-        return distance <= radius // Dynamic radius
-      }) || []
+      // Use the optimized function from geocoding lib
+      const nearbyWithDistance = findContactsInRadius(
+        property.lat,
+        property.lng,
+        contacts || [],
+        radius
+      )
 
+      // Extract just the contact data (remove distance property)
+      const nearby = nearbyWithDistance.map(({ distance, ...contact }) => contact as unknown as Contact)
       setNearbyContacts(nearby)
     } catch (error) {
       console.error('Error fetching nearby contacts:', error)
     } finally {
       setLoading(false)
     }
-  }
-
-  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
-    const R = 6371 // Earth's radius in km
-    const dLat = (lat2 - lat1) * Math.PI / 180
-    const dLng = (lng2 - lng1) * Math.PI / 180
-    const a =
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLng/2) * Math.sin(dLng/2)
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
-    return R * c
   }
 
   const fetchCommunicationHistory = async () => {
@@ -261,8 +253,6 @@ Interested in similar properties in your area? Let's discuss your requirements.`
   const handleSendCommunication = async () => {
     if (selectedContacts.length === 0) return
 
-    const selectedContactsData = nearbyContacts.filter((c: Contact) => selectedContacts.includes(c.id))
-    
     // For multi-contact send, we'll generate the message for the first contact as a preview
     // and then generate individually for each contact when opening the app.
     // The stored message will be the generic one or the template-based one.

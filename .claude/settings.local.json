@@ -23,7 +23,14 @@
       "Bash(vercel:*)",
       "Bash(npm run preview:*)",
       "Bash(python:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(npx vercel:*)",
+      "WebFetch(domain:cmhh.github.io)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.linz.govt.nz)",
+      "Bash(npm run lint:*)",
+      "Bash(git restore:*)",
+      "WebFetch(domain:www.addressable.co.nz)"
     ],
     "deny": [],
     "ask": []

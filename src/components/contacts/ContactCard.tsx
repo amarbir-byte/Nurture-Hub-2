@@ -1,23 +1,5 @@
-interface Contact {
-  id: string
-  user_id: string
-  name: string
-  email?: string
-  phone?: string
-  address: string
-  suburb?: string
-  city?: string
-  postal_code?: string
-  lat?: number
-  lng?: number
-  notes?: string
-  last_contact_date?: string
-  follow_up_date?: string
-  contact_source: 'manual' | 'import' | 'campaign' | 'referral'
-  tags?: string[]
-  created_at: string
-  updated_at: string
-}
+import type { Contact } from '../../types/contact'
+import { CONTACT_TYPE_LABELS, TEMPERATURE_LABELS, CONTACT_TYPE_CLASSES, TEMPERATURE_CLASSES } from '../../types/contact'
 
 interface ContactCardProps {
   contact: Contact
@@ -142,6 +124,17 @@ export function ContactCard({ contact, onEdit, onDelete, onViewDetails }: Contac
         )}
       </div>
 
+      {/* Contact Type & Temperature Indicators */}
+      <div className="flex items-center space-x-2 mb-3">
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${CONTACT_TYPE_CLASSES[contact.contact_type]}`}>
+          {CONTACT_TYPE_LABELS[contact.contact_type]}
+        </span>
+        
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${TEMPERATURE_CLASSES[contact.temperature]}`}>
+          {TEMPERATURE_LABELS[contact.temperature]}
+        </span>
+      </div>
+
       {/* Compact Name */}
       <h3 className="text-lg font-bold text-primary-900 dark:text-white mb-2 leading-tight group-hover:text-accent-700 dark:group-hover:text-accent-300 transition-colors duration-200">
         {contact.name}
@@ -188,6 +181,38 @@ export function ContactCard({ contact, onEdit, onDelete, onViewDetails }: Contac
           </div>
         </div>
       </div>
+
+      {/* Property Information (for sellers) */}
+      {(contact.contact_type === 'seller' || contact.contact_type === 'both') && contact.property_address && (
+        <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <div className="flex items-center mb-2">
+            <div className="w-5 h-5 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mr-2">
+              <svg className="w-3 h-3 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+            </div>
+            <span className="text-xs font-medium text-blue-800 dark:text-blue-200">Property Owned</span>
+          </div>
+          
+          <div className="text-xs text-blue-700 dark:text-blue-300">
+            <div className="font-medium truncate mb-1">{contact.property_address}</div>
+            {(contact.property_suburb || contact.property_city) && (
+              <div className="text-blue-600 dark:text-blue-400 truncate mb-1">
+                {contact.property_suburb}{contact.property_suburb && contact.property_city ? ', ' : ''}{contact.property_city}
+              </div>
+            )}
+            
+            <div className="flex items-center justify-between text-blue-600 dark:text-blue-400">
+              {contact.property_purchase_date && (
+                <span>Purchased: {new Date(contact.property_purchase_date).toLocaleDateString()}</span>
+              )}
+              {contact.property_purchase_price && (
+                <span className="font-medium">${contact.property_purchase_price.toLocaleString()}</span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Compact Notes */}
       {contact.notes && (

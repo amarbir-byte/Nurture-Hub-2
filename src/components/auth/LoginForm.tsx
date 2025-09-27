@@ -23,7 +23,7 @@ export function LoginForm({ onSwitchToSignup }: LoginFormProps) {
       if (error) {
         setError(error.message)
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred')
     } finally {
       setLoading(false)

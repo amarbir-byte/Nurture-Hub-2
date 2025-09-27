@@ -1,6 +1,8 @@
 import { useRef, useEffect, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { circle } from '@turf/circle';
+import { point } from '@turf/helpers';
 
 interface Marker {
   id: string;
@@ -96,7 +98,7 @@ export function MapTilerMap({
         .setPopup(
           new maplibregl.Popup({ offset: 25 })
             .setHTML(
-              `<div class="p-2 text-primary-900 dark:text-primary-100">` + // Updated text color classes here
+              `<div style="padding: 8px; color: #1f2937; background: white; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">` +
               `<strong>${markerData.title}</strong>` +
               `</div>`
             )
@@ -106,12 +108,12 @@ export function MapTilerMap({
 
     // Add radius circle
     if (showRadius && radiusCenter && radiusKm) {
-      const options = { steps: 64, units: 'kilometers' as const };
-      const circle = turf.circle(radiusCenter, radiusKm, options);
+      const centerPoint = point(radiusCenter);
+      const circleFeature = circle(centerPoint, radiusKm, { steps: 64, units: 'kilometers' });
 
       map.current.addSource('radius-source', {
         type: 'geojson',
-        data: circle as GeoJSON.Feature<GeoJSON.Polygon>, // Cast to correct type
+        data: circleFeature as GeoJSON.Feature<GeoJSON.Polygon>,
       });
 
       map.current.addLayer({
@@ -151,44 +153,3 @@ export function MapTilerMap({
   );
 }
 
-// Dummy turf.js implementation for circle if not installed
-// In a real project, you would install @turf/turf
-const turf = {
-  circle: (center: [number, number], radius: number, options: { steps: number, units: 'kilometers' }) => {
-    const points = options.steps;
-    const units = options.units;
-    const coords = [];
-    for (let i = 0; i < points; i++) {
-      coords.push(turf.destination(center, radius, i * -360 / points, { units }).geometry.coordinates);
-    }
-    coords.push(coords[0]); // Close the circle
-    return {
-      type: 'Feature',
-      geometry: {
-        type: 'Polygon',
-        coordinates: [coords],
-      },
-      properties: {},
-    };
-  },
-  destination: (origin: [number, number], distance: number, bearing: number, _options: { units: 'kilometers' }) => {
-    const R = 6371; // Earth's radius in km
-    const lat = (origin[1] * Math.PI) / 180;
-    const lon = (origin[0] * Math.PI) / 180;
-    const brng = (bearing * Math.PI) / 180;
-
-    const lat2 = Math.asin(Math.sin(lat) * Math.cos(distance / R) +
-      Math.cos(lat) * Math.sin(distance / R) * Math.cos(brng));
-    const lon2 = lon + Math.atan2(Math.sin(brng) * Math.sin(distance / R) * Math.cos(lat),
-      Math.cos(distance / R) - Math.sin(lat) * Math.sin(lat2));
-
-    return {
-      type: 'Feature',
-      geometry: {
-        type: 'Point',
-        coordinates: [(lon2 * 180) / Math.PI, (lat2 * 180) / Math.PI],
-      },
-      properties: {},
-    };
-  },
-};

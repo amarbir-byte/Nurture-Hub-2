@@ -44,7 +44,7 @@ export const isSecureContext = (): boolean => {
 
 // Utility function for secure data handling
 export const sanitizeInput = (input: string): string => {
-  return input.replace(/[<>\"']/g, '')
+  return input.replace(/[<>"']/g, '')
 }
 
 export default config

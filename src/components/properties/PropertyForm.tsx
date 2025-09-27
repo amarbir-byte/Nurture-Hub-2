@@ -6,6 +6,7 @@ import { geocode } from '../../lib/geocoding'
 import { AddressAutocomplete } from '../ui/AddressAutocomplete'
 import type { AutocompleteResult } from '../../lib/maptiler'
 import { parseNZAddress } from '../../types/address'
+import { checkDuplicateProperty } from '../../utils/duplicateCheck'
 
 interface Property {
   id: string
@@ -72,6 +73,11 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Partial<FormData>>({})
+  const [duplicateCheck, setDuplicateCheck] = useState<{
+    show: boolean
+    existingProperty?: any
+    action: 'create' | 'update' | 'cancel'
+  }>({ show: false, action: 'create' })
 
   const [formData, setFormData] = useState<FormData>({
     address: property?.address || '',
@@ -145,6 +151,119 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
       return
     }
 
+    // If this is a new property (not editing), check for duplicates
+    if (!property && user) {
+      const duplicateResult = await checkDuplicateProperty(user.id, formData.address)
+      
+      if (duplicateResult.isDuplicate && duplicateResult.existingProperty) {
+        setDuplicateCheck({
+          show: true,
+          existingProperty: duplicateResult.existingProperty,
+          action: 'create'
+        })
+        return
+      }
+    }
+
+    // If user chose to update existing property, proceed with update
+    if (duplicateCheck.action === 'update' && duplicateCheck.existingProperty) {
+      await updateExistingProperty()
+      return
+    }
+
+    // If user chose to cancel, close the form
+    if (duplicateCheck.action === 'cancel') {
+      onCancel()
+      return
+    }
+
+    // Proceed with normal create/update
+    await saveProperty()
+  }
+
+  const updateExistingProperty = async () => {
+    if (!user || !duplicateCheck.existingProperty) return
+
+    setLoading(true)
+
+    try {
+      // Build the most accurate address for geocoding using components if available
+      let fullAddress = formData.address.trim()
+
+      // If we have address components, build a more precise address
+      if (formData.street_number || formData.street || formData.suburb || formData.city) {
+        const addressParts = []
+
+        // Street address
+        if (formData.street_number && formData.street) {
+          addressParts.push(`${formData.street_number} ${formData.street}`)
+        } else if (formData.street) {
+          addressParts.push(formData.street)
+        }
+
+        // Add suburb, city, region, postal code
+        if (formData.suburb) addressParts.push(formData.suburb)
+        if (formData.city) addressParts.push(formData.city)
+        if (formData.region && formData.region !== formData.city) addressParts.push(formData.region)
+        if (formData.postal_code) addressParts.push(formData.postal_code)
+
+        if (addressParts.length > 0) {
+          fullAddress = addressParts.join(', ')
+        }
+      }
+
+      // Add New Zealand if not already present
+      if (!fullAddress.toLowerCase().includes('new zealand') && !fullAddress.toLowerCase().includes('nz')) {
+        fullAddress += ', New Zealand'
+      }
+
+      console.log('Geocoding full property address:', fullAddress)
+      const coordinates = await geocode(fullAddress)
+
+      const propertyData = {
+        address: formData.address.trim(),
+        // NZ Address Components
+        street_number: formData.street_number.trim() || null,
+        street: formData.street.trim() || null,
+        suburb: formData.suburb.trim() || null,
+        city: formData.city.trim() || null,
+        region: formData.region.trim() || null,
+        postal_code: formData.postal_code.trim() || null,
+        status: formData.status,
+        price: formData.price ? Number(formData.price) : null,
+        sale_price: formData.sale_price ? Number(formData.sale_price) : null,
+        bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
+        bathrooms: formData.bathrooms ? Number(formData.bathrooms) : null,
+        property_type: formData.property_type,
+        description: formData.description.trim() || null,
+        listing_date: formData.listing_date || null,
+        sold_date: formData.sold_date || null,
+        floor_area: formData.floor_area ? Number(formData.floor_area) : null,
+        land_area_m2: formData.land_area_m2 ? Number(formData.land_area_m2) : null,
+        organisation: formData.organisation.trim() || null,
+        lat: coordinates.lat,
+        lng: coordinates.lng,
+        updated_at: new Date().toISOString(),
+      }
+
+      const result = await supabase
+        .from('properties')
+        .update(propertyData)
+        .eq('id', duplicateCheck.existingProperty.id)
+        .eq('user_id', user.id)
+
+      if (result.error) throw result.error
+
+      onSave()
+    } catch (error) {
+      console.error('Error updating existing property:', error)
+      alert('Error updating property. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const saveProperty = async () => {
     setLoading(true)
 
     try {
@@ -689,6 +808,91 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
           </form>
         </div>
       </div>
+
+      {/* Duplicate Property Modal */}
+      {duplicateCheck.show && duplicateCheck.existingProperty && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-60">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-gray-900">Duplicate Property Found</h3>
+                <button
+                  onClick={() => setDuplicateCheck({ show: false, action: 'create' })}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-gray-600 mb-4">
+                  A property with a similar address already exists in your database:
+                </p>
+                
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="space-y-2">
+                    <div>
+                      <span className="font-medium text-gray-700">Address:</span>
+                      <span className="ml-2 text-gray-600">{duplicateCheck.existingProperty.address}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">Status:</span>
+                      <span className="ml-2 text-gray-600 capitalize">{duplicateCheck.existingProperty.status}</span>
+                    </div>
+                    {duplicateCheck.existingProperty.price && (
+                      <div>
+                        <span className="font-medium text-gray-700">Price:</span>
+                        <span className="ml-2 text-gray-600">${duplicateCheck.existingProperty.price.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {duplicateCheck.existingProperty.bedrooms && (
+                      <div>
+                        <span className="font-medium text-gray-700">Bedrooms:</span>
+                        <span className="ml-2 text-gray-600">{duplicateCheck.existingProperty.bedrooms}</span>
+                      </div>
+                    )}
+                    <div>
+                      <span className="font-medium text-gray-700">Added:</span>
+                      <span className="ml-2 text-gray-600">
+                        {new Date(duplicateCheck.existingProperty.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    setDuplicateCheck(prev => ({ ...prev, action: 'update' }))
+                    handleSubmit(new Event('submit') as any)
+                  }}
+                  className="w-full btn-primary"
+                >
+                  Update Existing Property
+                </button>
+                <button
+                  onClick={() => {
+                    setDuplicateCheck(prev => ({ ...prev, action: 'create' }))
+                    handleSubmit(new Event('submit') as any)
+                  }}
+                  className="w-full btn-secondary"
+                >
+                  Create New Property Anyway
+                </button>
+                <button
+                  onClick={() => setDuplicateCheck({ show: false, action: 'cancel' })}
+                  className="w-full text-gray-500 hover:text-gray-700 py-2"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

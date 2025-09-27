@@ -1,5 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useAuth } from '../../contexts/AuthContext'
+import { supabase } from '../../lib/supabase'
 import { type MessageTemplate, getTemplatesByType } from '../../utils/messageTemplates'
+
+interface DatabaseTemplate {
+  id: string
+  name: string
+  content: string
+  category: string
+  placeholders: string[]
+  created_at: string
+  updated_at: string
+}
 
 interface TemplateSelectorProps {
   type: 'email' | 'sms'
@@ -16,10 +28,58 @@ export function TemplateSelector({
   onTemplateSelect,
   className = ''
 }: TemplateSelectorProps) {
+  const { user } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
+  const [databaseTemplates, setDatabaseTemplates] = useState<DatabaseTemplate[]>([])
+  const [loading, setLoading] = useState(false)
   
-  const templates = getTemplatesByType(type, category)
-  const selectedTemplate = templates.find(t => t.id === selectedTemplateId)
+  // Get hardcoded templates as fallback
+  const hardcodedTemplates = getTemplatesByType(type, category)
+  
+  // Convert database template to MessageTemplate format
+  const convertDatabaseTemplate = (dbTemplate: DatabaseTemplate): MessageTemplate => ({
+    id: dbTemplate.id,
+    name: dbTemplate.name,
+    type: type,
+    category: dbTemplate.category as 'property' | 'contact' | 'general',
+    message: dbTemplate.content,
+    variables: dbTemplate.placeholders || []
+  })
+  
+  // Combine database and hardcoded templates
+  const allTemplates = [
+    ...databaseTemplates.map(convertDatabaseTemplate),
+    ...hardcodedTemplates
+  ]
+  
+  const selectedTemplate = allTemplates.find(t => t.id === selectedTemplateId)
+
+  // Fetch database templates
+  useEffect(() => {
+    if (user && isOpen) {
+      fetchDatabaseTemplates()
+    }
+  }, [user, isOpen])
+
+  const fetchDatabaseTemplates = async () => {
+    if (!user) return
+    
+    setLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('templates')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setDatabaseTemplates(data || [])
+    } catch (error) {
+      console.error('Error fetching database templates:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleTemplateSelect = (template: MessageTemplate) => {
     onTemplateSelect(template)
@@ -68,13 +128,18 @@ export function TemplateSelector({
             </button>
           </div>
           
-          {templates.length > 0 && (
+          {allTemplates.length > 0 && (
             <div className="border-t border-gray-200">
               <div className="p-2">
-                <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-                  {category ? `${category} templates` : 'Templates'}
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    {category ? `${category} templates` : 'Templates'}
+                  </div>
+                  {loading && (
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary-600"></div>
+                  )}
                 </div>
-                {templates.map((template) => (
+                {allTemplates.map((template) => (
                   <button
                     key={template.id}
                     onClick={() => handleTemplateSelect(template)}

@@ -468,7 +468,7 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
                       value={formData.property_address}
                       onChange={(value) => handleInputChange('property_address', value)}
                       onSelect={(result) => {
-                        const mainAddress = result.formatted_address || result.address
+                        const mainAddress = result.place_name
                         const addressComponents = parseNZAddress(mainAddress)
                         
                         setFormData(prev => ({

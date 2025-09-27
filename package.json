@@ -33,6 +33,7 @@
     "@stripe/react-stripe-js": "^4.0.2",
     "@stripe/stripe-js": "^7.9.0",
     "@supabase/supabase-js": "^2.57.4",
+    "maplibre-gl": "^5.7.3",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },

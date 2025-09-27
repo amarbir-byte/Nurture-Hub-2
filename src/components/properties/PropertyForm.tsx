@@ -3,11 +3,21 @@ import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { ensureUserExists } from '../../utils/userUtils'
 import { geocode } from '../../lib/geocoding'
+import { AddressAutocomplete } from '../ui/AddressAutocomplete'
+import type { AutocompleteResult } from '../../lib/maptiler'
+import { parseNZAddress } from '../../types/address'
 
 interface Property {
   id: string
   user_id: string
   address: string
+  // NZ Address Components
+  street_number?: string
+  street?: string
+  suburb?: string
+  city?: string
+  region?: string
+  postal_code?: string
   status: 'listed' | 'sold' | 'withdrawn'
   price: number
   bedrooms?: number
@@ -36,6 +46,13 @@ interface PropertyFormProps {
 
 interface FormData {
   address: string
+  // NZ Address Components
+  street_number: string
+  street: string
+  suburb: string
+  city: string
+  region: string
+  postal_code: string
   status: 'listed' | 'sold' | 'withdrawn'
   price: string
   sale_price: string
@@ -58,6 +75,13 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
 
   const [formData, setFormData] = useState<FormData>({
     address: property?.address || '',
+    // NZ Address Components
+    street_number: property?.street_number || '',
+    street: property?.street || '',
+    suburb: property?.suburb || '',
+    city: property?.city || '',
+    region: property?.region || 'Auckland',
+    postal_code: property?.postal_code || '',
     status: property?.status || 'listed',
     price: property?.price?.toString() || '',
     sale_price: property?.sale_price?.toString() || '',
@@ -129,8 +153,30 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
         await ensureUserExists(user)
       }
 
-      // Ensure complete address for accurate geocoding
+      // Build the most accurate address for geocoding using components if available
       let fullAddress = formData.address.trim()
+
+      // If we have address components, build a more precise address
+      if (formData.street_number || formData.street || formData.suburb || formData.city) {
+        const addressParts = []
+
+        // Street address
+        if (formData.street_number && formData.street) {
+          addressParts.push(`${formData.street_number} ${formData.street}`)
+        } else if (formData.street) {
+          addressParts.push(formData.street)
+        }
+
+        // Add suburb, city, region, postal code
+        if (formData.suburb) addressParts.push(formData.suburb)
+        if (formData.city) addressParts.push(formData.city)
+        if (formData.region && formData.region !== formData.city) addressParts.push(formData.region)
+        if (formData.postal_code) addressParts.push(formData.postal_code)
+
+        if (addressParts.length > 0) {
+          fullAddress = addressParts.join(', ')
+        }
+      }
 
       // Add New Zealand if not already present
       if (!fullAddress.toLowerCase().includes('new zealand') && !fullAddress.toLowerCase().includes('nz')) {
@@ -142,6 +188,13 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
 
       const propertyData = {
         address: formData.address.trim(),
+        // NZ Address Components
+        street_number: formData.street_number.trim() || null,
+        street: formData.street.trim() || null,
+        suburb: formData.suburb.trim() || null,
+        city: formData.city.trim() || null,
+        region: formData.region.trim() || null,
+        postal_code: formData.postal_code.trim() || null,
         status: formData.status,
         price: formData.price ? Number(formData.price) : null,
         sale_price: formData.sale_price ? Number(formData.sale_price) : null,
@@ -214,24 +267,140 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Address */}
             <div>
-              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                Complete Address *
-              </label>
-              <p className="text-xs text-gray-500 mb-2">
-                Include street, suburb, city, and postal code for accurate location matching
-              </p>
-              <input
-                type="text"
-                id="address"
+              <AddressAutocomplete
+                label="Complete Address"
                 value={formData.address}
-                onChange={(e) => handleInputChange('address', e.target.value)}
-                className={`input-field ${errors.address ? 'border-red-500' : ''}`}
-                placeholder="123 Main Street, Ponsonby, Auckland 1011"
+                onChange={(value) => handleInputChange('address', value)}
+                onSelect={(result: AutocompleteResult) => {
+                  console.log('Selected address:', result)
+
+                  // Parse the selected address into components
+                  const addressComponents = parseNZAddress(result.place_name)
+                  console.log('Parsed address components:', addressComponents)
+
+                  // Update form fields with parsed components
+                  setFormData(prev => ({
+                    ...prev,
+                    address: result.place_name,
+                    street_number: addressComponents.street_number || '',
+                    street: addressComponents.street || '',
+                    suburb: addressComponents.suburb || '',
+                    city: addressComponents.city || '',
+                    region: addressComponents.region || prev.region,
+                    postal_code: addressComponents.postal_code || '',
+                  }))
+
+                  // Clear any address-related errors
+                  if (errors.address) {
+                    setErrors(prev => ({ ...prev, address: undefined }))
+                  }
+                }}
+                placeholder="Start typing address... e.g. 123 Main Street, Ponsonby"
+                error={errors.address}
+                required
               />
-              {errors.address && (
-                <p className="mt-1 text-sm text-red-600">{errors.address}</p>
-              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Type at least 3 characters to see NZ address suggestions
+              </p>
             </div>
+
+            {/* Address Components (auto-populated from selection) */}
+            {(formData.street_number || formData.street || formData.suburb || formData.city || formData.postal_code) && (
+              <div className="space-y-4 bg-blue-50 p-4 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-blue-900">Address Components</h3>
+                  <p className="text-xs text-blue-700">Auto-filled from selected address</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label htmlFor="street_number" className="block text-xs font-medium text-blue-700 mb-1">
+                      Street Number
+                    </label>
+                    <input
+                      type="text"
+                      id="street_number"
+                      value={formData.street_number}
+                      onChange={(e) => handleInputChange('street_number', e.target.value)}
+                      className="input-field text-sm"
+                      placeholder="123"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label htmlFor="street" className="block text-xs font-medium text-blue-700 mb-1">
+                      Street Name
+                    </label>
+                    <input
+                      type="text"
+                      id="street"
+                      value={formData.street}
+                      onChange={(e) => handleInputChange('street', e.target.value)}
+                      className="input-field text-sm"
+                      placeholder="Main Street"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <label htmlFor="suburb" className="block text-xs font-medium text-blue-700 mb-1">
+                      Suburb
+                    </label>
+                    <input
+                      type="text"
+                      id="suburb"
+                      value={formData.suburb}
+                      onChange={(e) => handleInputChange('suburb', e.target.value)}
+                      className="input-field text-sm"
+                      placeholder="Ponsonby"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="city" className="block text-xs font-medium text-blue-700 mb-1">
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      id="city"
+                      value={formData.city}
+                      onChange={(e) => handleInputChange('city', e.target.value)}
+                      className="input-field text-sm"
+                      placeholder="Auckland"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="region" className="block text-xs font-medium text-blue-700 mb-1">
+                      Region
+                    </label>
+                    <input
+                      type="text"
+                      id="region"
+                      value={formData.region}
+                      onChange={(e) => handleInputChange('region', e.target.value)}
+                      className="input-field text-sm"
+                      placeholder="Auckland"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="postal_code" className="block text-xs font-medium text-blue-700 mb-1">
+                      Postal Code
+                    </label>
+                    <input
+                      type="text"
+                      id="postal_code"
+                      value={formData.postal_code}
+                      onChange={(e) => handleInputChange('postal_code', e.target.value)}
+                      className="input-field text-sm"
+                      placeholder="1011"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Property Type & Status */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

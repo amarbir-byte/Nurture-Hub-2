@@ -215,15 +215,49 @@ export function mockGeocode(address: string): { lat: number; lng: number } {
 }
 
 /**
- * Main geocoding function - uses MapTiler API with fallback to mock geocoding
+ * Main geocoding function - prioritizes LINZ (NZ official data) > Google Maps > MapTiler > mock geocoding
  */
 export async function geocode(address: string): Promise<{ lat: number; lng: number }> {
-  // Import MapTiler service dynamically to avoid circular dependencies
+  // Import services dynamically to avoid circular dependencies
+  const { geocodeWithLinz } = await import('./linz-geocoding')
+  const { geocodeWithGoogle } = await import('./google-geocoding')
   const { geocodeAddress } = await import('./maptiler')
 
   try {
-    // Try MapTiler API first
-    console.log('Attempting MapTiler geocoding for:', address)
+    // Try LINZ geocoding first for New Zealand addresses (highest accuracy)
+    console.log('🇳🇿 Attempting LINZ geocoding for:', address)
+    const linzResult = await geocodeWithLinz(address)
+    if (linzResult && linzResult.confidence > 0.6) {
+      console.log('✅ LINZ geocoding successful:', linzResult)
+      return {
+        lat: linzResult.lat,
+        lng: linzResult.lng
+      }
+    }
+    console.log('LINZ returned no high-confidence results for:', address)
+  } catch (error) {
+    console.warn('LINZ geocoding failed, trying Google Maps:', error)
+  }
+
+  try {
+    // Try Google Maps geocoding (excellent worldwide coverage)
+    console.log('🌍 Attempting Google Maps geocoding for:', address)
+    const googleResult = await geocodeWithGoogle(address)
+    if (googleResult && googleResult.confidence > 0.7) {
+      console.log('✅ Google geocoding successful:', googleResult)
+      return {
+        lat: googleResult.lat,
+        lng: googleResult.lng
+      }
+    }
+    console.log('Google Maps returned no high-confidence results for:', address)
+  } catch (error) {
+    console.warn('Google geocoding failed, trying MapTiler:', error)
+  }
+
+  try {
+    // Fallback to MapTiler API (mainly for map display compatibility)
+    console.log('🗺️ Attempting MapTiler geocoding for:', address)
     const result = await geocodeAddress(address)
     if (result) {
       console.log('MapTiler geocoding successful:', result)
@@ -237,8 +271,8 @@ export async function geocode(address: string): Promise<{ lat: number; lng: numb
     console.warn('MapTiler geocoding failed, falling back to mock:', error)
   }
 
-  // Fallback to mock geocoding for development/offline use
-  console.warn(`Using mock geocoding for address: ${address}`)
+  // Final fallback to mock geocoding for development/offline use
+  console.warn(`⚠️ Using mock geocoding for address: ${address}`)
   return mockGeocode(address)
 }
 
@@ -268,9 +302,9 @@ export function calculateDistance(
 export function findContactsInRadius(
   propertyLat: number,
   propertyLng: number,
-  contacts: Array<{ lat: number | null; lng: number | null; [key: string]: any }>,
+  contacts: Array<{ lat: number | null; lng: number | null; [key: string]: unknown }>,
   radiusKm: number
-): Array<{ distance: number; [key: string]: any }> {
+): Array<{ distance: number; [key: string]: unknown }> {
   return contacts
     .filter(contact => contact.lat !== null && contact.lng !== null)
     .map(contact => ({

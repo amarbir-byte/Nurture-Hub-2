@@ -1,5 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
-import { autocompleteAddress, type AutocompleteResult } from '../../lib/maptiler'
+import { autocompleteGooglePlaces, type GooglePlacesResult } from '../../lib/google-places'
+
+// Compatibility type for existing components
+export interface AutocompleteResult {
+  place_name: string
+  center: [number, number]
+  place_type: string[]
+  relevance: number
+}
 
 interface AddressAutocompleteProps {
   value: string
@@ -22,7 +30,7 @@ export function AddressAutocomplete({
   label,
   required = false
 }: AddressAutocompleteProps) {
-  const [suggestions, setSuggestions] = useState<AutocompleteResult[]>([])
+  const [suggestions, setSuggestions] = useState<GooglePlacesResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [activeSuggestion, setActiveSuggestion] = useState(-1)
@@ -46,12 +54,12 @@ export function AddressAutocomplete({
     debounceTimeout.current = setTimeout(async () => {
       setIsLoading(true)
       try {
-        const results = await autocompleteAddress(value)
+        const results = await autocompleteGooglePlaces(value)
         setSuggestions(results)
         setShowSuggestions(results.length > 0)
         setActiveSuggestion(-1)
       } catch (error) {
-        console.error('Address autocomplete error:', error)
+        console.error('Google Places autocomplete error:', error)
         setSuggestions([])
         setShowSuggestions(false)
       } finally {
@@ -72,12 +80,21 @@ export function AddressAutocomplete({
     setActiveSuggestion(-1)
   }
 
-  const handleSuggestionClick = (suggestion: AutocompleteResult) => {
-    onChange(suggestion.place_name)
+  const handleSuggestionClick = (suggestion: GooglePlacesResult) => {
+    onChange(suggestion.description)
     setSuggestions([])
     setShowSuggestions(false)
     setActiveSuggestion(-1)
-    onSelect?.(suggestion)
+
+    // Convert Google Places result to AutocompleteResult for compatibility
+    const compatibilityResult: AutocompleteResult = {
+      place_name: suggestion.description,
+      center: [0, 0], // Will be geocoded by the enhanced system
+      place_type: suggestion.types,
+      relevance: 1
+    }
+
+    onSelect?.(compatibilityResult)
     inputRef.current?.blur()
   }
 
@@ -185,7 +202,7 @@ export function AddressAutocomplete({
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
           {suggestions.map((suggestion, index) => (
             <div
-              key={`${suggestion.place_name}-${index}`}
+              key={`${suggestion.description}-${index}`}
               ref={el => { suggestionRefs.current[index] = el }}
               className={`
                 px-4 py-2 cursor-pointer text-sm
@@ -204,16 +221,18 @@ export function AddressAutocomplete({
                 </svg>
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-gray-900 truncate">
-                    {suggestion.place_name}
+                    {suggestion.structured_formatting.main_text}
                   </div>
-                  {suggestion.place_type.length > 0 && (
-                    <div className="text-xs text-gray-500 capitalize">
-                      {suggestion.place_type[0]}
+                  {suggestion.structured_formatting.secondary_text && (
+                    <div className="text-xs text-gray-500">
+                      {suggestion.structured_formatting.secondary_text}
                     </div>
                   )}
-                </div>
-                <div className="text-xs text-gray-400 ml-2">
-                  {Math.round(suggestion.relevance * 100)}%
+                  {suggestion.types.length > 0 && (
+                    <div className="text-xs text-gray-400 capitalize mt-1">
+                      {suggestion.types.filter(type => type !== 'establishment').slice(0, 1)[0]?.replace(/_/g, ' ')}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

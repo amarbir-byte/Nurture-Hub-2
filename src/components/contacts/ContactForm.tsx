@@ -3,6 +3,9 @@ import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { ensureUserExists } from '../../utils/userUtils'
 import { geocode } from '../../lib/geocoding'
+import { AddressAutocomplete } from '../ui/AddressAutocomplete'
+import type { AutocompleteResult } from '../../lib/maptiler'
+import { parseNZAddress } from '../../types/address'
 
 interface Contact {
   id: string
@@ -96,7 +99,7 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
   }
 
   const isValidPhone = (phone: string): boolean => {
-    const phoneRegex = /^[\+]?[0-9\s\-\(\)]{8,}$/
+    const phoneRegex = /^[+]?[0-9\s\-()]{8,}$/
     return phoneRegex.test(phone)
   }
 
@@ -282,20 +285,53 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
 
             {/* Address */}
             <div>
-              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                Street Address *
-              </label>
-              <input
-                type="text"
-                id="address"
+              <AddressAutocomplete
+                label="Complete Address"
                 value={formData.address}
-                onChange={(e) => handleInputChange('address', e.target.value)}
-                className={`input-field ${errors.address ? 'border-red-500' : ''}`}
-                placeholder="123 Main Street"
+                onChange={(value) => handleInputChange('address', value)}
+                onSelect={(result: AutocompleteResult) => {
+                  console.log('Selected address:', result)
+
+                  // Use improved NZ address parsing
+                  const addressComponents = parseNZAddress(result.place_name)
+
+                  // Build the main address field from street components
+                  let mainAddress = ''
+                  if (addressComponents.street_number && addressComponents.street) {
+                    mainAddress = `${addressComponents.street_number} ${addressComponents.street}`
+                  } else if (addressComponents.street) {
+                    mainAddress = addressComponents.street
+                  } else {
+                    // Fallback to first part of the address
+                    mainAddress = result.place_name.split(',')[0].trim()
+                  }
+
+                  // Update form fields with parsed components
+                  handleInputChange('address', mainAddress)
+
+                  if (addressComponents.suburb) {
+                    handleInputChange('suburb', addressComponents.suburb)
+                  }
+
+                  if (addressComponents.city) {
+                    handleInputChange('city', addressComponents.city)
+                  }
+
+                  if (addressComponents.postal_code) {
+                    handleInputChange('postal_code', addressComponents.postal_code)
+                  }
+
+                  // Log the parsing for debugging
+                  console.log('Parsed address components:', addressComponents)
+                  console.log('Main address field set to:', mainAddress)
+                }}
+                placeholder="Start typing address... e.g. 123 Main Street, Ponsonby, Auckland"
+                error={errors.address}
+                required
               />
-              {errors.address && (
-                <p className="mt-1 text-sm text-red-600">{errors.address}</p>
-              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Select an address to auto-fill suburb, city, and postal code
+              </p>
             </div>
 
             {/* Suburb, City, Postal Code */}

@@ -16,6 +16,21 @@ interface CleanupTask {
   execute: () => Promise<{ success: boolean; details: string; itemsProcessed?: number }>;
 }
 
+interface CleanupFailure {
+  task: string;
+  details: string;
+}
+
+interface CleanupMetrics {
+  startTime: number;
+  endTime: number;
+  duration: number;
+  tasksCompleted: number;
+  tasksTotal: number;
+  failures: number;
+  itemsProcessed: number;
+}
+
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
@@ -337,7 +352,7 @@ async function optimizeDatabasePerformance(): Promise<{ success: boolean; detail
 }
 
 // Helper functions
-async function sendCleanupFailureAlert(failedTasks: any[]): Promise<void> {
+async function sendCleanupFailureAlert(failedTasks: CleanupFailure[]): Promise<void> {
   const alertMessage = `⚠️ Daily cleanup completed with ${failedTasks.length} failures:
 
 ${failedTasks.map(task => `- ${task.task}: ${task.details}`).join('\n')}
@@ -365,7 +380,7 @@ Time: ${new Date().toISOString()}`;
   }
 }
 
-async function sendSystemAlert(title: string, details: Record<string, any>): Promise<void> {
+async function sendSystemAlert(title: string, details: Record<string, string | number | boolean>): Promise<void> {
   const alertMessage = `🔥 SYSTEM ALERT: ${title}
 
 Details: ${JSON.stringify(details, null, 2)}
@@ -391,7 +406,7 @@ Time: ${new Date().toISOString()}`;
   }
 }
 
-async function storeCleanupMetrics(metrics: any): Promise<void> {
+async function storeCleanupMetrics(metrics: CleanupMetrics): Promise<void> {
   try {
     console.log('📊 Storing cleanup metrics for analysis...');
 

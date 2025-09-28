@@ -9,7 +9,7 @@ interface Template {
   user_id: string
   name: string
   content: string
-  category: 'listing' | 'sold' | 'follow_up' | 'marketing' | 'custom'
+  category: 'listing' | 'sold' | 'follow_up' | 'marketing' | 'sms' | 'custom'
   placeholders: string[]
   is_default: boolean
   usage_count: number
@@ -24,7 +24,7 @@ export function TemplatesPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState<'all' | 'listing' | 'sold' | 'follow_up' | 'marketing' | 'custom'>('all')
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'listing' | 'sold' | 'follow_up' | 'marketing' | 'sms' | 'custom'>('all')
 
   useEffect(() => {
     if (user) {
@@ -137,6 +137,14 @@ export function TemplatesPage() {
         placeholders: ['HomeownerName', 'Suburb', 'ContactAddress'],
         is_default: true,
         usage_count: 0,
+      },
+      {
+        name: 'SMS Nearby Properties Alert',
+        content: 'Hi [ContactName]! [PropertyCount] in your area [PropertyDetails]. Given the current market activity in your area, this might be a great time to consider your options. I\'d love to discuss what this means for your property value. - [AgentName]',
+        category: 'custom' as const,
+        placeholders: ['ContactName', 'PropertyCount', 'PropertyDetails', 'AgentName'],
+        is_default: true,
+        usage_count: 0,
       }
     ]
 
@@ -176,6 +184,7 @@ export function TemplatesPage() {
     sold: templates.filter(t => t.category === 'sold').length,
     follow_up: templates.filter(t => t.category === 'follow_up').length,
     marketing: templates.filter(t => t.category === 'marketing').length,
+    sms: templates.filter(t => t.category === 'sms').length,
     custom: templates.filter(t => t.category === 'custom').length,
   }
 
@@ -215,7 +224,7 @@ export function TemplatesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-7 gap-4">
         <div className="card text-center">
           <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</div>
           <div className="text-sm text-gray-600 dark:text-primary-400">Total Templates</div>
@@ -235,6 +244,10 @@ export function TemplatesPage() {
         <div className="card text-center">
           <div className="text-2xl font-bold text-yellow-600">{stats.marketing}</div>
           <div className="text-sm text-gray-600 dark:text-primary-400">Marketing</div>
+        </div>
+        <div className="card text-center">
+          <div className="text-2xl font-bold text-orange-600">{stats.sms}</div>
+          <div className="text-sm text-gray-600 dark:text-primary-400">SMS</div>
         </div>
         <div className="card text-center">
           <div className="text-2xl font-bold text-gray-600 dark:text-primary-400">{stats.custom}</div>
@@ -276,6 +289,7 @@ export function TemplatesPage() {
               <option value="sold">Sold</option>
               <option value="follow_up">Follow-up</option>
               <option value="marketing">Marketing</option>
+              <option value="sms">SMS</option>
               <option value="custom">Custom</option>
             </select>
           </div>

@@ -7,7 +7,7 @@ interface Template {
   user_id: string
   name: string
   content: string
-  category: 'listing' | 'sold' | 'follow_up' | 'marketing' | 'custom'
+  category: 'listing' | 'sold' | 'follow_up' | 'marketing' | 'sms' | 'custom'
   placeholders: string[]
   is_default: boolean
   usage_count: number
@@ -24,15 +24,18 @@ interface TemplateFormProps {
 interface FormData {
   name: string
   content: string
-  category: 'listing' | 'sold' | 'follow_up' | 'marketing' | 'custom'
+  category: 'listing' | 'sold' | 'follow_up' | 'marketing' | 'sms' | 'custom'
 }
 
 const availablePlaceholders = [
   { key: 'HomeownerName', description: 'Contact\'s name' },
+  { key: 'ContactName', description: 'Contact\'s name (SMS preferred)' },
   { key: 'ContactAddress', description: 'Contact\'s address' },
   { key: 'PropertyAddress', description: 'Property address' },
   { key: 'PropertyPrice', description: 'Property price' },
   { key: 'PropertyType', description: 'Property type (house, apartment, etc.)' },
+  { key: 'PropertyCount', description: 'Number/description of properties (SMS)' },
+  { key: 'PropertyDetails', description: 'Property sale details (SMS)' },
   { key: 'Suburb', description: 'Property or contact suburb' },
   { key: 'City', description: 'Property or contact city' },
   { key: 'AgentName', description: 'Your name' },
@@ -249,6 +252,7 @@ export function TemplateForm({ template, onSave, onCancel }: TemplateFormProps) 
                   <option value="sold">Sold</option>
                   <option value="follow_up">Follow-up</option>
                   <option value="marketing">Marketing</option>
+                  <option value="sms">SMS</option>
                   <option value="custom">Custom</option>
                 </select>
               </div>

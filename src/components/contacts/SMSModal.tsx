@@ -340,12 +340,122 @@ export function SMSModal({ contact, onClose, onSent }: SMSModalProps) {
           </button>
         </div>
 
+        {/* Quick Templates Section */}
+        <div className="flex-shrink-0 border-b border-gray-200 bg-gray-50">
+          <div className="p-4 sm:p-6">
+            <h3 className="text-sm font-medium text-gray-900 mb-3">Quick Templates</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              <button
+                onClick={() => {
+                  const contactName = contact.first_name || contact.name || 'there'
+                  const agentName = user?.user_metadata?.full_name || 'Your Agent'
+                  const message = `Hi ${contactName}! Hope you're doing well. Just wanted to check in and see how you're finding the current market. If you're thinking about buying or selling, I'd love to help! - ${agentName}`
+
+                  const smsUrl = `sms:${contact.phone}?body=${encodeURIComponent(message)}`
+                  window.open(smsUrl, '_self')
+                  onSent?.()
+                  onClose()
+                }}
+                className="p-3 text-left bg-white border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors"
+              >
+                <div className="text-sm font-medium text-gray-900">Quick Check-in</div>
+                <div className="text-xs text-gray-600 mt-1">General follow-up message</div>
+              </button>
+
+              <button
+                onClick={() => {
+                  const contactName = contact.first_name || contact.name || 'there'
+                  const agentName = user?.user_metadata?.full_name || 'Your Agent'
+                  const message = `Hi ${contactName}! The market has been really active lately. Properties in your area are selling well. If you're thinking of selling or know someone who is, now could be a great time! - ${agentName}`
+
+                  const smsUrl = `sms:${contact.phone}?body=${encodeURIComponent(message)}`
+                  window.open(smsUrl, '_self')
+                  onSent?.()
+                  onClose()
+                }}
+                className="p-3 text-left bg-white border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors"
+              >
+                <div className="text-sm font-medium text-gray-900">Market Update</div>
+                <div className="text-xs text-gray-600 mt-1">General market activity message</div>
+              </button>
+
+              <button
+                onClick={() => {
+                  const contactName = contact.first_name || contact.name || 'there'
+                  const agentName = user?.user_metadata?.full_name || 'Your Agent'
+                  const message = `Hi ${contactName}! I've noticed some great buying opportunities in your area. Interest rates are still favorable and there's good selection. Want to chat about your options? - ${agentName}`
+
+                  const smsUrl = `sms:${contact.phone}?body=${encodeURIComponent(message)}`
+                  window.open(smsUrl, '_self')
+                  onSent?.()
+                  onClose()
+                }}
+                className="p-3 text-left bg-white border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors"
+              >
+                <div className="text-sm font-medium text-gray-900">Buying Opportunity</div>
+                <div className="text-xs text-gray-600 mt-1">Encourage buyers to act</div>
+              </button>
+
+              <button
+                onClick={() => {
+                  const contactName = contact.first_name || contact.name || 'there'
+                  const agentName = user?.user_metadata?.full_name || 'Your Agent'
+                  const message = `Hi ${contactName}! Hope you're well. I'm always here if you need any real estate advice or market insights. Feel free to reach out anytime! - ${agentName}`
+
+                  const smsUrl = `sms:${contact.phone}?body=${encodeURIComponent(message)}`
+                  window.open(smsUrl, '_self')
+                  onSent?.()
+                  onClose()
+                }}
+                className="p-3 text-left bg-white border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors"
+              >
+                <div className="text-sm font-medium text-gray-900">Stay Connected</div>
+                <div className="text-xs text-gray-600 mt-1">Maintain relationship</div>
+              </button>
+
+              <button
+                onClick={() => {
+                  const contactName = contact.first_name || contact.name || 'there'
+                  const agentName = user?.user_metadata?.full_name || 'Your Agent'
+                  const message = `Hi ${contactName}! I wanted to share some exciting news - I recently helped a client get a fantastic price for their home. If you've been thinking about selling, I'd love to provide you with a free market valuation! - ${agentName}`
+
+                  const smsUrl = `sms:${contact.phone}?body=${encodeURIComponent(message)}`
+                  window.open(smsUrl, '_self')
+                  onSent?.()
+                  onClose()
+                }}
+                className="p-3 text-left bg-white border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors"
+              >
+                <div className="text-sm font-medium text-gray-900">Free Valuation</div>
+                <div className="text-xs text-gray-600 mt-1">Offer market appraisal</div>
+              </button>
+
+              <button
+                onClick={() => {
+                  const contactName = contact.first_name || contact.name || 'there'
+                  const agentName = user?.user_metadata?.full_name || 'Your Agent'
+                  const message = `Hi ${contactName}! Just a quick note to wish you and your family all the best. Thanks for being such a valued part of my network. Have a wonderful day! - ${agentName}`
+
+                  const smsUrl = `sms:${contact.phone}?body=${encodeURIComponent(message)}`
+                  window.open(smsUrl, '_self')
+                  onSent?.()
+                  onClose()
+                }}
+                className="p-3 text-left bg-white border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors"
+              >
+                <div className="text-sm font-medium text-gray-900">Personal Touch</div>
+                <div className="text-xs text-gray-600 mt-1">Build personal connection</div>
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Main Content - Properties Selection */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 sm:p-6">
             <div className="mb-4 sm:mb-6">
-              <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">Select Sold Properties</h3>
-              <p className="text-xs sm:text-sm text-gray-600">Choose recently sold properties to create a personalized market update message.</p>
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">Custom Market Update</h3>
+              <p className="text-xs sm:text-sm text-gray-600">Or select sold properties below to create a personalized market update with specific data.</p>
             </div>
 
             {/* Radius Control */}

@@ -126,7 +126,6 @@ export class GlobalErrorBoundary extends Component<Props, State> {
 
   private renderFallback() {
     const { fallback, level = 'component' } = this.props;
-    const { error, errorId, retryCount } = this.state;
 
     // Use custom fallback if provided
     if (fallback) {

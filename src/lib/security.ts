@@ -512,7 +512,7 @@ class EnterpriseSecurity {
     return undefined;
   }
 
-  private checkSuspiciousPattern(userId: string, action: string, pattern: any, metadata: Record<string, any>): boolean {
+  private checkSuspiciousPattern(_userId: string, _action: string, _pattern: any, _metadata: Record<string, any>): boolean {
     // Simplified suspicious pattern detection
     // In production, this would involve more sophisticated analysis
     return false;

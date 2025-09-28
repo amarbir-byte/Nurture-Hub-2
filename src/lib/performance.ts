@@ -308,7 +308,7 @@ class EnterprisePerformance {
   ) {
     const LazyComponent = React.lazy(factory);
 
-    return React.forwardRef<any, React.ComponentProps<T>>((props, ref: any) => {
+    return React.forwardRef<any, React.ComponentProps<T>>((props, _ref: any) => {
       return React.createElement(
         React.Suspense,
         {
@@ -316,7 +316,7 @@ class EnterprisePerformance {
             ? React.createElement(fallback)
             : React.createElement('div', null, 'Loading...')
         },
-        React.createElement(LazyComponent, props)
+        React.createElement(LazyComponent, props as any)
       );
     });
   }

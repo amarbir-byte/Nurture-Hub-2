@@ -231,7 +231,7 @@ class EnterpriseAlerting {
     }
   }
 
-  private async sendInAppAlert(alert: Alert, config: Record<string, any>) {
+  private async sendInAppAlert(alert: Alert, _config: Record<string, any>) {
     // Store notification in database for in-app display
     const notification = {
       id: alert.id,
@@ -302,7 +302,7 @@ class EnterpriseAlerting {
   }
 
   // 🔄 ALERT RESOLUTION
-  async resolveAlert(alertId: string, resolvedBy?: string) {
+  async resolveAlert(alertId: string, _resolvedBy?: string) {
     const alert = this.activeAlerts.get(alertId);
     if (!alert) {
       console.warn(`Alert not found: ${alertId}`);
@@ -371,7 +371,7 @@ class EnterpriseAlerting {
     }
   }
 
-  private async checkErrorRate(condition: AlertCondition, errorReport: ErrorReport): Promise<boolean> {
+  private async checkErrorRate(condition: AlertCondition, _errorReport: ErrorReport): Promise<boolean> {
     // Calculate error rate over time window
     const now = new Date();
     const windowStart = new Date(now.getTime() - condition.timeWindowMinutes * 60000);
@@ -443,7 +443,7 @@ class EnterpriseAlerting {
     return true;
   }
 
-  private async isAlertConditionResolved(condition: AlertCondition, alert: Alert): Promise<boolean> {
+  private async isAlertConditionResolved(_condition: AlertCondition, _alert: Alert): Promise<boolean> {
     // Implement logic to check if the condition that triggered the alert is now resolved
     // This is a simplified implementation
     return false;
@@ -463,7 +463,7 @@ class EnterpriseAlerting {
     return `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  private generateAlertTitle(rule: AlertRule, context: Record<string, any>): string {
+  private generateAlertTitle(rule: AlertRule, _context: Record<string, any>): string {
     switch (rule.condition.type) {
       case 'error_rate':
         return `High Error Rate: ${rule.name}`;
@@ -476,7 +476,7 @@ class EnterpriseAlerting {
     }
   }
 
-  private generateAlertDescription(rule: AlertRule, context: Record<string, any>): string {
+  private generateAlertDescription(rule: AlertRule, _context: Record<string, any>): string {
     return `Alert condition '${rule.name}' has been triggered. Check the monitoring dashboard for details.`;
   }
 
@@ -518,8 +518,6 @@ class EnterpriseAlerting {
   private async sendRecoveryNotification(alert: Alert) {
     // Send a recovery notification to let people know the issue is resolved
     const recoveryTitle = `✅ RECOVERED: ${alert.title}`;
-    const recoveryMessage = `The alert "${alert.title}" has been resolved at ${alert.resolvedAt?.toISOString()}.`;
-
     console.log(`✅ Recovery notification: ${recoveryTitle}`);
   }
 

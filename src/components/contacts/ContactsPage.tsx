@@ -5,6 +5,7 @@ import { ContactCard } from './ContactCard'
 import { ContactForm } from './ContactForm'
 import { ContactImport } from './ContactImport'
 import { ContactDetailsModal } from './ContactDetailsModal'
+import { FilterSortDropdown } from './SortDropdown'
 import { Pagination } from '../common/Pagination'
 import type { Contact } from '../../types/contact'
 
@@ -22,7 +23,7 @@ export function ContactsPage() {
   const [communicationFilter, setCommunicationFilter] = useState<'all' | 'contacted' | 'not_contacted'>('all')
   const [contactTypeFilter, setContactTypeFilter] = useState<'all' | 'buyer' | 'seller' | 'both'>('all')
   const [temperatureFilter, setTemperatureFilter] = useState<'all' | 'hot' | 'warm' | 'cold'>('all')
-  const [sortBy, setSortBy] = useState<'name_asc' | 'name_desc' | 'email_asc' | 'email_desc' | 'contact_type_asc' | 'contact_type_desc' | 'temperature_asc' | 'temperature_desc' | 'created_desc' | 'created_asc' | 'updated_desc' | 'updated_asc'>('created_desc')
+  const [sortBy, setSortBy] = useState<'name_asc' | 'name_desc' | 'temperature_asc' | 'temperature_desc' | 'created_desc' | 'created_asc' | 'updated_desc' | 'updated_asc'>('created_desc')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(12)
 
@@ -151,10 +152,6 @@ export function ContactsPage() {
         return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
       case 'name_desc':
         return b.name.toLowerCase().localeCompare(a.name.toLowerCase())
-      case 'email_asc':
-        return (a.email || '').toLowerCase().localeCompare((b.email || '').toLowerCase())
-      case 'email_desc':
-        return (b.email || '').toLowerCase().localeCompare((a.email || '').toLowerCase())
       case 'created_asc':
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       case 'created_desc':
@@ -163,10 +160,6 @@ export function ContactsPage() {
         return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()
       case 'updated_desc':
         return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-      case 'contact_type_asc':
-        return a.contact_type.localeCompare(b.contact_type)
-      case 'contact_type_desc':
-        return b.contact_type.localeCompare(a.contact_type)
       case 'temperature_asc':
         return a.temperature.localeCompare(b.temperature)
       case 'temperature_desc':
@@ -252,8 +245,8 @@ export function ContactsPage() {
 
       {/* Filters and Sort */}
       <div className="card">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="flex-1 min-w-0">
             <label htmlFor="search" className="sr-only">Search contacts</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -271,109 +264,41 @@ export function ContactsPage() {
               />
             </div>
           </div>
-          <div>
-            <label htmlFor="followup-filter" className="sr-only">Filter by follow-up</label>
-            <select
-              id="followup-filter"
-              value={followUpFilter}
-              onChange={(e) => setFollowUpFilter(e.target.value as any)}
-              className="input-field"
-            >
-              <option value="all">All Follow-ups</option>
-              <option value="due">Due Today</option>
-              <option value="overdue">Overdue</option>
-            </select>
-          </div>
-          <div>
-            <label htmlFor="sort-filter" className="sr-only">Sort contacts</label>
-            <select
-              id="sort-filter"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="input-field"
-            >
-              <option value="created_desc">Newest First</option>
-              <option value="created_asc">Oldest First</option>
-              <option value="updated_desc">Recently Modified</option>
-              <option value="updated_asc">Least Modified</option>
-              <option value="name_asc">Name A-Z</option>
-              <option value="name_desc">Name Z-A</option>
-              <option value="email_asc">Email A-Z</option>
-              <option value="email_desc">Email Z-A</option>
-              <option value="contact_type_asc">Contact Type A-Z</option>
-              <option value="contact_type_desc">Contact Type Z-A</option>
-              <option value="temperature_asc">Temperature A-Z</option>
-              <option value="temperature_desc">Temperature Z-A</option>
-            </select>
+          <div className="flex-shrink-0">
+            <FilterSortDropdown
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              followUpFilter={followUpFilter}
+              onFollowUpFilterChange={setFollowUpFilter}
+              communicationFilter={communicationFilter}
+              onCommunicationFilterChange={setCommunicationFilter}
+              contactTypeFilter={contactTypeFilter}
+              onContactTypeFilterChange={setContactTypeFilter}
+              temperatureFilter={temperatureFilter}
+              onTemperatureFilterChange={setTemperatureFilter}
+            />
           </div>
         </div>
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label htmlFor="communication-filter" className="sr-only">Filter by communication</label>
-            <select
-              id="communication-filter"
-              value={communicationFilter}
-              onChange={(e) => setCommunicationFilter(e.target.value as any)}
-              className="input-field"
-            >
-              <option value="all">All Contacts</option>
-              <option value="contacted">Contacted</option>
-              <option value="not_contacted">Not Contacted</option>
-            </select>
-          </div>
-          <div>
-            <label htmlFor="contact-type-filter" className="sr-only">Filter by contact type</label>
-            <select
-              id="contact-type-filter"
-              value={contactTypeFilter}
-              onChange={(e) => setContactTypeFilter(e.target.value as any)}
-              className="input-field"
-            >
-              <option value="all">All Types</option>
-              <option value="buyer">👤 Buyers</option>
-              <option value="seller">🏠 Sellers</option>
-              <option value="both">🔄 Both</option>
-            </select>
-          </div>
-          <div>
-            <label htmlFor="temperature-filter" className="sr-only">Filter by temperature</label>
-            <select
-              id="temperature-filter"
-              value={temperatureFilter}
-              onChange={(e) => setTemperatureFilter(e.target.value as any)}
-              className="input-field"
-            >
-              <option value="all">All Temperatures</option>
-              <option value="hot">🔥 Hot</option>
-              <option value="warm">🟡 Warm</option>
-              <option value="cold">🔵 Cold</option>
-            </select>
-          </div>
-          <div>
-            <div className="text-sm text-gray-600 dark:text-primary-400 flex items-center">
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-              </svg>
-              Showing {sortedContacts.length} of {contacts.length} contacts
-              {!['created_desc', 'updated_desc'].includes(sortBy) && (
-                <span className="ml-2 text-primary-600 dark:text-primary-300">
-                  • Sorted by {
-                    sortBy === 'name_asc' ? 'Name (A-Z)' :
-                    sortBy === 'name_desc' ? 'Name (Z-A)' :
-                    sortBy === 'email_asc' ? 'Email (A-Z)' :
-                    sortBy === 'email_desc' ? 'Email (Z-A)' :
-                    sortBy === 'contact_type_asc' ? 'Contact Type (A-Z)' :
-                    sortBy === 'contact_type_desc' ? 'Contact Type (Z-A)' :
-                    sortBy === 'temperature_asc' ? 'Temperature (A-Z)' :
-                    sortBy === 'temperature_desc' ? 'Temperature (Z-A)' :
-                    sortBy === 'created_asc' ? 'Date Created (Oldest)' :
-                    sortBy === 'created_desc' ? 'Date Created (Newest)' :
-                    sortBy === 'updated_asc' ? 'Date Modified (Oldest)' :
-                    sortBy === 'updated_desc' ? 'Date Modified (Newest)' : 'Default'
-                  }
-                </span>
-              )}
-            </div>
+        <div className="mt-4">
+          <div className="text-sm text-gray-600 dark:text-primary-400 flex items-center">
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+            </svg>
+            Showing {sortedContacts.length} of {contacts.length} contacts
+            {!['created_desc', 'updated_desc'].includes(sortBy) && (
+              <span className="ml-2 text-primary-600 dark:text-primary-300">
+                • Sorted by {
+                  sortBy === 'name_asc' ? 'Name (A-Z)' :
+                  sortBy === 'name_desc' ? 'Name (Z-A)' :
+                  sortBy === 'temperature_asc' ? 'Temperature (Cool to Hot)' :
+                  sortBy === 'temperature_desc' ? 'Temperature (Hot to Cool)' :
+                  sortBy === 'created_asc' ? 'Date Created (Oldest)' :
+                  sortBy === 'created_desc' ? 'Date Created (Newest)' :
+                  sortBy === 'updated_asc' ? 'Date Modified (Oldest)' :
+                  sortBy === 'updated_desc' ? 'Date Modified (Newest)' : 'Default'
+                }
+              </span>
+            )}
           </div>
         </div>
       </div>

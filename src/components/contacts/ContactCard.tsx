@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import type { Contact } from '../../types/contact'
 import { CONTACT_TYPE_LABELS, TEMPERATURE_LABELS, CONTACT_TYPE_CLASSES, TEMPERATURE_CLASSES } from '../../types/contact'
+import { SMSModal } from './SMSModal'
 
 interface ContactCardProps {
   contact: Contact
@@ -9,6 +11,8 @@ interface ContactCardProps {
 }
 
 export function ContactCard({ contact, onEdit, onDelete, onViewDetails }: ContactCardProps) {
+  const [showSMSModal, setShowSMSModal] = useState(false)
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return null
     return new Date(dateString).toLocaleDateString('en-NZ', {
@@ -73,9 +77,7 @@ export function ContactCard({ contact, onEdit, onDelete, onViewDetails }: Contac
   const handleSMS = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (contact.phone) {
-      // Clean phone number for sms: link
-      const cleanPhone = contact.phone.replace(/[^\d+]/g, '')
-      window.open(`sms:${cleanPhone}`, '_self')
+      setShowSMSModal(true)
     }
   }
 
@@ -298,6 +300,18 @@ export function ContactCard({ contact, onEdit, onDelete, onViewDetails }: Contac
           </button>
         </div>
       </div>
+
+      {/* SMS Modal */}
+      {showSMSModal && (
+        <SMSModal
+          contact={contact}
+          onClose={() => setShowSMSModal(false)}
+          onSent={() => {
+            setShowSMSModal(false)
+            // Could trigger a refresh or update last contact date here
+          }}
+        />
+      )}
     </div>
   )
 }

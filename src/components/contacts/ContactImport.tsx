@@ -4,7 +4,9 @@ import { supabase } from '../../lib/supabase'
 import { geocode } from '../../lib/geocoding'
 
 interface ImportContact {
-  name: string
+  name: string // Legacy field
+  first_name?: string
+  last_name?: string
   email?: string
   phone?: string
   address: string
@@ -40,8 +42,8 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
   const [step, setStep] = useState<'upload' | 'mapping' | 'preview'>('upload')
   const [csvHeaders, setCsvHeaders] = useState<string[]>([])
 
-  const requiredFields = ['name', 'address']
-  const optionalFields = ['email', 'phone', 'suburb', 'city', 'postal_code', 'notes', 'contact_type', 'temperature', 'tags', 'property_purchase_date', 'property_purchase_price', 'property_address', 'property_suburb', 'property_city', 'property_postal_code']
+  const requiredFields = ['address'] // At least one name field is required but handled separately
+  const optionalFields = ['name', 'first_name', 'last_name', 'email', 'phone', 'suburb', 'city', 'postal_code', 'notes', 'contact_type', 'temperature', 'tags', 'property_purchase_date', 'property_purchase_price', 'property_address', 'property_suburb', 'property_city', 'property_postal_code']
   const allFields = [...requiredFields, ...optionalFields]
 
   // const mockGeocode = async (_address: string) => {
@@ -117,6 +119,8 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
     // Exact matches (highest confidence)
     const exactMatches: Record<string, string[]> = {
       'name': ['name', 'full name', 'fullname', 'contact name', 'client name', 'customer name'],
+      'first_name': ['first name', 'firstname', 'given name', 'forename', 'first'],
+      'last_name': ['last name', 'lastname', 'surname', 'family name', 'last'],
       'email': ['email', 'e-mail', 'email address', 'mail'],
       'phone': ['phone', 'mobile', 'cell', 'telephone', 'tel', 'contact number', 'phone number'],
       'address': ['address', 'street address', 'full address', 'property address'],
@@ -147,6 +151,8 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
     // Fuzzy matching for partial matches
     const fuzzyMatches: Record<string, string[]> = {
       'name': ['name', 'full', 'contact', 'client', 'customer', 'person'],
+      'first_name': ['first', 'given', 'forename'],
+      'last_name': ['last', 'surname', 'family'],
       'email': ['email', 'mail', '@'],
       'phone': ['phone', 'mobile', 'cell', 'tel', 'contact', 'number'],
       'address': ['address', 'street', 'property', 'location'],
@@ -505,7 +511,9 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
           const coordinates = await geocode(fullAddress)
 
           const contactData = {
-            name: contact.name,
+            name: contact.name || `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Unknown', // Legacy field
+            first_name: contact.first_name || null,
+            last_name: contact.last_name || null,
             email: contact.email || null,
             phone: contact.phone || null,
             address: contact.address,

@@ -13,6 +13,22 @@ interface ContactCardProps {
 export function ContactCard({ contact, onEdit, onDelete, onViewDetails }: ContactCardProps) {
   const [showSMSModal, setShowSMSModal] = useState(false)
 
+  const getDisplayName = () => {
+    if (contact.first_name || contact.last_name) {
+      return `${contact.first_name || ''} ${contact.last_name || ''}`.trim()
+    }
+    return contact.name || 'Unknown'
+  }
+
+  const getInitials = () => {
+    if (contact.first_name || contact.last_name) {
+      const first = contact.first_name?.charAt(0) || ''
+      const last = contact.last_name?.charAt(0) || ''
+      return (first + last).toUpperCase()
+    }
+    return contact.name?.charAt(0).toUpperCase() || '?'
+  }
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return null
     return new Date(dateString).toLocaleDateString('en-NZ', {
@@ -108,7 +124,7 @@ export function ContactCard({ contact, onEdit, onDelete, onViewDetails }: Contac
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 bg-gradient-to-br from-accent-500 to-accent-700 rounded-lg flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-200">
             <span className="text-sm font-bold text-white">
-              {contact.name.charAt(0).toUpperCase()}
+              {getInitials()}
             </span>
           </div>
           <span className={`badge text-xs ${getSourceColor(contact.contact_source)}`}>
@@ -139,7 +155,7 @@ export function ContactCard({ contact, onEdit, onDelete, onViewDetails }: Contac
 
       {/* Compact Name */}
       <h3 className="text-lg font-bold text-primary-900 dark:text-white mb-2 leading-tight group-hover:text-accent-700 dark:group-hover:text-accent-300 transition-colors duration-200">
-        {contact.name}
+        {getDisplayName()}
       </h3>
 
       {/* Compact Contact Info */}

@@ -2,7 +2,9 @@
 export interface Contact {
   id: string
   user_id: string
-  name: string
+  name: string // Legacy field - use first_name and last_name instead
+  first_name?: string
+  last_name?: string
   email?: string
   phone?: string
   address: string

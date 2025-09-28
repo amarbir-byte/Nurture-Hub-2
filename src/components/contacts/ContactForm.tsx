@@ -3,9 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { ensureUserExists } from '../../utils/userUtils'
 import { geocode } from '../../lib/geocoding'
-import { AddressAutocomplete } from '../ui/AddressAutocomplete'
-import type { AutocompleteResult } from '../../lib/maptiler'
-import { parseNZAddress } from '../../types/address'
+import { AddressAutoCorrect } from '../ui/AddressAutoCorrect'
 import { checkDuplicateContact } from '../../utils/duplicateCheck'
 import type { Contact } from '../../types/contact'
 
@@ -16,7 +14,8 @@ interface ContactFormProps {
 }
 
 interface FormData {
-  name: string
+  first_name: string
+  last_name: string
   email: string
   phone: string
   address: string
@@ -51,7 +50,8 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
   }>({ show: false, action: 'create' })
 
   const [formData, setFormData] = useState<FormData>({
-    name: contact?.name || '',
+    first_name: contact?.first_name || '',
+    last_name: contact?.last_name || '',
     email: contact?.email || '',
     phone: contact?.phone || '',
     address: contact?.address || '',
@@ -78,8 +78,8 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
   const validateForm = (): boolean => {
     const newErrors: Partial<FormData> = {}
 
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required'
+    if (!formData.first_name.trim() && !formData.last_name.trim()) {
+      newErrors.first_name = 'First name or last name is required'
     }
 
     if (!formData.address.trim()) {
@@ -214,7 +214,9 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
       const tags = parseTags(formData.tags)
 
       const contactData = {
-        name: formData.name.trim(),
+        name: `${formData.first_name.trim()} ${formData.last_name.trim()}`.trim() || 'Unknown', // Legacy field
+        first_name: formData.first_name.trim() || null,
+        last_name: formData.last_name.trim() || null,
         email: formData.email.trim() || null,
         phone: formData.phone.trim() || null,
         address: formData.address.trim(),
@@ -298,7 +300,9 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
       const tags = parseTags(formData.tags)
 
       const contactData = {
-        name: formData.name.trim(),
+        name: `${formData.first_name.trim()} ${formData.last_name.trim()}`.trim() || 'Unknown', // Legacy field
+        first_name: formData.first_name.trim() || null,
+        last_name: formData.last_name.trim() || null,
         email: formData.email.trim() || null,
         phone: formData.phone.trim() || null,
         address: formData.address.trim(),
@@ -360,6 +364,19 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
     }
   }
 
+  const handleAddressSelect = (suggestion: any) => {
+    // Auto-populate address components when address is selected/corrected
+    const { address_components } = suggestion
+    
+    setFormData(prev => ({
+      ...prev,
+      address: suggestion.formatted_address,
+      suburb: address_components.suburb || prev.suburb,
+      city: address_components.city || prev.city,
+      postal_code: address_components.postal_code || prev.postal_code,
+    }))
+  }
+
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -382,21 +399,38 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
             {/* Name & Source */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name *
+                <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1">
+                  First Name
                 </label>
                 <input
                   type="text"
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  className={`input-field ${errors.name ? 'border-red-500' : ''}`}
-                  placeholder="John Smith"
+                  id="first_name"
+                  value={formData.first_name}
+                  onChange={(e) => handleInputChange('first_name', e.target.value)}
+                  className={`input-field ${errors.first_name ? 'border-red-500' : ''}`}
+                  placeholder="John"
                 />
-                {errors.name && (
-                  <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                {errors.first_name && (
+                  <p className="mt-1 text-sm text-red-600">{errors.first_name}</p>
                 )}
               </div>
+
+              <div>
+                <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-1">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  id="last_name"
+                  value={formData.last_name}
+                  onChange={(e) => handleInputChange('last_name', e.target.value)}
+                  className="input-field"
+                  placeholder="Smith"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
               <div>
                 <label htmlFor="contact_source" className="block text-sm font-medium text-gray-700 mb-1">
@@ -614,48 +648,13 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
 
             {/* Address */}
             <div>
-              <AddressAutocomplete
-                label="Complete Address"
+              <AddressAutoCorrect
                 value={formData.address}
                 onChange={(value) => handleInputChange('address', value)}
-                onSelect={(result: AutocompleteResult) => {
-                  console.log('Selected address:', result)
-
-                  // Use improved NZ address parsing
-                  const addressComponents = parseNZAddress(result.place_name)
-
-                  // Build the main address field from street components
-                  let mainAddress = ''
-                  if (addressComponents.street_number && addressComponents.street) {
-                    mainAddress = `${addressComponents.street_number} ${addressComponents.street}`
-                  } else if (addressComponents.street) {
-                    mainAddress = addressComponents.street
-                  } else {
-                    // Fallback to first part of the address
-                    mainAddress = result.place_name.split(',')[0].trim()
-                  }
-
-                  // Update form fields with parsed components
-                  handleInputChange('address', mainAddress)
-
-                  if (addressComponents.suburb) {
-                    handleInputChange('suburb', addressComponents.suburb)
-                  }
-
-                  if (addressComponents.city) {
-                    handleInputChange('city', addressComponents.city)
-                  }
-
-                  if (addressComponents.postal_code) {
-                    handleInputChange('postal_code', addressComponents.postal_code)
-                  }
-
-                  // Log the parsing for debugging
-                  console.log('Parsed address components:', addressComponents)
-                  console.log('Main address field set to:', mainAddress)
-                }}
+                onAddressSelect={handleAddressSelect}
                 placeholder="Start typing address... e.g. 123 Main Street, Ponsonby, Auckland"
                 error={errors.address}
+                label="Complete Address"
                 required
               />
               <p className="text-xs text-gray-500 mt-1">

@@ -22,7 +22,6 @@ interface Contact {
   notes?: string
   last_contact_date?: string
   follow_up_date?: string
-  contact_source: 'manual' | 'import' | 'campaign' | 'referral'
   tags?: string[]
   created_at: string
   updated_at: string
@@ -460,10 +459,6 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
                 <div className="bg-gray-50 dark:bg-dark-700 rounded-lg p-4">
                   <h4 className="font-medium text-gray-900 dark:text-white mb-3">Contact Information</h4>
                   <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="text-gray-600 dark:text-primary-300">Source:</span>
-                      <span className="ml-2 font-medium capitalize text-gray-900 dark:text-white">{contact.contact_source}</span>
-                    </div>
                     {contact.last_contact_date && (
                       <div>
                         <span className="text-gray-600 dark:text-primary-300">Last Contact:</span>

@@ -535,7 +535,6 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
             property_postal_code: contact.property_postal_code || null,
             property_lat: null, // Will be geocoded if property address is provided
             property_lng: null,
-            contact_source: 'import' as const,
             user_id: user?.id,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),

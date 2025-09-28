@@ -25,7 +25,6 @@ interface FormData {
   notes: string
   last_contact_date: string
   follow_up_date: string
-  contact_source: 'manual' | 'import' | 'campaign' | 'referral'
   contact_type: 'buyer' | 'seller' | 'both'
   temperature: 'hot' | 'warm' | 'cold'
   tags: string
@@ -61,7 +60,6 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
     notes: contact?.notes || '',
     last_contact_date: contact?.last_contact_date || '',
     follow_up_date: contact?.follow_up_date || '',
-    contact_source: contact?.contact_source || 'manual',
     contact_type: contact?.contact_type || 'buyer',
     temperature: contact?.temperature || 'warm',
     tags: contact?.tags?.join(', ') || '',
@@ -226,7 +224,6 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
         notes: formData.notes.trim() || null,
         last_contact_date: formData.last_contact_date || null,
         follow_up_date: formData.follow_up_date || null,
-        contact_source: formData.contact_source,
         contact_type: formData.contact_type,
         temperature: formData.temperature,
         tags: tags.length > 0 ? tags : null,
@@ -312,7 +309,6 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
         notes: formData.notes.trim() || null,
         last_contact_date: formData.last_contact_date || null,
         follow_up_date: formData.follow_up_date || null,
-        contact_source: formData.contact_source,
         contact_type: formData.contact_type,
         temperature: formData.temperature,
         tags: tags.length > 0 ? tags : null,
@@ -430,25 +426,6 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-              <div>
-                <label htmlFor="contact_source" className="block text-sm font-medium text-gray-700 mb-1">
-                  Contact Source
-                </label>
-                <select
-                  id="contact_source"
-                  value={formData.contact_source}
-                  onChange={(e) => handleInputChange('contact_source', e.target.value)}
-                  className="input-field"
-                >
-                  <option value="manual">Manual Entry</option>
-                  <option value="import">Imported</option>
-                  <option value="campaign">From Campaign</option>
-                  <option value="referral">Referral</option>
-                </select>
-              </div>
-            </div>
 
             {/* Contact Type & Temperature */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -16,7 +16,6 @@ export interface Contact {
   notes?: string
   last_contact_date?: string
   follow_up_date?: string
-  contact_source: 'manual' | 'import' | 'campaign' | 'referral'
   contact_type: 'buyer' | 'seller' | 'both'
   temperature: 'hot' | 'warm' | 'cold'
   tags?: string[]

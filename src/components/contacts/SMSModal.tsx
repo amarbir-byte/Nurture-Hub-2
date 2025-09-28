@@ -20,7 +20,6 @@ interface Contact {
   notes?: string
   last_contact_date?: string
   follow_up_date?: string
-  contact_source: 'manual' | 'import' | 'campaign' | 'referral'
   tags?: string[]
   created_at: string
   updated_at: string

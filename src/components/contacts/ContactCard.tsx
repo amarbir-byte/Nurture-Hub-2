@@ -38,20 +38,6 @@ export function ContactCard({ contact, onEdit, onDelete, onViewDetails }: Contac
     })
   }
 
-  const getSourceColor = (source: string) => {
-    switch (source) {
-      case 'manual':
-        return 'bg-blue-100 text-blue-800'
-      case 'import':
-        return 'bg-green-100 text-green-800'
-      case 'campaign':
-        return 'bg-purple-100 text-purple-800'
-      case 'referral':
-        return 'bg-orange-100 text-orange-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
 
   const getFollowUpStatus = () => {
     if (!contact.follow_up_date) return null
@@ -127,9 +113,6 @@ export function ContactCard({ contact, onEdit, onDelete, onViewDetails }: Contac
               {getInitials()}
             </span>
           </div>
-          <span className={`badge text-xs ${getSourceColor(contact.contact_source)}`}>
-            {contact.contact_source.charAt(0).toUpperCase() + contact.contact_source.slice(1)}
-          </span>
         </div>
         {followUpStatus && (
           <div className={`text-xs font-medium px-2 py-1 rounded-full ${followUpStatus.color} ${

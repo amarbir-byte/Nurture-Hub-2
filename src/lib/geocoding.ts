@@ -217,7 +217,7 @@ export function mockGeocode(address: string): { lat: number; lng: number } {
 /**
  * Main geocoding function - prioritizes LINZ (NZ official data) > Google Maps > MapTiler > mock geocoding
  */
-export async function geocode(address: string): Promise<{ lat: number; lng: number }> {
+export async function geocode(address: string): Promise<{ lat: number; lng: number; formatted_address?: string }> {
   // Import services dynamically to avoid circular dependencies
   const { geocodeWithLinz } = await import('./linz-geocoding')
   const { geocodeWithGoogle } = await import('./google-geocoding')
@@ -231,7 +231,8 @@ export async function geocode(address: string): Promise<{ lat: number; lng: numb
       console.log('✅ LINZ geocoding successful:', linzResult)
       return {
         lat: linzResult.lat,
-        lng: linzResult.lng
+        lng: linzResult.lng,
+        formatted_address: linzResult.formatted_address
       }
     }
     console.log('LINZ returned no high-confidence results for:', address)
@@ -247,7 +248,8 @@ export async function geocode(address: string): Promise<{ lat: number; lng: numb
       console.log('✅ Google geocoding successful:', googleResult)
       return {
         lat: googleResult.lat,
-        lng: googleResult.lng
+        lng: googleResult.lng,
+        formatted_address: googleResult.formatted_address
       }
     }
     console.log('Google Maps returned no high-confidence results for:', address)
@@ -263,7 +265,8 @@ export async function geocode(address: string): Promise<{ lat: number; lng: numb
       console.log('MapTiler geocoding successful:', result)
       return {
         lat: result.lat,
-        lng: result.lng
+        lng: result.lng,
+        formatted_address: result.formatted_address
       }
     }
     console.log('MapTiler returned no results for:', address)
@@ -273,7 +276,11 @@ export async function geocode(address: string): Promise<{ lat: number; lng: numb
 
   // Final fallback to mock geocoding for development/offline use
   console.warn(`⚠️ Using mock geocoding for address: ${address}`)
-  return mockGeocode(address)
+  const mockResult = mockGeocode(address)
+  return {
+    ...mockResult,
+    formatted_address: address // Use original address as formatted address for mock
+  }
 }
 
 /**

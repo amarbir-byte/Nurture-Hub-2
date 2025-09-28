@@ -78,8 +78,11 @@ export function AddressAutoCorrect({
         // Address was successfully geocoded, parse it for components
         const addressComponents = parseNZAddress(address)
         
+        // Get the formatted address from the geocoding result
+        const formattedAddress = result.formatted_address || address
+        
         const suggestion: AddressSuggestion = {
-          formatted_address: address,
+          formatted_address: formattedAddress,
           address_components: addressComponents,
           confidence: 0.8, // High confidence since it geocoded successfully
           lat: result.lat,
@@ -88,8 +91,8 @@ export function AddressAutoCorrect({
 
         setValidationResult(suggestion)
         
-        // Check if the address needs correction (compare with parsed components)
-        const needsCorrection = checkIfNeedsCorrection(address, addressComponents)
+        // Check if the address needs correction (compare original with formatted)
+        const needsCorrection = checkIfNeedsCorrection(address, formattedAddress)
         setShowCorrection(needsCorrection)
       } else {
         setValidationResult(null)
@@ -104,13 +107,9 @@ export function AddressAutoCorrect({
     }
   }
 
-  const checkIfNeedsCorrection = (originalAddress: string, components: any): boolean => {
-    // Simple heuristic: if we have good components but the original address seems incomplete or has typos
-    const hasGoodComponents = components.street_number && components.street && components.suburb && components.city
-    const addressLength = originalAddress.trim().length
-    
-    // If we have good components but the address is short, it might need expansion
-    if (hasGoodComponents && addressLength < 20) {
+  const checkIfNeedsCorrection = (originalAddress: string, formattedAddress: string): boolean => {
+    // If the formatted address is different from the original, it needs correction
+    if (originalAddress.toLowerCase().trim() !== formattedAddress.toLowerCase().trim()) {
       return true
     }
     
@@ -131,7 +130,8 @@ export function AddressAutoCorrect({
 
   const handleAcceptCorrection = () => {
     if (validationResult) {
-      const correctedAddress = buildCorrectedAddress(validationResult)
+      // Use the formatted address directly from the geocoding result
+      const correctedAddress = validationResult.formatted_address
       onChange(correctedAddress)
       setShowCorrection(false)
       if (onAddressSelect) {
@@ -219,7 +219,7 @@ export function AddressAutoCorrect({
               <div className="mt-1 text-sm text-yellow-700">
                 <p className="mb-2">We found a more complete address:</p>
                 <div className="bg-white p-2 rounded border text-gray-900 font-mono text-xs">
-                  {buildCorrectedAddress(validationResult)}
+                  {validationResult.formatted_address}
                 </div>
               </div>
               <div className="mt-3 flex space-x-2">

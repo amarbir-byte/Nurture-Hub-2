@@ -35,7 +35,10 @@
       "Bash(npm run:*)",
       "Bash(echo:*)",
       "Bash(curl:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(npx vite:*)"
     ],
     "deny": [],
     "ask": []

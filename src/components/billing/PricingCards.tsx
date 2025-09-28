@@ -7,6 +7,13 @@ interface Plan {
   features: string[]
   popular: boolean
   color: string
+  limits?: {
+    contacts: number
+    campaigns_per_month: number
+    templates: number
+    storage_mb: number
+  }
+  stripePriceId?: string
 }
 
 interface PricingCardsProps {
@@ -58,7 +65,8 @@ const plans = [
     stripePriceId: process.env.NODE_ENV === 'production'
       ? 'price_professional_prod'
       : 'price_professional_test',
-    popular: true
+    popular: true,
+    color: 'green'
   },
   {
     name: 'Enterprise',
@@ -85,7 +93,8 @@ const plans = [
     stripePriceId: process.env.NODE_ENV === 'production'
       ? 'price_enterprise_prod'
       : 'price_enterprise_test',
-    popular: false
+    popular: false,
+    color: 'purple'
   }
 ]
 

@@ -8,7 +8,7 @@
  * - Graceful degradation for different error types
  */
 
-import React, { Component, ReactNode } from 'react';
+import React, { Component, type ReactNode } from 'react';
 import { monitoring, reportError } from '../../lib/monitoring';
 
 interface Props {
@@ -125,7 +125,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
   };
 
   private renderFallback() {
-    const { fallback, level = 'component', name = 'Unknown' } = this.props;
+    const { fallback, level = 'component' } = this.props;
     const { error, errorId, retryCount } = this.state;
 
     // Use custom fallback if provided

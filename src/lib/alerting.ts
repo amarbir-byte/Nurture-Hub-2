@@ -10,7 +10,7 @@
  */
 
 import { supabase } from './supabase';
-import { ErrorReport, PerformanceMetric } from './monitoring';
+import { type ErrorReport, type PerformanceMetric } from './monitoring';
 
 export interface AlertRule {
   id: string;

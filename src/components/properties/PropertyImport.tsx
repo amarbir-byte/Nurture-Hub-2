@@ -100,7 +100,7 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
           components: {}
         }
       }
-    } catch {
+    } catch (error) {
       console.error('Address validation error:', error)
       return {
         corrected: address,
@@ -631,7 +631,7 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
 
       onImportComplete(properties.length)
       onClose()
-    } catch {
+    } catch (error) {
       console.error('Error importing properties:', error)
       setErrors(['Error importing properties. Please try again.'])
     } finally {

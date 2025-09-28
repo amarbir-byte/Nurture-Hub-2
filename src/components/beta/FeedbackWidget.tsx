@@ -56,10 +56,10 @@ export function FeedbackWidget() {
   }
 
   const feedbackTypes = [
-    { value: 'bug', label: '🐛 Bug Report', color: 'text-red-600' },
-    { value: 'feature', label: '💡 Feature Request', color: 'text-blue-600' },
-    { value: 'general', label: '💬 General Feedback', color: 'text-gray-600' },
-    { value: 'praise', label: '❤️ Something Great', color: 'text-green-600' }
+    { value: 'bug' as const, label: '🐛 Bug Report', color: 'text-red-600' },
+    { value: 'feature' as const, label: '💡 Feature Request', color: 'text-blue-600' },
+    { value: 'general' as const, label: '💬 General Feedback', color: 'text-gray-600' },
+    { value: 'praise' as const, label: '❤️ Something Great', color: 'text-green-600' }
   ]
 
   return (

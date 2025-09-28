@@ -326,7 +326,7 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
       } else {
         setStep('mapping')
       }
-    } catch {
+    } catch (error) {
       setErrors(['Error reading file. Please check the format.'])
       console.error('File parsing error:', error)
     }
@@ -386,7 +386,7 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
       setErrors(validationErrors)
       setPreview(contacts)
       setStep('preview')
-    } catch {
+    } catch (error) {
       setErrors(['Error generating preview'])
       console.error('Preview generation error:', error)
     }
@@ -546,7 +546,7 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
           if (!error) {
             successCount++
           }
-        } catch {
+        } catch (error) {
           console.error('Error importing contact:', contact.name, error)
         }
       }

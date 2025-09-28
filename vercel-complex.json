@@ -1,0 +1,186 @@
+{
+  "version": 2,
+  "framework": "vite",
+  "buildCommand": "npm run pre-deploy",
+  "outputDirectory": "dist",
+  "installCommand": "npm ci --prefer-offline --no-audit",
+  "devCommand": "npm run dev",
+
+  "env": {
+    "NODE_VERSION": "20",
+    "NPM_CONFIG_CACHE": ".npm-cache",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+
+  "build": {
+    "env": {
+      "NODE_ENV": "production",
+      "VITE_APP_VERSION": "$VERCEL_GIT_COMMIT_SHA",
+      "VITE_BUILD_TIME": "$VERCEL_BUILD_TIME",
+      "VITE_VERCEL_ENV": "$VERCEL_ENV"
+    }
+  },
+
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 30,
+      "memory": 1024
+    }
+  },
+
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "geolocation=(), microphone=(), camera=()"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://*.supabase.co https://api.maptiler.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://api.maptiler.com https://data.linz.govt.nz; worker-src 'self' blob:; frame-src https://js.stripe.com; object-src 'none'; base-uri 'self';"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains; preload"
+        }
+      ]
+    },
+    {
+      "source": "/static/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        },
+        {
+          "key": "Cross-Origin-Resource-Policy",
+          "value": "cross-origin"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        },
+        {
+          "key": "Cross-Origin-Resource-Policy",
+          "value": "cross-origin"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)\\.(js|css|json|ico|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        },
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
+    }
+  ],
+
+  "redirects": [
+    {
+      "source": "/app/(.*)",
+      "destination": "/$1",
+      "permanent": true
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/",
+      "permanent": false
+    }
+  ],
+
+  "rewrites": [
+    {
+      "source": "/api/health",
+      "destination": "/api/health"
+    },
+    {
+      "source": "/api/monitoring/(.*)",
+      "destination": "/api/monitoring/$1"
+    }
+  ],
+
+  "regions": ["iad1"],
+
+  "crons": [
+    {
+      "path": "/api/cron/cleanup",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/health-check",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/performance-metrics",
+      "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/cron/security-scan",
+      "schedule": "0 18 * * *"
+    }
+  ],
+
+  "github": {
+    "enabled": false,
+    "autoJobCancelation": true
+  },
+
+  "cleanUrls": true,
+  "trailingSlash": false,
+
+  "env": {
+    "VITE_APP_URL": "https://nurture-hub.vercel.app",
+    "VITE_SUPABASE_URL": "https://danbkfdqwprutyzlvnid.supabase.co",
+    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhbmJrZmRxd3BydXR5emx2bmlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2MTE1MDIsImV4cCI6MjA3NDE4NzUwMn0.7qjB8kazTqPUVPknaoYCuYZEfxi-EAHv9RbIEa9w9gE",
+    "VITE_STRIPE_PUBLISHABLE_KEY": "pk_test_51SAQ8rH2TgB2v6s7pUTMDeowb8y7V9jHiuMzvz0jkCp0CQg4MKJg6txrwV7t1z9GjnvTtbL4arbTY3f5Evm9JEs9005WnzwhNx",
+    "VITE_MAPTILER_API_KEY": "L7wVdmrapoAnz5FFYuJX",
+    "VITE_LINZ_API_KEY": "demo"
+  }
+}

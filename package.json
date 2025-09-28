@@ -23,7 +23,7 @@
     "typecheck": "tsc --noEmit",
     "security:audit": "node scripts/security-audit.js",
     "test:performance": "npm run build && npm run preview --port 4173 &",
-    "pre-deploy": "npm run typecheck && npm run lint && npm run security:audit && npm run build",
+    "pre-deploy": "npm run typecheck && npm run security:audit && npm run build",
     "ci:test": "npm run typecheck && npm run lint && npm run test:unit",
     "ci:build": "npm run pre-deploy",
     "ci:security": "npm run security:audit && npm run security:dependencies",

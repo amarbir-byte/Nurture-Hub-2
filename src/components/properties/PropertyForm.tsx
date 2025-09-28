@@ -391,7 +391,6 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
                 error={errors.address}
                 label="Complete Address"
                 required
-                showSuggestions={true}
               />
             </div>
 

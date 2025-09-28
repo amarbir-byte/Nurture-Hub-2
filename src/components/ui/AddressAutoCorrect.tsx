@@ -26,7 +26,6 @@ interface AddressAutoCorrectProps {
   error?: string
   label?: string
   required?: boolean
-  showSuggestions?: boolean
 }
 
 export function AddressAutoCorrect({
@@ -38,13 +37,12 @@ export function AddressAutoCorrect({
   error,
   label,
   required = false,
-  showSuggestions = true
 }: AddressAutoCorrectProps) {
   const [isValidating, setIsValidating] = useState(false)
   const [validationResult, setValidationResult] = useState<AddressSuggestion | null>(null)
   const [showCorrection, setShowCorrection] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const debounceRef = useRef<NodeJS.Timeout>()
+  const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
   // Debounced address validation
   useEffect(() => {

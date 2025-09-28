@@ -34,7 +34,8 @@
       "Bash(chmod:*)",
       "Bash(npm run:*)",
       "Bash(echo:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npx eslint:*)"
     ],
     "deny": [],
     "ask": []

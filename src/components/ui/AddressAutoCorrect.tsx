@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { geocode } from '../../lib/geocoding'
 import { parseNZAddress } from '../../types/address'
 
-interface AddressSuggestion {
+export interface AddressSuggestion {
   formatted_address: string
   address_components: {
     street_number?: string

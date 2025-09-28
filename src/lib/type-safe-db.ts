@@ -299,9 +299,12 @@ export interface PropertyAnalytics {
 
 // ✅ CUSTOM ERROR CLASS
 export class DatabaseError extends Error {
-  constructor(message: string, public supabaseError?: any) {
+  supabaseError?: any;
+
+  constructor(message: string, supabaseError?: any) {
     super(message);
     this.name = 'DatabaseError';
+    this.supabaseError = supabaseError;
   }
 }
 

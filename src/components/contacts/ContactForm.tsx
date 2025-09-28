@@ -4,17 +4,11 @@ import { supabase } from '../../lib/supabase'
 import { ensureUserExists } from '../../utils/userUtils'
 import { geocode } from '../../lib/geocoding'
 import { AddressAutoCorrect } from '../ui/AddressAutoCorrect'
-import { checkDuplicateContact } from '../../utils/duplicateCheck'
+import type { AddressSuggestion } from '../ui/AddressAutoCorrect'
+import { checkDuplicateContact, type DuplicateContactResult } from '../../utils/duplicateCheck'
 import type { Contact } from '../../types/contact'
 
-interface AddressSuggestion {
-  formatted_address: string
-  address_components: {
-    long_name: string
-    short_name: string
-    types: string[]
-  }[]
-}
+// Using AddressSuggestion from AddressAutoCorrect component
 
 interface ContactFormProps {
   contact?: Contact | null
@@ -22,7 +16,7 @@ interface ContactFormProps {
   onCancel: () => void
 }
 
-interface FormData {
+interface ContactFormData {
   first_name: string
   last_name: string
   email: string
@@ -49,15 +43,15 @@ interface FormData {
 export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
-  const [errors, setErrors] = useState<Partial<FormData>>({})
+  const [errors, setErrors] = useState<Partial<ContactFormData>>({})
   const [duplicateCheck, setDuplicateCheck] = useState<{
     show: boolean
-    existingContact?: Contact
-    samePropertyContacts?: Contact[]
+    existingContact?: DuplicateContactResult['existingContact']
+    samePropertyContacts?: DuplicateContactResult['samePropertyContacts']
     action: 'create' | 'update' | 'cancel'
   }>({ show: false, action: 'create' })
 
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<ContactFormData>({
     first_name: contact?.first_name || '',
     last_name: contact?.last_name || '',
     email: contact?.email || '',
@@ -83,7 +77,7 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
 
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {}
+    const newErrors: Partial<ContactFormData> = {}
 
     if (!formData.first_name.trim() && !formData.last_name.trim()) {
       newErrors.first_name = 'First name or last name is required'
@@ -143,7 +137,7 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
     if (!contact && user) {
       const duplicateResult = await checkDuplicateContact(
         user.id,
-        formData.name,
+        `${formData.first_name} ${formData.last_name}`.trim(),
         formData.phone,
         formData.email,
         formData.address
@@ -362,7 +356,7 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
     }
   }
 
-  const handleInputChange = (field: keyof FormData, value: string) => {
+  const handleInputChange = (field: keyof ContactFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }))
@@ -371,14 +365,14 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
 
   const handleAddressSelect = (suggestion: AddressSuggestion) => {
     // Auto-populate address components when address is selected/corrected
-    const { address_components } = suggestion
-    
+    const addressComponents = suggestion.address_components
+
     setFormData(prev => ({
       ...prev,
       address: suggestion.formatted_address,
-      suburb: address_components.suburb || prev.suburb,
-      city: address_components.city || prev.city,
-      postal_code: address_components.postal_code || prev.postal_code,
+      suburb: addressComponents?.suburb || prev.suburb,
+      city: addressComponents?.city || prev.city,
+      postal_code: addressComponents?.postal_code || prev.postal_code,
     }))
   }
 
@@ -484,19 +478,19 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
                     <label htmlFor="property_address" className="block text-sm font-medium text-gray-700 mb-1">
                       Property Address *
                     </label>
-                    <AddressAutocomplete
+                    <AddressAutoCorrect
                       value={formData.property_address}
-                      onChange={(value) => handleInputChange('property_address', value)}
-                      onSelect={(result) => {
-                        const mainAddress = result.place_name
-                        const addressComponents = parseNZAddress(mainAddress)
+                      onChange={(value: string) => handleInputChange('property_address', value)}
+                      onAddressSelect={(result) => {
+                        const mainAddress = result.formatted_address
+                        const addressComponents = result.address_components
                         
                         setFormData(prev => ({
                           ...prev,
                           property_address: mainAddress,
-                          property_suburb: addressComponents.suburb || prev.property_suburb,
-                          property_city: addressComponents.city || prev.property_city,
-                          property_postal_code: addressComponents.postal_code || prev.property_postal_code,
+                          property_suburb: addressComponents?.suburb || prev.property_suburb,
+                          property_city: addressComponents?.city || prev.property_city,
+                          property_postal_code: addressComponents?.postal_code || prev.property_postal_code,
                         }))
                         
                         console.log('Property address selected:', result)
@@ -871,7 +865,7 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
                     <button
                       onClick={() => {
                         setDuplicateCheck(prev => ({ ...prev, action: 'update' }))
-                        handleSubmit(new Event('submit') as React.FormEvent)
+                        handleSubmit({ preventDefault: () => {} } as React.FormEvent)
                       }}
                       className="w-full btn-primary"
                     >
@@ -880,7 +874,7 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
                     <button
                       onClick={() => {
                         setDuplicateCheck(prev => ({ ...prev, action: 'create' }))
-                        handleSubmit(new Event('submit') as React.FormEvent)
+                        handleSubmit({ preventDefault: () => {} } as React.FormEvent)
                       }}
                       className="w-full btn-secondary"
                     >

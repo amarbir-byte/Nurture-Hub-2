@@ -129,7 +129,7 @@ class EnterprisePerformance {
     batchSize: number = 10
   ): Promise<Map<string, T | Error>> {
     const results = new Map<string, T | Error>();
-    const startTime = performance.now();
+    const startTime = globalThis.performance.now();
 
     // Process requests in batches to avoid overwhelming the server
     for (let i = 0; i < requests.length; i += batchSize) {
@@ -152,7 +152,7 @@ class EnterprisePerformance {
       }
     }
 
-    const duration = performance.now() - startTime;
+    const duration = globalThis.performance.now() - startTime;
     recordMetric('batch_request_duration', duration, {
       totalRequests: requests.length,
       batchSize,
@@ -226,7 +226,7 @@ class EnterprisePerformance {
           monitoring.reportError(
             new Error(`High memory usage: ${usagePercentage.toFixed(1)}%`),
             'Memory Management',
-            'warning',
+            'medium',
             { usagePercentage, usedHeap: memory.usedJSHeapSize }
           );
         }
@@ -251,7 +251,7 @@ class EnterprisePerformance {
               monitoring.reportError(
                 new Error(`Long task detected: ${entry.duration}ms`),
                 'Performance Monitoring',
-                'warning',
+                'medium',
                 { duration: entry.duration, startTime: entry.startTime }
               );
             }
@@ -286,7 +286,7 @@ class EnterprisePerformance {
             monitoring.reportError(
               new Error(`Slow resource loading: ${resourceEntry.name}`),
               'Resource Performance',
-              'warning',
+              'medium',
               {
                 duration: resourceEntry.duration,
                 resource: resourceEntry.name,
@@ -308,7 +308,7 @@ class EnterprisePerformance {
   ) {
     const LazyComponent = React.lazy(factory);
 
-    return React.forwardRef<any, React.ComponentProps<T>>((props, ref) => {
+    return React.forwardRef<any, React.ComponentProps<T>>((props, ref: any) => {
       return React.createElement(
         React.Suspense,
         {
@@ -316,7 +316,7 @@ class EnterprisePerformance {
             ? React.createElement(fallback)
             : React.createElement('div', null, 'Loading...')
         },
-        React.createElement(LazyComponent, { ...props, ref })
+        React.createElement(LazyComponent, props)
       );
     });
   }

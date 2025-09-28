@@ -128,10 +128,26 @@ class EnterpriseMonitoring {
         const isLastAttempt = attempt === maxRetries;
 
         if (isLastAttempt) {
-          const errorReport = this.reportError(error as Error, `${context} - Final attempt failed`, 'high', {
-            attempts: maxRetries,
-            totalTime: maxRetries * backoffMs
-          });
+          const errorReport = {
+            error: error as Error,
+            context: `${context} - Final attempt failed`,
+            userId: this.getCurrentUserId(),
+            userAgent: navigator.userAgent,
+            timestamp: new Date(),
+            stackTrace: (error as Error).stack || '',
+            errorId: this.generateErrorId(),
+            severity: 'high' as const,
+            metadata: {
+              attempts: maxRetries,
+              totalTime: maxRetries * backoffMs,
+              url: window.location.href,
+              referrer: document.referrer,
+              viewport: `${window.innerWidth}x${window.innerHeight}`,
+              memory: this.getMemoryInfo(),
+            }
+          };
+
+          this.errorQueue.push(errorReport);
 
           // Trigger alerting system for critical failures
           this.triggerAlert(errorReport);

@@ -5,7 +5,6 @@ import { ensureUserExists } from '../../utils/userUtils'
 import { geocode } from '../../lib/geocoding'
 import { checkDuplicateProperty } from '../../utils/duplicateCheck'
 import { AddressAutoCorrect } from '../ui/AddressAutoCorrect'
-import { parseNZAddress } from '../../types/address'
 
 interface Property {
   id: string

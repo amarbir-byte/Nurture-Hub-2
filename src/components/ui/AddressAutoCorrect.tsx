@@ -40,13 +40,10 @@ export function AddressAutoCorrect({
   required = false,
   showSuggestions = true
 }: AddressAutoCorrectProps) {
-  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([])
-  const [showSuggestionsList, setShowSuggestionsList] = useState(false)
   const [isValidating, setIsValidating] = useState(false)
   const [validationResult, setValidationResult] = useState<AddressSuggestion | null>(null)
   const [showCorrection, setShowCorrection] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const suggestionsRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<NodeJS.Timeout>()
 
   // Debounced address validation
@@ -132,15 +129,6 @@ export function AddressAutoCorrect({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value
     onChange(newValue)
-    setShowSuggestionsList(false)
-  }
-
-  const handleSuggestionSelect = (suggestion: AddressSuggestion) => {
-    onChange(suggestion.formatted_address)
-    setShowSuggestionsList(false)
-    if (onAddressSelect) {
-      onAddressSelect(suggestion)
-    }
   }
 
   const handleAcceptCorrection = () => {
@@ -176,27 +164,9 @@ export function AddressAutoCorrect({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
-      setShowSuggestionsList(false)
       setShowCorrection(false)
     }
   }
-
-  // Close suggestions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        suggestionsRef.current &&
-        !suggestionsRef.current.contains(event.target as Node) &&
-        inputRef.current &&
-        !inputRef.current.contains(event.target as Node)
-      ) {
-        setShowSuggestionsList(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   return (
     <div className={`relative ${className}`}>

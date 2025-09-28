@@ -33,7 +33,8 @@
       "WebFetch(domain:www.addressable.co.nz)",
       "Bash(chmod:*)",
       "Bash(npm run:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,52 @@
+{
+  "version": 2,
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm ci --legacy-peer-deps --prefer-offline --no-audit",
+
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains; preload"
+        }
+      ]
+    }
+  ],
+
+  "crons": [
+    {
+      "path": "/api/cron/cleanup",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/health-check",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/performance-metrics",
+      "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/cron/security-scan",
+      "schedule": "0 18 * * *"
+    }
+  ],
+
+  "env": {
+    "VITE_APP_URL": "https://nurture-hub.vercel.app",
+    "VITE_SUPABASE_URL": "https://danbkfdqwprutyzlvnid.supabase.co",
+    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhbmJrZmRxd3BydXR5emx2bmlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjM0NTY0MDEsImV4cCI6MjAzOTAzMjQwMX0.DGn9fiqpCkjg_4X17o3Iz6YS25WYNpNrP6lgLvJ4sCY"
+  }
+}

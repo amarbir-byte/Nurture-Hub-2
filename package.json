@@ -28,6 +28,10 @@
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "db:migrate": "supabase db push",
+    "db:push": "node scripts/migrate.js push",
+    "db:status": "node scripts/migrate.js status",
+    "db:pull": "node scripts/migrate.js pull",
+    "db:new": "node scripts/migrate.js new",
     "db:generate-types": "supabase gen types typescript --local > src/types/supabase.ts",
     "db:studio": "supabase studio",
     "db:seed": "supabase db seed"

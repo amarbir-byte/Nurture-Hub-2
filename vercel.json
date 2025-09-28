@@ -5,12 +5,6 @@
   "outputDirectory": "dist",
   "installCommand": "npm ci --prefer-offline --no-audit",
 
-  "functions": {
-    "api/**/*.ts": {
-      "runtime": "nodejs20.x"
-    }
-  },
-
   "headers": [
     {
       "source": "/(.*)",

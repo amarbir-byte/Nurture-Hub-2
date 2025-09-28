@@ -69,7 +69,7 @@ export function FilterSortDropdown({
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 })
   const buttonRef = useRef<HTMLButtonElement>(null)
 
-  const selectedOption = sortOptions.find(option => option.value === sortBy)
+  // const selectedOption = sortOptions.find(option => option.value === sortBy)
 
   const groupedSortOptions = sortOptions.reduce((acc, option) => {
     if (!acc[option.category]) {
@@ -142,7 +142,6 @@ export function FilterSortDropdown({
     const handleResize = () => {
       if (isOpen) {
         // Recalculate position on resize
-        const event = new Event('resize')
         handleToggle()
         setTimeout(() => handleToggle(), 0)
       }

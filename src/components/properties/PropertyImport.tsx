@@ -100,7 +100,7 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
           components: {}
         }
       }
-    } catch (error) {
+    } catch {
       console.error('Address validation error:', error)
       return {
         corrected: address,
@@ -202,7 +202,7 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
     return { headers, rows }
   }
 
-  const parseExcelFile = async (_arrayBuffer: ArrayBuffer): Promise<{ headers: string[], rows: string[][] }> => {
+  const parseExcelFile = async (): Promise<{ headers: string[], rows: string[][] }> => {
     throw new Error('Excel file support: Please export your Excel file as CSV format for import. Excel files will be fully supported in the next update.')
   }
 
@@ -210,8 +210,7 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
     const fileName = file.name.toLowerCase()
 
     if (fileName.endsWith('.xlsx')) {
-      const arrayBuffer = await file.arrayBuffer()
-      return await parseExcelFile(arrayBuffer)
+      return await parseExcelFile()
     } else if (fileName.endsWith('.tsv')) {
       const text = await file.text()
       return parseTSV(text)
@@ -316,7 +315,7 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
       setHeaders(headers)
       setFieldMapping(autoMapping)
       setStep('mapping')
-    } catch (error) {
+    } catch {
       setErrors(['Error reading file. Please check the format.'])
     }
   }
@@ -381,7 +380,7 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
 
           const headerIndex = headers.indexOf(csvHeader)
           if (headerIndex !== -1) {
-            let value = row[headerIndex]?.trim()
+            const value = row[headerIndex]?.trim()
             if (value) {
               // Numeric fields
               if (['price', 'sale_price', 'list_price', 'valuation', 'bedrooms', 'bathrooms', 'floor_area', 'land_area_m2', 'days_to_sell'].includes(field)) {
@@ -420,7 +419,7 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
       setErrors(validationErrors)
       setPreview(properties)
       setStep('preview')
-    } catch (error) {
+    } catch {
       setErrors(['Error generating preview'])
     }
   }
@@ -473,7 +472,7 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
 
           const headerIndex = headers.indexOf(csvHeader)
           if (headerIndex !== -1) {
-            let value = row[headerIndex]?.trim()
+            const value = row[headerIndex]?.trim()
             if (value) {
               // Numeric fields
               if (['price', 'sale_price', 'list_price', 'valuation', 'bedrooms', 'bathrooms', 'floor_area', 'land_area_m2', 'days_to_sell'].includes(field)) {
@@ -632,7 +631,7 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
 
       onImportComplete(properties.length)
       onClose()
-    } catch (error) {
+    } catch {
       console.error('Error importing properties:', error)
       setErrors(['Error importing properties. Please try again.'])
     } finally {

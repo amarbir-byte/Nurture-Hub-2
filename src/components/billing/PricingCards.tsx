@@ -1,3 +1,14 @@
+interface Plan {
+  name: string
+  planType: string
+  price: number
+  priceId: string
+  description: string
+  features: string[]
+  popular: boolean
+  color: string
+}
+
 interface PricingCardsProps {
   currentPlan?: string
   onSelectPlan: (priceId: string, planType: string) => void
@@ -90,7 +101,7 @@ export function PricingCards({ currentPlan, onSelectPlan, loading, isTrialing }:
     return loading || currentPlan === planType
   }
 
-  const getCardClassName = (plan: any) => {
+  const getCardClassName = (plan: Plan) => {
     let baseClass = "card relative"
 
     if (plan.popular) {
@@ -104,7 +115,7 @@ export function PricingCards({ currentPlan, onSelectPlan, loading, isTrialing }:
     return baseClass
   }
 
-  const getButtonClassName = (plan: any) => {
+  const getButtonClassName = (plan: Plan) => {
     if (currentPlan === plan.planType) {
       return "w-full btn-ghost cursor-not-allowed dark:text-primary-400"
     }

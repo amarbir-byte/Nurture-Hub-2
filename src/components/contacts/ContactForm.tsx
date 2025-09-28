@@ -7,6 +7,15 @@ import { AddressAutoCorrect } from '../ui/AddressAutoCorrect'
 import { checkDuplicateContact } from '../../utils/duplicateCheck'
 import type { Contact } from '../../types/contact'
 
+interface AddressSuggestion {
+  formatted_address: string
+  address_components: {
+    long_name: string
+    short_name: string
+    types: string[]
+  }[]
+}
+
 interface ContactFormProps {
   contact?: Contact | null
   onSave: () => void
@@ -43,8 +52,8 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
   const [errors, setErrors] = useState<Partial<FormData>>({})
   const [duplicateCheck, setDuplicateCheck] = useState<{
     show: boolean
-    existingContact?: any
-    samePropertyContacts?: any[]
+    existingContact?: Contact
+    samePropertyContacts?: Contact[]
     action: 'create' | 'update' | 'cancel'
   }>({ show: false, action: 'create' })
 
@@ -360,7 +369,7 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
     }
   }
 
-  const handleAddressSelect = (suggestion: any) => {
+  const handleAddressSelect = (suggestion: AddressSuggestion) => {
     // Auto-populate address components when address is selected/corrected
     const { address_components } = suggestion
     
@@ -862,7 +871,7 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
                     <button
                       onClick={() => {
                         setDuplicateCheck(prev => ({ ...prev, action: 'update' }))
-                        handleSubmit(new Event('submit') as any)
+                        handleSubmit(new Event('submit') as React.FormEvent)
                       }}
                       className="w-full btn-primary"
                     >
@@ -871,7 +880,7 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
                     <button
                       onClick={() => {
                         setDuplicateCheck(prev => ({ ...prev, action: 'create' }))
-                        handleSubmit(new Event('submit') as any)
+                        handleSubmit(new Event('submit') as React.FormEvent)
                       }}
                       className="w-full btn-secondary"
                     >

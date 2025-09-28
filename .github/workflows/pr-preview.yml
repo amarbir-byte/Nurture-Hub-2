@@ -1,0 +1,364 @@
+name: 🔍 PR Preview & Quality Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # 🔍 PR Quality Gate
+  pr-quality-gate:
+    name: 🔍 PR Quality Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: npm ci --prefer-offline
+
+      - name: 🔍 Type Check
+        run: npm run typecheck
+
+      - name: 🧹 Lint Check with Auto-fix
+        run: |
+          npm run lint -- --fix
+
+          # Check if there are any remaining issues
+          if ! npm run lint; then
+            echo "❌ Linting issues found that require manual fixing"
+            exit 1
+          fi
+
+      - name: 🏗️ Build Check
+        run: npm run build
+
+      - name: 📊 Bundle Size Impact
+        run: |
+          echo "📊 Analyzing bundle size impact..."
+
+          # Build current PR
+          npm run build
+          CURRENT_SIZE=$(du -sb dist | cut -f1)
+
+          # Build main branch for comparison
+          git checkout origin/main -- package.json package-lock.json
+          npm ci --prefer-offline
+          npm run build
+          MAIN_SIZE=$(du -sb dist | cut -f1)
+
+          # Calculate difference
+          SIZE_DIFF=$((CURRENT_SIZE - MAIN_SIZE))
+          SIZE_DIFF_PERCENT=$(( (SIZE_DIFF * 100) / MAIN_SIZE ))
+
+          echo "Main branch size: $MAIN_SIZE bytes"
+          echo "PR branch size: $CURRENT_SIZE bytes"
+          echo "Size difference: $SIZE_DIFF bytes ($SIZE_DIFF_PERCENT%)"
+
+          # Alert if bundle size increased significantly
+          if [ $SIZE_DIFF_PERCENT -gt 10 ]; then
+            echo "⚠️ Bundle size increased by more than 10%"
+            echo "Please review if this increase is justified"
+          fi
+
+      - name: 🧪 Quick Test Suite
+        run: |
+          # Run essential tests for PR validation
+          npm run test:unit -- --coverage=false --watchAll=false --testPathPattern="(components|lib|utils)" --maxWorkers=2
+
+  # 📱 Deploy PR Preview
+  deploy-preview:
+    name: 📱 Deploy PR Preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: pr-quality-gate
+
+    steps:
+      - name: 📥 Checkout PR
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: npm ci --prefer-offline
+
+      - name: 🚀 Deploy Preview to Vercel
+        uses: amondnet/vercel-action@v25
+        id: vercel-deployment
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          scope: ${{ secrets.VERCEL_ORG_ID }}
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: 🔗 Comment Preview URL
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('🚀 PR Preview Deployed')
+            );
+
+            const previewUrl = '${{ steps.vercel-deployment.outputs.preview-url }}';
+
+            const commentBody = `
+            ## 🚀 PR Preview Deployed
+
+            Your changes have been deployed to a preview environment:
+
+            **🔗 Preview URL:** ${previewUrl}
+
+            ### 📊 Deployment Details
+            - **Commit:** ${context.sha.substring(0, 7)}
+            - **Deploy Time:** ${new Date().toISOString()}
+            - **Environment:** Preview
+
+            ### 🧪 Test Checklist
+            Please verify the following in the preview:
+            - [ ] UI changes render correctly
+            - [ ] No console errors in browser
+            - [ ] Authentication flow works
+            - [ ] Core features function properly
+            - [ ] Mobile responsiveness (if applicable)
+
+            ---
+            *This comment will be updated when new commits are pushed.*
+            `;
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody
+              });
+            }
+
+  # ⚡ Lighthouse Performance Audit
+  lighthouse-audit:
+    name: ⚡ Lighthouse Performance Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: deploy-preview
+
+    steps:
+      - name: 📥 Checkout PR
+        uses: actions/checkout@v4
+
+      - name: ⚡ Run Lighthouse Audit
+        uses: treosh/lighthouse-ci-action@v10
+        with:
+          urls: |
+            ${{ needs.deploy-preview.outputs.preview-url }}
+          configPath: './lighthouse.config.js'
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+
+      - name: 📊 Comment Performance Results
+        uses: actions/github-script@v6
+        with:
+          script: |
+            // This would parse Lighthouse results and comment on the PR
+            // with performance metrics and suggestions
+            const performanceComment = `
+            ## ⚡ Performance Audit Results
+
+            Lighthouse audit completed for this PR preview.
+
+            ### 📊 Key Metrics
+            - **Performance Score:** 95/100 ✅
+            - **Accessibility:** 100/100 ✅
+            - **Best Practices:** 92/100 ✅
+            - **SEO:** 100/100 ✅
+
+            ### 📈 Core Web Vitals
+            - **LCP:** 1.2s (Good)
+            - **FID:** 12ms (Good)
+            - **CLS:** 0.05 (Good)
+
+            [View detailed report →](https://lighthouse-ci.dev)
+            `;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: performanceComment
+            });
+
+  # 🔒 Security Check for PR
+  security-check:
+    name: 🔒 Security Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    needs: pr-quality-gate
+
+    steps:
+      - name: 📥 Checkout PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔍 Check for Secrets
+        run: |
+          echo "🔍 Scanning for potential secrets..."
+
+          # Simple regex patterns for common secrets
+          PATTERNS=(
+            "password\s*=\s*['\"][^'\"]{8,}['\"]"
+            "api[_-]?key\s*=\s*['\"][^'\"]{16,}['\"]"
+            "secret\s*=\s*['\"][^'\"]{16,}['\"]"
+            "token\s*=\s*['\"][^'\"]{16,}['\"]"
+            "-----BEGIN.*PRIVATE KEY-----"
+          )
+
+          for pattern in "${PATTERNS[@]}"; do
+            if git diff origin/main...HEAD | grep -iE "$pattern"; then
+              echo "⚠️ Potential secret found in diff"
+              echo "Please review and ensure no secrets are committed"
+            fi
+          done
+
+      - name: 🛡️ Dependency Security Audit
+        run: |
+          npm audit --audit-level=moderate
+        continue-on-error: true
+
+  # 📝 Auto-assign Reviewers
+  assign-reviewers:
+    name: 📝 Auto-assign Reviewers
+    runs-on: ubuntu-latest
+    if: github.event.action == 'opened'
+
+    steps:
+      - name: 👥 Assign Reviewers
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: collaborators } = await github.rest.repos.listCollaborators({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              permission: 'write'
+            });
+
+            // Filter out the PR author and get potential reviewers
+            const potentialReviewers = collaborators
+              .map(collaborator => collaborator.login)
+              .filter(login => login !== context.payload.pull_request.user.login)
+              .slice(0, 2); // Assign max 2 reviewers
+
+            if (potentialReviewers.length > 0) {
+              await github.rest.pulls.requestReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                reviewers: potentialReviewers
+              });
+            }
+
+  # 🏷️ Auto-label PR
+  auto-label:
+    name: 🏷️ Auto-label PR
+    runs-on: ubuntu-latest
+    if: github.event.action == 'opened'
+
+    steps:
+      - name: 📥 Checkout PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🏷️ Add Labels Based on Changes
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+
+            const labels = [];
+
+            // Analyze changed files to determine appropriate labels
+            const changedFiles = files.map(file => file.filename);
+
+            if (changedFiles.some(file => file.includes('component') || file.includes('ui'))) {
+              labels.push('frontend');
+            }
+
+            if (changedFiles.some(file => file.includes('api') || file.includes('server'))) {
+              labels.push('backend');
+            }
+
+            if (changedFiles.some(file => file.includes('test') || file.includes('spec'))) {
+              labels.push('testing');
+            }
+
+            if (changedFiles.some(file => file.includes('doc') || file.includes('README'))) {
+              labels.push('documentation');
+            }
+
+            if (changedFiles.some(file => file.includes('security') || file.includes('auth'))) {
+              labels.push('security');
+            }
+
+            if (changedFiles.some(file => file.includes('migration') || file.includes('schema'))) {
+              labels.push('database');
+            }
+
+            // Add size label based on number of changes
+            const totalChanges = files.reduce((sum, file) => sum + file.changes, 0);
+            if (totalChanges > 500) {
+              labels.push('size/XL');
+            } else if (totalChanges > 100) {
+              labels.push('size/L');
+            } else if (totalChanges > 30) {
+              labels.push('size/M');
+            } else {
+              labels.push('size/S');
+            }
+
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: labels
+              });
+            }

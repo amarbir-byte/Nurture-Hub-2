@@ -90,7 +90,7 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
     return { headers, rows }
   }
 
-  const parseExcelFile = async (_arrayBuffer: ArrayBuffer): Promise<{ headers: string[], rows: string[][] }> => {
+  const parseExcelFile = async (): Promise<{ headers: string[], rows: string[][] }> => {
     // For now, we'll provide instructions for Excel users to export as CSV
     // In a real implementation, you'd use a library like SheetJS
     throw new Error('Excel file support: Please export your Excel file as CSV format for import. Excel files will be fully supported in the next update.')
@@ -100,8 +100,7 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
     const fileName = file.name.toLowerCase()
 
     if (fileName.endsWith('.xlsx')) {
-      const arrayBuffer = await file.arrayBuffer()
-      return await parseExcelFile(arrayBuffer)
+      return await parseExcelFile()
     } else if (fileName.endsWith('.tsv')) {
       const text = await file.text()
       return parseTSV(text)
@@ -327,7 +326,7 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
       } else {
         setStep('mapping')
       }
-    } catch (error) {
+    } catch {
       setErrors(['Error reading file. Please check the format.'])
       console.error('File parsing error:', error)
     }
@@ -343,7 +342,7 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
         Object.entries(mapping).forEach(([field, csvHeader]) => {
           const headerIndex = headers.indexOf(csvHeader)
           if (headerIndex !== -1) {
-            let value = row[headerIndex]?.trim()
+            const value = row[headerIndex]?.trim()
             if (field === 'tags' && value) {
               contact[field] = value.split(';').map((tag: string) => tag.trim()).filter((tag: string) => tag)
             } else if (value) {
@@ -387,7 +386,7 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
       setErrors(validationErrors)
       setPreview(contacts)
       setStep('preview')
-    } catch (error) {
+    } catch {
       setErrors(['Error generating preview'])
       console.error('Preview generation error:', error)
     }
@@ -405,7 +404,7 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
         Object.entries(fieldMapping).forEach(([field, csvHeader]) => {
           const headerIndex = headers.indexOf(csvHeader)
           if (headerIndex !== -1) {
-            let value = row[headerIndex]?.trim()
+            const value = row[headerIndex]?.trim()
             if (field === 'tags' && value) {
               contact[field] = value.split(';').map((tag: string) => tag.trim()).filter((tag: string) => tag)
             } else if (value) {
@@ -430,7 +429,7 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
       setErrors(validationErrors)
       setPreview(contacts)
       setStep('preview')
-    } catch (error) {
+    } catch {
       setErrors(['Error generating preview'])
     }
   }
@@ -453,7 +452,7 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
         Object.entries(fieldMapping).forEach(([field, csvHeader]) => {
           const headerIndex = headers.indexOf(csvHeader)
           if (headerIndex !== -1) {
-            let value = row[headerIndex]?.trim()
+            const value = row[headerIndex]?.trim()
             if (field === 'tags' && value) {
               contact[field] = value.split(';').map((tag: string) => tag.trim()).filter((tag: string) => tag)
             } else if (value) {
@@ -547,13 +546,13 @@ export function ContactImport({ onImportComplete, onClose }: ContactImportProps)
           if (!error) {
             successCount++
           }
-        } catch (error) {
+        } catch {
           console.error('Error importing contact:', contact.name, error)
         }
       }
 
       onImportComplete(successCount)
-    } catch (error) {
+    } catch {
       setErrors(['Error during import process'])
     } finally {
       setImporting(false)

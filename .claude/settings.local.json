@@ -30,7 +30,10 @@
       "WebFetch(domain:www.linz.govt.nz)",
       "Bash(npm run lint:*)",
       "Bash(git restore:*)",
-      "WebFetch(domain:www.addressable.co.nz)"
+      "WebFetch(domain:www.addressable.co.nz)",
+      "Bash(chmod:*)",
+      "Bash(npm run:*)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []

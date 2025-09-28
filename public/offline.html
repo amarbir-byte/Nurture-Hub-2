@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline - Nurture Hub</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+
+    .container {
+      text-align: center;
+      max-width: 500px;
+      padding: 2rem;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1.5rem;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+    }
+
+    .title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: white;
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+
+    .features {
+      text-align: left;
+      margin: 2rem 0;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1.5rem;
+      border-radius: 10px;
+    }
+
+    .features h3 {
+      margin-bottom: 1rem;
+      color: #fff;
+      font-size: 1.2rem;
+    }
+
+    .features ul {
+      list-style: none;
+    }
+
+    .features li {
+      margin-bottom: 0.5rem;
+      opacity: 0.9;
+      padding-left: 1.5rem;
+      position: relative;
+    }
+
+    .features li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #4ade80;
+      font-weight: bold;
+    }
+
+    .retry-btn {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 0.5rem;
+    }
+
+    .retry-btn:hover {
+      background: #4338ca;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+    }
+
+    .retry-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .status {
+      margin-top: 1rem;
+      padding: 0.5rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    .status.online {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+    }
+
+    .status.offline {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+
+    .footer {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .checking {
+      animation: pulse 2s infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">
+      📡
+    </div>
+
+    <h1 class="title">You're Offline</h1>
+
+    <p class="subtitle">
+      No internet connection detected. Don't worry - Nurture Hub is designed to work offline!
+    </p>
+
+    <div class="features">
+      <h3>Available Offline Features:</h3>
+      <ul>
+        <li>View cached contacts and properties</li>
+        <li>Add new contacts (will sync when online)</li>
+        <li>Edit existing data (saved locally)</li>
+        <li>View maps and property details</li>
+        <li>Access recent analytics</li>
+      </ul>
+    </div>
+
+    <div class="status offline" id="connectionStatus">
+      🔴 Offline - Changes will sync when connection is restored
+    </div>
+
+    <button class="retry-btn" onclick="checkConnection()">
+      Check Connection
+    </button>
+
+    <button class="retry-btn" onclick="goHome()">
+      Continue Offline
+    </button>
+
+    <div class="footer">
+      <p>Nurture Hub - Enterprise Real Estate CRM</p>
+    </div>
+  </div>
+
+  <script>
+    let isChecking = false;
+
+    function updateConnectionStatus() {
+      const status = document.getElementById('connectionStatus');
+      const retryBtn = document.querySelector('.retry-btn');
+
+      if (navigator.onLine) {
+        status.textContent = '🟢 Back Online - Redirecting...';
+        status.className = 'status online';
+
+        // Auto-redirect when back online
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1500);
+      } else {
+        status.textContent = '🔴 Still Offline - Changes will sync when connection is restored';
+        status.className = 'status offline';
+      }
+    }
+
+    function checkConnection() {
+      if (isChecking) return;
+
+      isChecking = true;
+      const button = document.querySelector('.retry-btn');
+      const originalText = button.textContent;
+
+      button.textContent = 'Checking...';
+      button.disabled = true;
+      button.classList.add('checking');
+
+      // Try to fetch a small resource to check connectivity
+      fetch('/manifest.json', {
+        method: 'HEAD',
+        cache: 'no-cache',
+        mode: 'no-cors'
+      })
+      .then(() => {
+        updateConnectionStatus();
+      })
+      .catch(() => {
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.disabled = false;
+          button.classList.remove('checking');
+          isChecking = false;
+        }, 1000);
+      });
+    }
+
+    function goHome() {
+      window.location.href = '/';
+    }
+
+    // Listen for online/offline events
+    window.addEventListener('online', updateConnectionStatus);
+    window.addEventListener('offline', updateConnectionStatus);
+
+    // Auto-check connection every 30 seconds
+    setInterval(() => {
+      if (!isChecking && !navigator.onLine) {
+        checkConnection();
+      }
+    }, 30000);
+
+    // Initial status update
+    updateConnectionStatus();
+
+    // Show a tip after 10 seconds
+    setTimeout(() => {
+      const tip = document.createElement('div');
+      tip.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        animation: slideUp 0.5s ease;
+      `;
+      tip.innerHTML = '💡 Tip: Your changes are being saved locally and will sync automatically when you\'re back online.';
+
+      document.body.appendChild(tip);
+
+      // Remove tip after 5 seconds
+      setTimeout(() => {
+        tip.style.animation = 'slideDown 0.5s ease';
+        setTimeout(() => tip.remove(), 500);
+      }, 5000);
+    }, 10000);
+
+    // Add CSS animation for tip
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideUp {
+        from { transform: translateX(-50%) translateY(100px); opacity: 0; }
+        to { transform: translateX(-50%) translateY(0); opacity: 1; }
+      }
+      @keyframes slideDown {
+        from { transform: translateX(-50%) translateY(0); opacity: 1; }
+        to { transform: translateX(-50%) translateY(100px); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+</body>
+</html>

@@ -112,7 +112,7 @@ export function FeedbackWidget() {
                         <button
                           key={type.value}
                           type="button"
-                          onClick={() => setFeedback({...feedback, type: type.value as any})}
+                          onClick={() => setFeedback({...feedback, type: type.value})}
                           className={`p-3 text-sm rounded-lg border-2 transition-colors ${
                             feedback.type === type.value
                               ? 'border-blue-500 bg-blue-50'

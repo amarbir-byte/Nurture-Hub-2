@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from './contexts/AuthContext'
 import { useSubscription } from './contexts/SubscriptionContext'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -17,6 +17,11 @@ import { PerformanceMonitor } from './components/common/PerformanceMonitor'
 import { FeedbackWidget } from './components/beta/FeedbackWidget'
 import { BetaDashboard } from './components/beta/BetaDashboard'
 import { ensureTablesExist } from './utils/databaseInit'
+// Enterprise monitoring and error handling
+import { AppErrorBoundary, FeatureErrorBoundary } from './components/ui/GlobalErrorBoundary'
+import { monitoring, trackUserAction, recordMetric } from './lib/monitoring'
+import { preloadCriticalResources } from './lib/performance'
+import { detectSuspiciousActivity } from './lib/security'
 
 type DashboardPage = 'dashboard' | 'properties' | 'contacts' | 'marketing' | 'templates' | 'settings' | 'beta' | 'admin'
 
@@ -236,7 +241,7 @@ function DashboardHome({ onNavigate }: DashboardHomeProps) {
     }
   }, [user])
 
-  const fetchDashboardStats = async () => {
+  const fetchDashboardStats = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -270,11 +275,15 @@ function DashboardHome({ onNavigate }: DashboardHomeProps) {
         })
       }
     } catch (error) {
-      console.error('Error fetching dashboard stats:', error)
+      // Use enterprise error monitoring instead of console.error
+      monitoring.reportError(error as Error, 'Dashboard Stats Fetch', 'medium', {
+        userId: user?.id,
+        operation: 'fetch_dashboard_stats'
+      });
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
 
   return (
     <div className="space-y-6">
@@ -458,6 +467,35 @@ function Dashboard() {
 function AppContent() {
   const { user, loading } = useAuth()
 
+  // Initialize enterprise monitoring on mount
+  useEffect(() => {
+    // Track application startup
+    trackUserAction('app_startup', {
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      viewport: `${window.innerWidth}x${window.innerHeight}`
+    });
+
+    // Record initial performance metrics
+    recordMetric('app_load_time', performance.now());
+
+    // Preload critical resources for better performance
+    preloadCriticalResources([
+      '/api/dashboard/stats',
+      '/api/subscription',
+      '/manifest.json'
+    ]);
+
+    // Initialize security monitoring
+    if (user) {
+      detectSuspiciousActivity(user.id, 'app_access', {
+        loginTime: new Date().toISOString()
+      });
+    }
+
+    console.log('🚀 Enterprise monitoring systems initialized');
+  }, [user]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -478,16 +516,26 @@ function AppContent() {
     <div className="min-h-screen">
       <PerformanceMonitor />
       <OfflineIndicator />
-      {user ? <Dashboard /> : <LandingPage />}
+      {user ? (
+        <FeatureErrorBoundary name="Dashboard">
+          <Dashboard />
+        </FeatureErrorBoundary>
+      ) : (
+        <FeatureErrorBoundary name="LandingPage">
+          <LandingPage />
+        </FeatureErrorBoundary>
+      )}
     </div>
   )
 }
 
 function App() {
   return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
+    <AppErrorBoundary>
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
+    </AppErrorBoundary>
   )
 }
 

@@ -1,199 +1,241 @@
-# Supabase CLI Setup Guide
+# Supabase Database Setup & Migration Guide
 
-This guide will help you set up Supabase CLI for local development and database management.
+This guide covers setting up and managing the Supabase database for Nurture Hub, including troubleshooting common issues.
 
-## Prerequisites
+## 🚀 Quick Start
 
-- Node.js 18+ installed
-- Docker Desktop installed and running
-- Supabase account (for production)
+### 1. Prerequisites
+```bash
+# Install Supabase CLI (if not already installed)
+npm install -g supabase
+# or
+brew install supabase/tap/supabase
 
-## Installation
+# Verify installation
+supabase --version
+```
 
-1. **Install Supabase CLI globally:**
+### 2. Authentication & Linking
+```bash
+# Login to Supabase (one-time setup)
+supabase login
+
+# Link to the project (already done, but for reference)
+supabase link --project-ref danbkfdqwprutyzlvnid
+```
+
+### 3. Check Current Status
+```bash
+# Check migration status
+npm run db:status
+
+# Validate pending migrations
+npm run db:validate
+```
+
+## 📋 Migration Commands
+
+### Safe Migration (Recommended)
+```bash
+# Apply all pending migrations safely
+npm run db:push
+
+# Check what migrations are pending
+npm run db:status
+
+# Validate migrations for safety issues
+npm run db:validate
+
+# Create backup before migrations
+npm run db:backup
+```
+
+### Manual Migration (When CLI fails)
+```bash
+# List all pending migrations
+npm run db:manual list-pending
+
+# Show content of specific migration
+npm run db:manual show 005_enhance_properties_schema.sql
+
+# Get all migrations in one file for dashboard
+npm run db:manual all
+```
+
+### Other Useful Commands
+```bash
+# Generate TypeScript types
+npm run db:types
+
+# Start local development
+npm run db:start
+
+# Access database studio
+npm run db:studio
+
+# Create new migration
+npm run db:new "description_of_changes"
+```
+
+## 🔧 Troubleshooting
+
+### Connection Issues (Current Problem)
+
+**Symptoms:**
+- `connection refused` errors
+- `failed to connect as temp role`
+- CLI timeouts
+
+**Solutions:**
+
+#### Option 1: Manual Migration via Dashboard (Recommended)
+1. Go to [Supabase Dashboard](https://supabase.com/dashboard/project/danbkfdqwprutyzlvnid)
+2. Navigate to **SQL Editor**
+3. Run migrations one by one:
    ```bash
-   npm install -g supabase
+   npm run db:manual show 005_enhance_properties_schema.sql
+   ```
+4. Copy the output and paste in SQL Editor
+5. Click **Run**
+6. Repeat for all pending migrations (005-012)
+
+#### Option 2: Fix CLI Connection
+```bash
+# Re-authenticate
+supabase logout
+supabase login
+
+# Check network/firewall settings
+# Ensure port 6543 is not blocked
+
+# Try with different DNS resolver
+supabase db push --dns-resolver https
+
+# Use direct database URL (get from dashboard)
+supabase db push --db-url "postgresql://postgres:[password]@db.danbkfdqwprutyzlvnid.supabase.co:5432/postgres"
+```
+
+#### Option 3: Use psql Directly
+```bash
+# Get connection string from Supabase Dashboard > Settings > Database
+# Look for "Connection string" and use the "Direct connection" version
+
+psql "postgresql://postgres:[password]@db.danbkfdqwprutyzlvnid.supabase.co:5432/postgres"
+
+# Then run migrations manually:
+\\i supabase/migrations/005_enhance_properties_schema.sql
+\\i supabase/migrations/006_sample_data.sql
+# ... continue for all pending migrations
+```
+
+### Common Error Messages
+
+#### "Cannot connect to Docker daemon"
+- **Cause:** Docker Desktop not running
+- **Solution:** Start Docker Desktop (only needed for local development)
+- **Alternative:** Use remote-only commands: `supabase db push` (not `supabase start`)
+
+#### "Project not linked"
+```bash
+supabase link --project-ref danbkfdqwprutyzlvnid
+```
+
+#### "Access token expired"
+```bash
+supabase logout
+supabase login
+```
+
+#### "Migration conflicts"
+- Check for schema conflicts in dashboard
+- Use `npm run db:validate` to identify issues
+- Resolve manually in SQL Editor
+
+## 🛡️ Safe Migration Practices
+
+Our migration system includes several safety features:
+
+### 1. Validation Checks
+- ✅ Checks for `IF NOT EXISTS` clauses
+- ✅ Validates `WHERE` clauses in DELETE statements
+- ✅ Identifies potentially destructive operations
+- ✅ Ensures proper transaction handling
+
+### 2. Backup Strategy
+- ✅ Creates backups before applying migrations
+- ✅ Stores backups with timestamps
+- ✅ Provides rollback mechanisms
+
+### 3. Safe SQL Patterns
+```sql
+-- ✅ Good: Safe column addition
+IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+              WHERE table_name='users' AND column_name='new_field') THEN
+    ALTER TABLE users ADD COLUMN new_field TEXT;
+END IF;
+
+-- ✅ Good: Safe deletion
+DELETE FROM table_name WHERE specific_condition;
+
+-- ❌ Avoid: Unsafe operations
+DROP TABLE users;  -- Should be: DROP TABLE IF EXISTS users;
+DELETE FROM table_name;  -- Missing WHERE clause
+```
+
+## 📊 Current Migration Status
+
+**Applied Migrations (001-004):**
+- ✅ 001_initial_schema.sql
+- ✅ 002_add_property_columns.sql
+- ✅ 003_add_address_components_safe.sql
+- ✅ 004_add_sms_category.sql
+
+**Pending Migrations (005-012):**
+- ⏳ 005_enhance_properties_schema.sql
+- ⏳ 006_sample_data.sql
+- ⏳ 007_create_communication_history.sql
+- ⏳ 008_fix_user_policies.sql
+- ⏳ 009_add_contact_type_and_temperature.sql
+- ⏳ 010_add_seller_property_fields.sql
+- ⏳ 011_add_contact_name_fields.sql
+- ⏳ 012_add_missing_columns.sql
+
+## 🔄 Post-Migration Steps
+
+After applying migrations:
+
+1. **Generate Types:**
+   ```bash
+   npm run db:types
    ```
 
-2. **Install project dependencies:**
+2. **Test Application:**
    ```bash
-   npm install
-   ```
-
-## Initial Setup
-
-1. **Login to Supabase:**
-   ```bash
-   supabase login
-   ```
-
-2. **Link to your Supabase project:**
-   ```bash
-   supabase link --project-ref your-project-ref
-   ```
-
-3. **Start local Supabase services:**
-   ```bash
-   npm run db:start
-   ```
-
-   This will start:
-   - PostgreSQL database (port 54322)
-   - Supabase API (port 54321)
-   - Supabase Studio (port 54323)
-   - Inbucket email testing (port 54324)
-
-## Available Scripts
-
-### Database Management
-- `npm run db:start` - Start local Supabase services
-- `npm run db:stop` - Stop local Supabase services
-- `npm run db:reset` - Reset local database and run migrations
-- `npm run db:migrate` - Push migrations to remote database
-- `npm run db:seed` - Seed local database with sample data
-- `npm run db:studio` - Open Supabase Studio in browser
-- `npm run db:generate-types` - Generate TypeScript types from database schema
-
-### Development Workflow
-
-1. **Start local development:**
-   ```bash
-   npm run db:start
    npm run dev
    ```
 
-2. **Create a new migration:**
+3. **Verify Database:**
    ```bash
-   supabase migration new add_new_feature
+   npm run db:studio  # Opens Supabase Studio
    ```
 
-3. **Apply migrations:**
+4. **Check Migration Status:**
    ```bash
-   npm run db:reset  # For local development
-   npm run db:migrate  # For production
+   npm run db:status
    ```
 
-4. **Generate TypeScript types:**
-   ```bash
-   npm run db:generate-types
-   ```
+## 📞 Support
 
-## Environment Variables
+If you continue to have issues:
 
-Create a `.env.local` file with the following variables:
+1. **Check Supabase Status:** https://status.supabase.com/
+2. **Network Issues:** Try different network/VPN
+3. **CLI Issues:** Use manual migration via dashboard
+4. **Database Issues:** Check Supabase Dashboard for errors
 
-```env
-# For local development
-VITE_SUPABASE_URL=http://localhost:54321
-VITE_SUPABASE_ANON_KEY=your_local_anon_key
+## 🔗 Useful Links
 
-# For production
-# VITE_SUPABASE_URL=your_supabase_project_url
-# VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-## Database Schema
-
-The database includes the following main tables:
-
-- `users` - User accounts and authentication
-- `properties` - Property listings with geocoding
-- `contacts` - Contact management with type and temperature
-- `templates` - SMS/email templates
-- `communication_history` - Track communications
-- `subscriptions` - User subscription management
-
-## Local Development Features
-
-### Supabase Studio
-Access the local Supabase Studio at http://localhost:54323 to:
-- View and edit database tables
-- Test authentication
-- Monitor API requests
-- Manage storage
-
-### Email Testing
-Access Inbucket at http://localhost:54324 to:
-- View emails sent by the application
-- Test email templates
-- Debug email functionality
-
-### Database Seeding
-The `supabase/seed.sql` file contains sample data for local development:
-- Demo user account (demo@nurturehub.com / password123)
-- Sample properties in Auckland
-- Sample contacts with different types and temperatures
-- Sample templates
-
-## Production Deployment
-
-1. **Push migrations to production:**
-   ```bash
-   npm run db:migrate
-   ```
-
-2. **Update environment variables:**
-   ```bash
-   # Update .env.local with production values
-   VITE_SUPABASE_URL=your_production_url
-   VITE_SUPABASE_ANON_KEY=your_production_anon_key
-   ```
-
-3. **Deploy your application:**
-   ```bash
-   npm run build
-   npm run pre-deploy
-   ```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Docker not running:**
-   - Ensure Docker Desktop is installed and running
-   - Restart Docker if services fail to start
-
-2. **Port conflicts:**
-   - Check if ports 54321-54324 are available
-   - Stop other services using these ports
-
-3. **Migration errors:**
-   - Check migration files for syntax errors
-   - Ensure database is in a clean state
-
-4. **Type generation issues:**
-   - Ensure local database is running
-   - Check database connection
-
-### Useful Commands
-
-```bash
-# Check Supabase status
-supabase status
-
-# View logs
-supabase logs
-
-# Reset everything
-supabase stop
-supabase start
-
-# Generate types from remote database
-supabase gen types typescript --remote > src/types/supabase.ts
-```
-
-## Best Practices
-
-1. **Always test migrations locally first**
-2. **Use descriptive migration names**
-3. **Backup production data before major changes**
-4. **Keep seed data minimal and realistic**
-5. **Use environment variables for sensitive data**
-6. **Regularly update generated types**
-
-## Resources
-
-- [Supabase CLI Documentation](https://supabase.com/docs/guides/cli)
-- [Supabase Local Development](https://supabase.com/docs/guides/cli/local-development)
-- [Database Migrations](https://supabase.com/docs/guides/cli/local-development#database-migrations)
-- [TypeScript Integration](https://supabase.com/docs/guides/api/generating-types)
+- [Supabase Dashboard](https://supabase.com/dashboard/project/danbkfdqwprutyzlvnid)
+- [SQL Editor](https://supabase.com/dashboard/project/danbkfdqwprutyzlvnid/sql)
+- [Database Settings](https://supabase.com/dashboard/project/danbkfdqwprutyzlvnid/settings/database)
+- [Supabase CLI Docs](https://supabase.com/docs/reference/cli/introduction)

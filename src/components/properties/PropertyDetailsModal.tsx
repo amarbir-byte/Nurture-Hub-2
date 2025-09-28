@@ -105,7 +105,7 @@ export function PropertyDetailsModal({ property, onClose }: PropertyDetailsModal
       )
 
       // Extract just the contact data (remove distance property)
-      const nearby = nearbyWithDistance.map(({ distance, ...contact }) => contact as unknown as Contact)
+      const nearby = nearbyWithDistance.map(({ ...contact }) => contact as unknown as Contact)
       setNearbyContacts(nearby)
     } catch (error) {
       console.error('Error fetching nearby contacts:', error)

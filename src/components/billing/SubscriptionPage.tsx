@@ -199,7 +199,7 @@ export function SubscriptionPage() {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as 'overview' | 'plans' | 'history')}
               className={`whitespace-nowrap py-2 px-1 sm:px-3 border-b-2 font-medium text-sm flex-shrink-0 ${
                 activeTab === tab.id
                   ? 'border-primary-500 text-primary-600 dark:text-primary-300'

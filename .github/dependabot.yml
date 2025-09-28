@@ -1,0 +1,141 @@
+# Dependabot configuration for automated dependency updates
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # 📦 NPM Dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+
+    # Dependency update settings
+    open-pull-requests-limit: 5
+    reviewers:
+      - "amarbirsingh"
+    assignees:
+      - "amarbirsingh"
+
+    # Grouping strategy for cleaner PRs
+    groups:
+      # Group patch updates together
+      patch-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+
+      # Group development dependencies
+      dev-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+
+      # Group testing frameworks
+      testing-frameworks:
+        patterns:
+          - "@testing-library/*"
+          - "jest*"
+          - "vitest*"
+          - "cypress*"
+          - "playwright*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      # Group build tools
+      build-tools:
+        patterns:
+          - "vite*"
+          - "webpack*"
+          - "rollup*"
+          - "esbuild*"
+          - "@vitejs/*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      # Group linting and formatting
+      code-quality:
+        patterns:
+          - "eslint*"
+          - "prettier*"
+          - "@typescript-eslint/*"
+        update-types:
+          - "minor"
+          - "patch"
+
+    # Security updates (always create separate PRs)
+    allow:
+      - dependency-type: "all"
+
+    # Ignore major updates for critical dependencies
+    ignore:
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
+
+    # Custom commit messages
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+
+    # Pull request settings
+    pull-request-branch-name:
+      separator: "/"
+
+    # Version limits
+    target-branch: "main"
+
+    # Additional settings
+    rebase-strategy: "auto"
+
+    # Labels for categorization
+    labels:
+      - "dependencies"
+      - "automated"
+
+  # 🐳 Docker Dependencies (if using Docker)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 2
+    reviewers:
+      - "amarbirsingh"
+    commit-message:
+      prefix: "docker"
+    labels:
+      - "docker"
+      - "dependencies"
+
+  # 🔧 GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "amarbirsingh"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "github-actions"
+      - "ci/cd"
+      - "dependencies"

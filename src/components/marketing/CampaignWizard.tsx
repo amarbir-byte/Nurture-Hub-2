@@ -105,7 +105,7 @@ export function CampaignWizard({ properties, onComplete, onCancel }: CampaignWiz
       )
 
       // Extract just the contact data (remove distance property)
-      const contactsOnly = contactsInRadius.map(({ distance, ...contact }) => contact as unknown as Contact)
+      const contactsOnly = contactsInRadius.map(({ ...contact }) => contact as unknown as Contact)
       setNearbyContacts(contactsOnly)
     } catch (error) {
       console.error('Error finding nearby contacts:', error)

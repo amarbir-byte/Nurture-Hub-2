@@ -1,0 +1,375 @@
+name: 🤖 Dependency Security & Updates
+
+on:
+  schedule:
+    # Run dependency checks daily at 6 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # 🔒 Security Vulnerability Scan
+  security-scan:
+    name: 🔒 Security Vulnerability Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: npm ci --prefer-offline
+
+      - name: 🛡️ Run Security Audit
+        run: |
+          echo "🔍 Running comprehensive security audit..."
+
+          # Standard npm audit
+          npm audit --audit-level=moderate --json > audit-results.json || true
+
+          # Enhanced audit with better-npm-audit
+          npx better-npm-audit audit --level moderate
+
+          # Check for known vulnerabilities
+          npx audit-ci --moderate
+
+      - name: 📊 Parse Audit Results
+        run: |
+          if [ -f audit-results.json ]; then
+            VULNERABILITIES=$(jq '.metadata.vulnerabilities' audit-results.json)
+            echo "Security vulnerabilities found:"
+            echo "- Info: $(echo $VULNERABILITIES | jq '.info // 0')"
+            echo "- Low: $(echo $VULNERABILITIES | jq '.low // 0')"
+            echo "- Moderate: $(echo $VULNERABILITIES | jq '.moderate // 0')"
+            echo "- High: $(echo $VULNERABILITIES | jq '.high // 0')"
+            echo "- Critical: $(echo $VULNERABILITIES | jq '.critical // 0')"
+
+            # Fail if high or critical vulnerabilities found
+            HIGH=$(echo $VULNERABILITIES | jq '.high // 0')
+            CRITICAL=$(echo $VULNERABILITIES | jq '.critical // 0')
+
+            if [ "$HIGH" -gt 0 ] || [ "$CRITICAL" -gt 0 ]; then
+              echo "❌ High or critical vulnerabilities found!"
+              exit 1
+            fi
+          fi
+
+      - name: 🚨 Create Security Issue
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const title = '🚨 Security Vulnerabilities Detected';
+            const body = `
+            ## 🚨 Security Alert
+
+            Our automated security scan has detected vulnerabilities in the project dependencies.
+
+            **📊 Scan Results:**
+            - **Date:** ${new Date().toISOString()}
+            - **Workflow:** [Security Scan](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            **🛠️ Required Actions:**
+            1. Review the security audit results
+            2. Update vulnerable dependencies
+            3. Test the application thoroughly
+            4. Deploy security fixes immediately
+
+            **📋 Next Steps:**
+            - Run \`npm audit fix\` to auto-fix issues
+            - Manually update packages that require breaking changes
+            - Review the audit log for false positives
+
+            **⚠️ Priority:** HIGH
+            **🏷️ Labels:** security, dependencies, urgent
+
+            This issue was automatically created by our security monitoring system.
+            `;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['security', 'dependencies', 'urgent']
+            });
+
+  # 🔄 Dependency Updates Check
+  dependency-updates:
+    name: 🔄 Check for Dependency Updates
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: npm ci --prefer-offline
+
+      - name: 🔍 Check for Outdated Packages
+        run: |
+          echo "🔍 Checking for outdated packages..."
+
+          # Get outdated packages
+          npm outdated --json > outdated.json || true
+
+          if [ -s outdated.json ]; then
+            echo "📦 Outdated packages found:"
+            cat outdated.json | jq -r 'to_entries[] | "- \(.key): \(.value.current) → \(.value.wanted) (latest: \(.value.latest))"'
+
+            # Count critical updates (major version changes)
+            MAJOR_UPDATES=$(cat outdated.json | jq 'to_entries | map(select(.value.current != .value.latest and (.value.latest | split(".")[0] | tonumber) > (.value.current | split(".")[0] | tonumber))) | length')
+
+            echo "🚨 Major version updates available: $MAJOR_UPDATES"
+
+            if [ "$MAJOR_UPDATES" -gt 5 ]; then
+              echo "⚠️ Many major updates available. Consider scheduling a dependency update sprint."
+            fi
+          else
+            echo "✅ All packages are up to date!"
+          fi
+
+      - name: 📊 Generate Update Report
+        run: |
+          echo "📊 Generating dependency update report..."
+
+          # Create a comprehensive report
+          cat > dependency-report.md << 'EOF'
+          # 📦 Dependency Update Report
+
+          **Generated:** $(date -u)
+
+          ## 📊 Summary
+
+          EOF
+
+          if [ -s outdated.json ]; then
+            echo "### 🔄 Available Updates" >> dependency-report.md
+            echo "" >> dependency-report.md
+            cat outdated.json | jq -r 'to_entries[] | "- **\(.key)**: \(.value.current) → \(.value.wanted) (latest: \(.value.latest))"' >> dependency-report.md
+          else
+            echo "### ✅ All Dependencies Up to Date" >> dependency-report.md
+            echo "" >> dependency-report.md
+            echo "No outdated packages found." >> dependency-report.md
+          fi
+
+          echo "" >> dependency-report.md
+          echo "## 🔒 Security Status" >> dependency-report.md
+          echo "" >> dependency-report.md
+          echo "Security scan completed. See security-scan job for details." >> dependency-report.md
+
+      - name: 📤 Upload Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-report
+          path: dependency-report.md
+
+  # 🤖 Auto-create Update PRs
+  auto-update-pr:
+    name: 🤖 Create Auto-Update PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [security-scan, dependency-updates]
+    if: always() && needs.security-scan.result == 'success'
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: npm ci --prefer-offline
+
+      - name: 🔄 Apply Safe Updates
+        run: |
+          echo "🔄 Applying safe dependency updates..."
+
+          # Get current package.json hash for comparison
+          BEFORE_HASH=$(md5sum package-lock.json)
+
+          # Update patch and minor versions only (safe updates)
+          npm update --save
+
+          # Check if anything changed
+          AFTER_HASH=$(md5sum package-lock.json)
+
+          if [ "$BEFORE_HASH" != "$AFTER_HASH" ]; then
+            echo "✅ Safe updates applied"
+            echo "HAS_UPDATES=true" >> $GITHUB_ENV
+
+            # List what was updated
+            echo "📦 Updated packages:" > update-summary.txt
+            git diff --name-only package-lock.json >> update-summary.txt || true
+          else
+            echo "ℹ️ No safe updates available"
+            echo "HAS_UPDATES=false" >> $GITHUB_ENV
+          fi
+
+      - name: 🧪 Test Updates
+        if: env.HAS_UPDATES == 'true'
+        run: |
+          echo "🧪 Testing dependency updates..."
+
+          # Run basic checks
+          npm run typecheck
+          npm run lint
+          npm run build
+
+          # Run essential tests
+          npm run test:unit -- --watchAll=false --coverage=false
+
+      - name: 📝 Create Update PR
+        if: env.HAS_UPDATES == 'true'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { execSync } = require('child_process');
+
+            // Create a new branch
+            const branchName = `deps/auto-update-${Date.now()}`;
+            execSync(`git checkout -b ${branchName}`);
+            execSync('git config user.name "GitHub Actions"');
+            execSync('git config user.email "actions@github.com"');
+
+            // Commit changes
+            execSync('git add package.json package-lock.json');
+            execSync('git commit -m "🔄 Automatic dependency updates\n\nSafe patch and minor version updates applied.\nAll tests pass."');
+
+            // Push branch
+            execSync(`git push origin ${branchName}`);
+
+            // Create PR
+            const prBody = `
+            ## 🔄 Automatic Dependency Updates
+
+            This PR contains safe dependency updates (patch and minor versions only).
+
+            ### ✅ Validation Completed
+            - [x] TypeScript compilation
+            - [x] ESLint checks
+            - [x] Build process
+            - [x] Unit tests
+
+            ### 📦 Update Summary
+            Safe updates have been applied to maintain security and compatibility.
+
+            ### 🧪 Testing
+            All automated tests have passed. Please review and merge if everything looks good.
+
+            ---
+            *This PR was automatically created by our dependency management system.*
+            `;
+
+            const { data: pr } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🔄 Automatic dependency updates',
+              head: branchName,
+              base: 'main',
+              body: prBody
+            });
+
+            console.log(`Created PR: ${pr.html_url}`);
+
+  # 📊 Weekly Dependency Report
+  weekly-report:
+    name: 📊 Weekly Dependency Health Report
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 6 * * 1' # Monday at 6 AM UTC
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: npm ci --prefer-offline
+
+      - name: 📊 Generate Comprehensive Report
+        run: |
+          echo "📊 Generating weekly dependency health report..."
+
+          # Create comprehensive report
+          cat > weekly-report.md << 'EOF'
+          # 📊 Weekly Dependency Health Report
+
+          **Report Date:** $(date -u)
+
+          ## 📈 Dependency Statistics
+
+          EOF
+
+          # Count dependencies
+          TOTAL_DEPS=$(npm list --depth=0 --json | jq '.dependencies | keys | length')
+          DEV_DEPS=$(npm list --depth=0 --json | jq '.devDependencies | keys | length // 0')
+
+          echo "- **Total Dependencies:** $TOTAL_DEPS" >> weekly-report.md
+          echo "- **Dev Dependencies:** $DEV_DEPS" >> weekly-report.md
+          echo "" >> weekly-report.md
+
+          # Security status
+          echo "## 🔒 Security Status" >> weekly-report.md
+          echo "" >> weekly-report.md
+          npm audit --json > audit.json || true
+          VULNERABILITIES=$(jq '.metadata.vulnerabilities' audit.json 2>/dev/null || echo '{}')
+          echo "- **High/Critical:** $(echo $VULNERABILITIES | jq '.high // 0') / $(echo $VULNERABILITIES | jq '.critical // 0')" >> weekly-report.md
+          echo "- **Moderate/Low:** $(echo $VULNERABILITIES | jq '.moderate // 0') / $(echo $VULNERABILITIES | jq '.low // 0')" >> weekly-report.md
+          echo "" >> weekly-report.md
+
+          # Outdated packages
+          echo "## 📦 Update Opportunities" >> weekly-report.md
+          echo "" >> weekly-report.md
+          npm outdated --json > outdated.json || true
+          if [ -s outdated.json ]; then
+            OUTDATED_COUNT=$(jq 'keys | length' outdated.json)
+            echo "- **Packages with updates:** $OUTDATED_COUNT" >> weekly-report.md
+          else
+            echo "- **All packages up to date!** ✅" >> weekly-report.md
+          fi
+
+          echo "" >> weekly-report.md
+          echo "---" >> weekly-report.md
+          echo "*Generated by automated dependency monitoring*" >> weekly-report.md
+
+      - name: 📧 Create Weekly Issue
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const reportContent = fs.readFileSync('weekly-report.md', 'utf8');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `📊 Weekly Dependency Health Report - ${new Date().toISOString().split('T')[0]}`,
+              body: reportContent,
+              labels: ['dependencies', 'report', 'maintenance']
+            });

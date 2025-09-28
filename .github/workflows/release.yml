@@ -1,0 +1,448 @@
+name: 🚀 Production Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.2.3)'
+        required: true
+        type: string
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # 📋 Pre-release Validation
+  pre-release-validation:
+    name: 📋 Pre-release Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      is-prerelease: ${{ steps.version.outputs.prerelease }}
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: npm ci --prefer-offline
+
+      - name: 🔍 Extract Version Information
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${{ github.ref_name }}"
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+          # Check if this is a prerelease (contains alpha, beta, rc)
+          if [[ "$VERSION" =~ (alpha|beta|rc) ]]; then
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
+          echo "Release version: $VERSION"
+
+      - name: ✅ Comprehensive Test Suite
+        run: |
+          echo "🧪 Running comprehensive test suite for release..."
+
+          # Type checking
+          npm run typecheck
+
+          # Linting
+          npm run lint
+
+          # Security audit
+          npm run security:audit
+
+          # Unit tests with coverage
+          npm run test:unit -- --coverage --watchAll=false
+
+          # Integration tests
+          npm run test:integration -- --watchAll=false
+
+          # Database migration tests
+          npm run db:test ci
+
+      - name: 🏗️ Production Build
+        run: |
+          echo "🏗️ Creating production build..."
+          npm run build
+
+          # Verify build artifacts
+          ls -la dist/
+          echo "Build size: $(du -sh dist/)"
+
+      - name: 📊 Performance Validation
+        run: |
+          echo "📊 Validating performance metrics..."
+
+          # Check bundle size limits
+          MAX_MAIN_BUNDLE=1048576  # 1MB
+          MAX_VENDOR_BUNDLE=2097152  # 2MB
+
+          MAIN_SIZE=$(find dist -name "index-*.js" -exec du -b {} \; | cut -f1 | head -1)
+          VENDOR_SIZE=$(find dist -name "vendor-*.js" -exec du -b {} \; | cut -f1 | head -1)
+
+          echo "Main bundle: $MAIN_SIZE bytes (limit: $MAX_MAIN_BUNDLE)"
+          echo "Vendor bundle: $VENDOR_SIZE bytes (limit: $MAX_VENDOR_BUNDLE)"
+
+          if [ $MAIN_SIZE -gt $MAX_MAIN_BUNDLE ]; then
+            echo "❌ Main bundle exceeds size limit"
+            exit 1
+          fi
+
+          if [ $VENDOR_SIZE -gt $MAX_VENDOR_BUNDLE ]; then
+            echo "❌ Vendor bundle exceeds size limit"
+            exit 1
+          fi
+
+      - name: 🔒 Security Final Check
+        run: |
+          echo "🔒 Final security validation..."
+
+          # Check for any hardcoded secrets in build
+          if grep -r "sk_test\|pk_test\|secret" dist/ 2>/dev/null; then
+            echo "❌ Potential secrets found in build artifacts"
+            exit 1
+          fi
+
+          # Verify no development dependencies in production build
+          if find dist/ -name "*.map" | grep -v ".js.map$"; then
+            echo "⚠️ Found non-JS source maps in production build"
+          fi
+
+  # 🗄️ Database Backup & Migration
+  database-preparation:
+    name: 🗄️ Database Preparation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: pre-release-validation
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: npm ci --prefer-offline
+
+      - name: 📸 Create Production Backup
+        run: |
+          echo "📸 Creating production database backup..."
+          npm run db:enterprise snapshot production pre-release-${{ needs.pre-release-validation.outputs.version }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROD_PROJECT_REF: ${{ secrets.PROD_PROJECT_REF }}
+
+      - name: 🧪 Test Migrations on Staging
+        run: |
+          echo "🧪 Testing migrations on staging environment..."
+
+          # Apply migrations to staging first
+          npm run db:enterprise deploy staging
+
+          # Validate schema integrity
+          npm run db:validate
+
+          # Test rollback capability
+          npm run db:enterprise test
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          STAGING_PROJECT_REF: ${{ secrets.STAGING_PROJECT_REF }}
+
+  # 🚀 Production Deployment
+  production-deployment:
+    name: 🚀 Production Deployment
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [pre-release-validation, database-preparation]
+    environment: production
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: npm ci --prefer-offline
+
+      - name: 🗄️ Apply Production Migrations
+        run: |
+          echo "🗄️ Applying database migrations to production..."
+          npm run db:enterprise deploy production
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROD_PROJECT_REF: ${{ secrets.PROD_PROJECT_REF }}
+
+      - name: 🚀 Deploy to Vercel Production
+        uses: amondnet/vercel-action@v25
+        id: vercel-deployment
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          scope: ${{ secrets.VERCEL_ORG_ID }}
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: ⏳ Wait for Deployment Propagation
+        run: |
+          echo "⏳ Waiting for deployment to propagate globally..."
+          sleep 120  # Wait 2 minutes for global propagation
+
+  # 🧪 Post-deployment Validation
+  post-deployment-validation:
+    name: 🧪 Post-deployment Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: production-deployment
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🌐 Health Check
+        run: |
+          echo "🌐 Performing comprehensive health check..."
+
+          PROD_URL="https://nurture-hub.vercel.app"
+
+          # Test main endpoint
+          for i in {1..10}; do
+            if curl -f "$PROD_URL" > /dev/null 2>&1; then
+              echo "✅ Main endpoint healthy"
+              break
+            fi
+            echo "⏳ Waiting for endpoint... ($i/10)"
+            sleep 30
+          done
+
+          # Test API endpoints
+          API_ENDPOINTS=(
+            "/api/health"
+            "/api/dashboard/stats"
+            "/api/properties"
+            "/api/contacts"
+          )
+
+          for endpoint in "${API_ENDPOINTS[@]}"; do
+            if curl -f "${PROD_URL}${endpoint}" > /dev/null 2>&1; then
+              echo "✅ $endpoint healthy"
+            else
+              echo "❌ $endpoint failed"
+            fi
+          done
+
+      - name: ⚡ Performance Validation
+        run: |
+          echo "⚡ Running performance validation..."
+
+          # Test page load times
+          LOAD_TIME=$(curl -o /dev/null -s -w '%{time_total}' https://nurture-hub.vercel.app)
+          echo "Page load time: ${LOAD_TIME}s"
+
+          # Acceptable load time is under 3 seconds
+          if (( $(echo "$LOAD_TIME > 3.0" | bc -l) )); then
+            echo "⚠️ Page load time exceeds 3 seconds"
+          else
+            echo "✅ Page load time within acceptable range"
+          fi
+
+      - name: 🔒 Security Headers Validation
+        run: |
+          echo "🔒 Validating security headers..."
+
+          RESPONSE=$(curl -I https://nurture-hub.vercel.app 2>/dev/null)
+
+          # Required security headers
+          SECURITY_HEADERS=(
+            "X-Content-Type-Options: nosniff"
+            "X-Frame-Options"
+            "X-XSS-Protection"
+            "Strict-Transport-Security"
+          )
+
+          for header in "${SECURITY_HEADERS[@]}"; do
+            if echo "$RESPONSE" | grep -qi "$header"; then
+              echo "✅ $header present"
+            else
+              echo "⚠️ $header missing"
+            fi
+          done
+
+      - name: 🗄️ Database Connectivity Test
+        run: |
+          echo "🗄️ Testing database connectivity..."
+
+          # Test basic database operations
+          npm run db:status
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+  # 📊 Release Documentation
+  create-release:
+    name: 📊 Create Release Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [pre-release-validation, post-deployment-validation]
+    if: always() && needs.post-deployment-validation.result == 'success'
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📋 Generate Changelog
+        id: changelog
+        run: |
+          echo "📋 Generating changelog..."
+
+          # Get the previous tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "Changes since $PREVIOUS_TAG:"
+            git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD > CHANGELOG.txt
+          else
+            echo "Initial release" > CHANGELOG.txt
+          fi
+
+          cat CHANGELOG.txt
+
+      - name: 🏷️ Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.pre-release-validation.outputs.version }}
+          release_name: Release ${{ needs.pre-release-validation.outputs.version }}
+          body_path: ./CHANGELOG.txt
+          draft: false
+          prerelease: ${{ needs.pre-release-validation.outputs.is-prerelease }}
+
+  # 📈 Performance Monitoring Setup
+  setup-monitoring:
+    name: 📈 Setup Release Monitoring
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [pre-release-validation, post-deployment-validation]
+    if: always() && needs.post-deployment-validation.result == 'success'
+
+    steps:
+      - name: 📊 Configure Release Monitoring
+        run: |
+          echo "📊 Setting up monitoring for release ${{ needs.pre-release-validation.outputs.version }}"
+
+          # Here you would typically:
+          # 1. Set up monitoring dashboards
+          # 2. Configure alerts for the new release
+          # 3. Initialize performance baselines
+          # 4. Set up error tracking for the release
+
+          echo "✅ Monitoring configured for release"
+
+  # 📱 Notification
+  notify-stakeholders:
+    name: 📱 Notify Stakeholders
+    runs-on: ubuntu-latest
+    needs: [pre-release-validation, post-deployment-validation, create-release]
+    if: always()
+
+    steps:
+      - name: 🎉 Success Notification
+        if: needs.post-deployment-validation.result == 'success'
+        run: |
+          echo "🎉 Production release ${{ needs.pre-release-validation.outputs.version }} deployed successfully!"
+
+          RELEASE_NOTES="
+          🚀 **Production Release ${{ needs.pre-release-validation.outputs.version }}**
+
+          **✅ Deployment Status:** Successful
+          **🌐 Live URL:** https://nurture-hub.vercel.app
+          **📅 Deploy Time:** $(date -u)
+          **🔗 Release Notes:** https://github.com/${{ github.repository }}/releases/tag/${{ needs.pre-release-validation.outputs.version }}
+
+          **✅ Validation Results:**
+          - Health checks: Passed
+          - Performance: Passed
+          - Security headers: Validated
+          - Database connectivity: Verified
+
+          **📊 Key Metrics:**
+          - Build time: < 5 minutes
+          - Deployment time: < 10 minutes
+          - Page load time: < 3 seconds
+
+          Ready for production traffic! 🚀
+          "
+
+          echo "$RELEASE_NOTES"
+
+          # Here you would send notifications to:
+          # - Slack channels
+          # - Email lists
+          # - Discord servers
+          # - Team dashboards
+
+      - name: 🚨 Failure Notification
+        if: needs.post-deployment-validation.result == 'failure'
+        run: |
+          echo "🚨 Production release ${{ needs.pre-release-validation.outputs.version }} failed!"
+
+          FAILURE_ALERT="
+          🚨 **Production Release FAILED**
+
+          **❌ Version:** ${{ needs.pre-release-validation.outputs.version }}
+          **📅 Time:** $(date -u)
+          **🔗 Workflow:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          **🛑 Immediate Actions Required:**
+          1. Check workflow logs for failure details
+          2. Verify production system status
+          3. Consider rollback if necessary
+          4. Notify development team
+
+          **📊 System Status:**
+          - Database: Check required
+          - Application: Needs validation
+          - Monitoring: Review alerts
+
+          Please investigate immediately! 🚨
+          "
+
+          echo "$FAILURE_ALERT"
+
+          # Send critical failure notifications

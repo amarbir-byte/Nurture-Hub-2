@@ -100,7 +100,6 @@ export function SMSModal({ contact, onClose, onSent }: SMSModalProps) {
 
   const fetchSMSTemplate = async () => {
     if (!user) {
-      setTemplateLoading(false)
       return
     }
 
@@ -122,7 +121,6 @@ export function SMSModal({ contact, onClose, onSent }: SMSModalProps) {
     } catch (error) {
       console.error('Error fetching SMS template:', error)
     } finally {
-      setTemplateLoading(false)
     }
   }
 

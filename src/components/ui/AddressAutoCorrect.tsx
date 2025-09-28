@@ -140,25 +140,6 @@ export function AddressAutoCorrect({
     }
   }
 
-  const buildCorrectedAddress = (suggestion: AddressSuggestion): string => {
-    const { address_components } = suggestion
-    const parts = []
-    
-    if (address_components.street_number && address_components.street) {
-      parts.push(`${address_components.street_number} ${address_components.street}`)
-    }
-    if (address_components.suburb) {
-      parts.push(address_components.suburb)
-    }
-    if (address_components.city) {
-      parts.push(address_components.city)
-    }
-    if (address_components.postal_code) {
-      parts.push(address_components.postal_code)
-    }
-    
-    return parts.join(', ')
-  }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {

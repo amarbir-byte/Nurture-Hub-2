@@ -3,7 +3,7 @@ interface Template {
   user_id: string
   name: string
   content: string
-  category: 'listing' | 'sold' | 'follow_up' | 'marketing' | 'custom'
+  category: 'listing' | 'sold' | 'follow_up' | 'marketing' | 'sms' | 'custom'
   placeholders: string[]
   is_default: boolean
   usage_count: number

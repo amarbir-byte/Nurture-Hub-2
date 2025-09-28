@@ -82,7 +82,6 @@ export function SMSModal({ contact, onClose, onSent }: SMSModalProps) {
   const [sending, setSending] = useState(false)
   const [radius, setRadius] = useState(10) // Default 10km radius
   const [smsTemplate, setSmsTemplate] = useState<Template | null>(null)
-  const [templateLoading, setTemplateLoading] = useState(true)
 
   useEffect(() => {
     // Prevent body scroll when modal is open
@@ -196,14 +195,6 @@ export function SMSModal({ contact, onClose, onSent }: SMSModalProps) {
     }).format(price)
   }
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return null
-    return new Date(dateString).toLocaleDateString('en-NZ', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
 
   const handlePropertySelection = (propertyId: string) => {
     setSelectedProperties(prev =>

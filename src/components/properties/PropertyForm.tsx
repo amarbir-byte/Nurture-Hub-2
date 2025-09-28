@@ -3,10 +3,9 @@ import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { ensureUserExists } from '../../utils/userUtils'
 import { geocode } from '../../lib/geocoding'
-import { AddressAutocomplete } from '../ui/AddressAutocomplete'
-import type { AutocompleteResult } from '../../lib/maptiler'
-import { parseNZAddress } from '../../types/address'
 import { checkDuplicateProperty } from '../../utils/duplicateCheck'
+import { AddressAutoCorrect } from '../ui/AddressAutoCorrect'
+import { parseNZAddress } from '../../types/address'
 
 interface Property {
   id: string
@@ -56,7 +55,6 @@ interface FormData {
   postal_code: string
   status: 'listed' | 'sold' | 'withdrawn'
   price: string
-  sale_price: string
   bedrooms: string
   bathrooms: string
   property_type: 'house' | 'apartment' | 'townhouse' | 'land' | 'commercial'
@@ -90,7 +88,6 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
     postal_code: property?.postal_code || '',
     status: property?.status || 'listed',
     price: property?.price?.toString() || '',
-    sale_price: property?.sale_price?.toString() || '',
     bedrooms: property?.bedrooms?.toString() || '',
     bathrooms: property?.bathrooms?.toString() || '',
     property_type: property?.property_type || 'house',
@@ -111,18 +108,15 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
       newErrors.address = 'Address is required'
     }
 
-    // For sold properties, require sale_price. For listed properties, price is optional
-    if (formData.status === 'sold' && !formData.sale_price.trim()) {
-      newErrors.sale_price = 'Sale price is required for sold properties'
+    // For sold properties, require price. For listed properties, price is optional
+    if (formData.status === 'sold' && !formData.price.trim()) {
+      newErrors.price = 'Sale price is required for sold properties'
     }
 
     if (formData.price && (isNaN(Number(formData.price)) || Number(formData.price) <= 0)) {
       newErrors.price = 'Price must be a valid positive number'
     }
 
-    if (formData.sale_price && (isNaN(Number(formData.sale_price)) || Number(formData.sale_price) <= 0)) {
-      newErrors.sale_price = 'Sale price must be a valid positive number'
-    }
 
     if (formData.bedrooms && (isNaN(Number(formData.bedrooms)) || Number(formData.bedrooms) < 0)) {
       newErrors.bedrooms = 'Bedrooms must be a valid number'
@@ -163,18 +157,6 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
         })
         return
       }
-    }
-
-    // If user chose to update existing property, proceed with update
-    if (duplicateCheck.action === 'update' && duplicateCheck.existingProperty) {
-      await updateExistingProperty()
-      return
-    }
-
-    // If user chose to cancel, close the form
-    if (duplicateCheck.action === 'cancel') {
-      onCancel()
-      return
     }
 
     // Proceed with normal create/update
@@ -231,7 +213,7 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
         postal_code: formData.postal_code.trim() || null,
         status: formData.status,
         price: formData.price ? Number(formData.price) : null,
-        sale_price: formData.sale_price ? Number(formData.sale_price) : null,
+        sale_price: formData.status === 'sold' && formData.price ? Number(formData.price) : null,
         bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
         bathrooms: formData.bathrooms ? Number(formData.bathrooms) : null,
         property_type: formData.property_type,
@@ -316,7 +298,7 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
         postal_code: formData.postal_code.trim() || null,
         status: formData.status,
         price: formData.price ? Number(formData.price) : null,
-        sale_price: formData.sale_price ? Number(formData.sale_price) : null,
+        sale_price: formData.status === 'sold' && formData.price ? Number(formData.price) : null,
         bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
         bathrooms: formData.bathrooms ? Number(formData.bathrooms) : null,
         property_type: formData.property_type,
@@ -365,6 +347,22 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
     }
   }
 
+  const handleAddressSelect = (suggestion: any) => {
+    // Auto-populate address components when address is selected/corrected
+    const { address_components } = suggestion
+    
+    setFormData(prev => ({
+      ...prev,
+      address: suggestion.formatted_address,
+      street_number: address_components.street_number || prev.street_number,
+      street: address_components.street || prev.street,
+      suburb: address_components.suburb || prev.suburb,
+      city: address_components.city || prev.city,
+      region: address_components.region || prev.region,
+      postal_code: address_components.postal_code || prev.postal_code,
+    }))
+  }
+
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -386,41 +384,16 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Address */}
             <div>
-              <AddressAutocomplete
-                label="Complete Address"
+              <AddressAutoCorrect
                 value={formData.address}
                 onChange={(value) => handleInputChange('address', value)}
-                onSelect={(result: AutocompleteResult) => {
-                  console.log('Selected address:', result)
-
-                  // Parse the selected address into components
-                  const addressComponents = parseNZAddress(result.place_name)
-                  console.log('Parsed address components:', addressComponents)
-
-                  // Update form fields with parsed components
-                  setFormData(prev => ({
-                    ...prev,
-                    address: result.place_name,
-                    street_number: addressComponents.street_number || '',
-                    street: addressComponents.street || '',
-                    suburb: addressComponents.suburb || '',
-                    city: addressComponents.city || '',
-                    region: addressComponents.region || prev.region,
-                    postal_code: addressComponents.postal_code || '',
-                  }))
-
-                  // Clear any address-related errors
-                  if (errors.address) {
-                    setErrors(prev => ({ ...prev, address: undefined }))
-                  }
-                }}
-                placeholder="Start typing address... e.g. 123 Main Street, Ponsonby"
+                onAddressSelect={handleAddressSelect}
+                placeholder="e.g. 123 Main Street, Ponsonby, Auckland"
                 error={errors.address}
+                label="Complete Address"
                 required
+                showSuggestions={true}
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Type at least 3 characters to see NZ address suggestions
-              </p>
             </div>
 
             {/* Address Components (auto-populated from selection) */}
@@ -563,14 +536,14 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-medium text-gray-900">Pricing</h3>
                 <p className="text-sm text-gray-500">
-                  {formData.status === 'sold' ? '* Sale price required for sold properties' : '* Price is optional for listed properties'}
+                  {formData.status === 'sold' ? '* Sale price required for sold properties' : 'Price is optional for listed properties'}
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
-                    {formData.status === 'listed' ? 'List Price (NZD)' : 'Sale Price (NZD)'}
+                    {formData.status === 'listed' ? 'List Price (NZD)' : 'Sale Price (NZD)'} {formData.status === 'sold' ? '*' : ''}
                   </label>
                   <input
                     type="number"
@@ -578,35 +551,16 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
                     value={formData.price}
                     onChange={(e) => handleInputChange('price', e.target.value)}
                     className={`input-field ${errors.price ? 'border-red-500' : ''}`}
-                    placeholder="650000"
+                    placeholder={formData.status === 'listed' ? '650000' : '675000'}
                     min="0"
                     step="1000"
+                    required={formData.status === 'sold'}
                   />
                   {errors.price && (
                     <p className="mt-1 text-sm text-red-600">{errors.price}</p>
                   )}
                 </div>
 
-                {formData.status === 'sold' && (
-                  <div>
-                    <label htmlFor="sale_price" className="block text-sm font-medium text-gray-700 mb-1">
-                      Sale Price (NZD)
-                    </label>
-                    <input
-                      type="number"
-                      id="sale_price"
-                      value={formData.sale_price}
-                      onChange={(e) => handleInputChange('sale_price', e.target.value)}
-                      className={`input-field ${errors.sale_price ? 'border-red-500' : ''}`}
-                      placeholder="675000"
-                      min="0"
-                      step="1000"
-                    />
-                    {errors.sale_price && (
-                      <p className="mt-1 text-sm text-red-600">{errors.sale_price}</p>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
 
@@ -865,18 +819,18 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
 
               <div className="space-y-3">
                 <button
-                  onClick={() => {
-                    setDuplicateCheck(prev => ({ ...prev, action: 'update' }))
-                    handleSubmit(new Event('submit') as any)
+                  onClick={async () => {
+                    setDuplicateCheck(prev => ({ ...prev, action: 'update', show: false }))
+                    await updateExistingProperty()
                   }}
                   className="w-full btn-primary"
                 >
                   Update Existing Property
                 </button>
                 <button
-                  onClick={() => {
-                    setDuplicateCheck(prev => ({ ...prev, action: 'create' }))
-                    handleSubmit(new Event('submit') as any)
+                  onClick={async () => {
+                    setDuplicateCheck(prev => ({ ...prev, action: 'create', show: false }))
+                    await saveProperty()
                   }}
                   className="w-full btn-secondary"
                 >

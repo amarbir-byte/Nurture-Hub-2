@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { geocode } from '../../lib/geocoding'
+import { parseNZAddress } from '../../types/address'
 
 interface ImportProperty {
   // Core address fields
@@ -60,6 +61,92 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
   const [preview, setPreview] = useState<ImportProperty[]>([])
   const [errors, setErrors] = useState<string[]>([])
   const [importing, setImporting] = useState(false)
+  const [addressCorrections, setAddressCorrections] = useState<Array<{original: string, corrected: string}>>([])
+
+  // Function to validate and correct addresses during import
+  const validateAndCorrectAddress = async (address: string): Promise<{corrected: string, components: any}> => {
+    try {
+      // Try to geocode the original address
+      const result = await geocode(address)
+      
+      if (result.lat && result.lng) {
+        // Address geocoded successfully, parse it for components
+        const addressComponents = parseNZAddress(address)
+        
+        // Check if the address needs correction
+        const needsCorrection = checkIfAddressNeedsCorrection(address, addressComponents)
+        
+        if (needsCorrection) {
+          // Build corrected address
+          const correctedAddress = buildCorrectedAddress(addressComponents)
+          
+          // Store the correction for user review
+          setAddressCorrections(prev => [...prev, {original: address, corrected: correctedAddress}])
+          
+          return {
+            corrected: correctedAddress,
+            components: addressComponents
+          }
+        } else {
+          return {
+            corrected: address,
+            components: addressComponents
+          }
+        }
+      } else {
+        // Address couldn't be geocoded, return as-is
+        return {
+          corrected: address,
+          components: {}
+        }
+      }
+    } catch (error) {
+      console.error('Address validation error:', error)
+      return {
+        corrected: address,
+        components: {}
+      }
+    }
+  }
+
+  const checkIfAddressNeedsCorrection = (originalAddress: string, components: any): boolean => {
+    // Check for common issues that need correction
+    const hasGoodComponents = components.street_number && components.street && components.suburb && components.city
+    const addressLength = originalAddress.trim().length
+    
+    // If we have good components but the address is short, it might need expansion
+    if (hasGoodComponents && addressLength < 20) {
+      return true
+    }
+    
+    // Check for common typos or incomplete addresses
+    const commonTypos = ['st', 'rd', 'ave', 'dr', 'ct', 'pl']
+    const hasAbbreviations = commonTypos.some(abbr => 
+      originalAddress.toLowerCase().includes(abbr) && 
+      !originalAddress.toLowerCase().includes(abbr + '.')
+    )
+    
+    return hasAbbreviations
+  }
+
+  const buildCorrectedAddress = (components: any): string => {
+    const parts = []
+    
+    if (components.street_number && components.street) {
+      parts.push(`${components.street_number} ${components.street}`)
+    }
+    if (components.suburb) {
+      parts.push(components.suburb)
+    }
+    if (components.city) {
+      parts.push(components.city)
+    }
+    if (components.postal_code) {
+      parts.push(components.postal_code)
+    }
+    
+    return parts.join(', ')
+  }
 
   // Core REINZ fields
   const reinzFields = [
@@ -462,8 +549,20 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
           fullAddress += ', New Zealand'
         }
 
-        console.log('Geocoding imported property address:', fullAddress)
-        const { lat, lng } = await geocode(fullAddress)
+        // Validate and correct address if needed
+        console.log('Validating and correcting imported property address:', fullAddress)
+        const { corrected, components } = await validateAndCorrectAddress(fullAddress)
+        
+        // Update property with corrected address and components
+        property.address = corrected
+        if (components.street_number) property.street_number = components.street_number
+        if (components.street) property.street = components.street
+        if (components.suburb) property.suburb = components.suburb
+        if (components.city) property.city = components.city
+        if (components.postal_code) property.postal_code = components.postal_code
+
+        console.log('Geocoding corrected property address:', corrected)
+        const { lat, lng } = await geocode(corrected)
         property.lat = lat
         property.lng = lng
 
@@ -746,6 +845,40 @@ export function PropertyImport({ onImportComplete, onClose }: PropertyImportProp
                 <p className="text-sm text-gray-600">
                   Review the first 5 properties that will be imported. Check the data is correct before proceeding.
                 </p>
+                
+                {/* Address Corrections Summary */}
+                {addressCorrections.length > 0 && (
+                  <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                      </div>
+                      <div className="ml-3 flex-1">
+                        <h3 className="text-sm font-medium text-yellow-800">
+                          Address Auto-Corrections Applied ({addressCorrections.length})
+                        </h3>
+                        <div className="mt-2 text-sm text-yellow-700">
+                          <p className="mb-2">The following addresses were automatically corrected for better accuracy:</p>
+                          <div className="space-y-1 max-h-32 overflow-y-auto">
+                            {addressCorrections.slice(0, 5).map((correction, index) => (
+                              <div key={index} className="bg-white p-2 rounded border text-xs">
+                                <div className="text-gray-500 line-through">{correction.original}</div>
+                                <div className="text-green-700 font-medium">{correction.corrected}</div>
+                              </div>
+                            ))}
+                            {addressCorrections.length > 5 && (
+                              <div className="text-yellow-600 text-xs">
+                                ... and {addressCorrections.length - 5} more corrections
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {preview.length > 0 && (

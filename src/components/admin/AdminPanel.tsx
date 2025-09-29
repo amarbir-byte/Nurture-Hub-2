@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useSubscription } from '../../contexts/SubscriptionContext'
 import { supabase } from '../../lib/supabase'
+import { ErrorDashboard } from './ErrorDashboard'
+import { reportError } from '../../lib/monitoring'
 
 interface User {
   id: string
@@ -19,6 +21,7 @@ export function AdminPanel() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [activeTab, setActiveTab] = useState<'users' | 'monitoring' | 'system'>('users')
 
   // Check if current user is admin
   const isAdmin = userSubscription?.is_admin
@@ -39,7 +42,11 @@ export function AdminPanel() {
       if (error) throw error
       setUsers(data || [])
     } catch (error) {
-      console.error('Error fetching users:', error)
+      reportError(error as Error, 'Admin panel users fetch failed', 'medium', {
+        userId: user?.id,
+        operation: 'fetch_users',
+        adminPanel: true
+      })
     } finally {
       setLoading(false)
     }
@@ -62,7 +69,12 @@ export function AdminPanel() {
         u.id === userId ? { ...u, unlimited_access: !currentAccess } : u
       ))
     } catch (error) {
-      console.error('Error updating user access:', error)
+      reportError(error as Error, 'Admin panel user access update failed', 'high', {
+        userId: user?.id,
+        targetUserId: userId,
+        operation: 'toggle_unlimited_access',
+        adminPanel: true
+      })
       alert('Error updating user access')
     }
   }
@@ -89,7 +101,12 @@ export function AdminPanel() {
         u.id === userId ? { ...u, is_admin: !currentAdmin } : u
       ))
     } catch (error) {
-      console.error('Error updating admin access:', error)
+      reportError(error as Error, 'Admin panel admin access update failed', 'high', {
+        userId: user?.id,
+        targetUserId: userId,
+        operation: 'toggle_admin_access',
+        adminPanel: true
+      })
       alert('Error updating admin access')
     }
   }
@@ -121,15 +138,46 @@ export function AdminPanel() {
     )
   }
 
+  const tabs = [
+    { id: 'users' as const, label: 'User Management', icon: '👥', description: 'Manage user access and permissions' },
+    { id: 'monitoring' as const, label: 'Error Monitoring', icon: '🔍', description: 'Enterprise error tracking and analysis' },
+    { id: 'system' as const, label: 'System Status', icon: '⚙️', description: 'System health and performance' }
+  ]
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Panel</h1>
-        <p className="text-gray-600 dark:text-gray-400">Manage user access and permissions</p>
+        <p className="text-gray-600 dark:text-gray-400">
+          {tabs.find(tab => tab.id === activeTab)?.description}
+        </p>
       </div>
 
-      {/* Search */}
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-200 dark:border-gray-700">
+        <nav className="flex space-x-8">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === tab.id
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+              }`}
+            >
+              <span>{tab.icon}</span>
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'users' && (
+        <div className="space-y-6">
+          {/* Search */}
       <div className="card">
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -282,6 +330,32 @@ export function AdminPanel() {
           <div className="text-sm text-gray-600 dark:text-primary-400">Admins</div>
         </div>
       </div>
+        </div>
+      )}
+
+      {/* Error Monitoring Tab */}
+      {activeTab === 'monitoring' && (
+        <ErrorDashboard />
+      )}
+
+      {/* System Status Tab */}
+      {activeTab === 'system' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">🚧 System Status</h3>
+            <p className="text-gray-600">
+              System monitoring features coming soon. This will include:
+            </p>
+            <ul className="mt-4 space-y-2 text-sm text-gray-600">
+              <li>• Server performance metrics</li>
+              <li>• Database health monitoring</li>
+              <li>• API response times</li>
+              <li>• Deployment status tracking</li>
+              <li>• Resource usage analytics</li>
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

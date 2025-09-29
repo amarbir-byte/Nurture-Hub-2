@@ -17,6 +17,8 @@ import { PerformanceMonitor } from './components/common/PerformanceMonitor'
 import { FeedbackWidget } from './components/beta/FeedbackWidget'
 import { BetaDashboard } from './components/beta/BetaDashboard'
 import { ensureTablesExist } from './utils/databaseInit'
+import './utils/errorAnalysis' // Enable monitoring console utilities
+import './utils/testErrorMonitoring' // Enable error monitoring testing
 // Enterprise monitoring and error handling
 import { AppErrorBoundary, FeatureErrorBoundary } from './components/ui/GlobalErrorBoundary'
 import { monitoring, trackUserAction, recordMetric } from './lib/monitoring'

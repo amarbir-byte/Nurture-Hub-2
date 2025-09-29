@@ -5,6 +5,7 @@ import { ensureUserExists } from '../../utils/userUtils'
 import { geocode } from '../../lib/geocoding'
 import { checkDuplicateProperty } from '../../utils/duplicateCheck'
 import { AddressAutoCorrect } from '../ui/AddressAutoCorrect'
+import { reportError } from '../../lib/monitoring'
 
 interface Property {
   id: string
@@ -237,7 +238,12 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
 
       onSave()
     } catch (error) {
-      console.error('Error updating existing property:', error)
+      reportError(error as Error, 'Property update operation failed', 'high', {
+        userId: user?.id,
+        propertyId: property?.id,
+        operation: 'update_existing_property',
+        address: formData.address
+      })
       alert('Error updating property. Please try again.')
     } finally {
       setLoading(false)
@@ -332,7 +338,12 @@ export function PropertyForm({ property, onSave, onCancel }: PropertyFormProps) 
 
       onSave()
     } catch (error) {
-      console.error('Error saving property:', error)
+      reportError(error as Error, 'Property creation operation failed', 'high', {
+        userId: user?.id,
+        operation: 'create_new_property',
+        address: formData.address,
+        propertyType: formData.property_type
+      })
       alert('Error saving property. Please try again.')
     } finally {
       setLoading(false)

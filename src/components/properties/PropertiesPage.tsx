@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
+import { reportError } from '../../lib/monitoring'
 import { PropertyCard } from './PropertyCard'
 import { PropertyForm } from './PropertyForm'
 import { PropertyImport } from './PropertyImport'
@@ -94,7 +95,7 @@ export function PropertiesPage() {
       setProperties(propertiesData || [])
       setPropertiesCommunications(communicationsCount)
     } catch (error) {
-      console.error('Error fetching properties:', error)
+      reportError(error as Error, 'Properties list fetch failed', 'high', { userId: user?.id, page: 'properties' })
     } finally {
       setLoading(false)
     }
@@ -124,7 +125,7 @@ export function PropertiesPage() {
       if (error) throw error
       setProperties(prev => prev.filter(p => p.id !== propertyId))
     } catch (error) {
-      console.error('Error deleting property:', error)
+      reportError(error as Error, 'Property deletion failed', 'medium', { userId: user?.id, propertyId, operation: 'delete' })
       alert('Error deleting property. Please try again.')
     }
   }

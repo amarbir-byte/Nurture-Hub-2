@@ -10,6 +10,9 @@ export default defineConfig({
     strictPort: false,
     hmr: {
       port: 24678
+    },
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate'
     }
   },
   plugins: [

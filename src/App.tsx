@@ -493,7 +493,6 @@ function AppContent() {
       });
     }
 
-    console.log('🚀 Enterprise monitoring systems initialized');
   }, [user]);
 
   if (loading) {

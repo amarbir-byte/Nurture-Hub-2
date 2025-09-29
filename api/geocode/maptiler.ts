@@ -114,7 +114,6 @@ async function handleGeocode(req: AuthenticatedRequest, res: VercelResponse) {
     // Check cache first
     const cached = maptilerCache.get(cacheKey);
     if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
-      console.log(`Cache hit for MapTiler geocoding: ${address} (user: ${userId})`);
       return res.status(200).json({
         success: true,
         result: cached.result,
@@ -129,7 +128,6 @@ async function handleGeocode(req: AuthenticatedRequest, res: VercelResponse) {
     url.searchParams.set('country', 'NZ'); // Restrict to New Zealand
     url.searchParams.set('limit', '1');
 
-    console.log(`MapTiler geocoding request for user ${userId}: ${address}`);
 
     // Make request to MapTiler API
     const response = await fetch(url.toString(), {
@@ -175,7 +173,6 @@ async function handleGeocode(req: AuthenticatedRequest, res: VercelResponse) {
     });
 
     // Log usage for audit
-    console.log(`MapTiler geocoding success for user ${userId}: ${address} -> ${result.lat}, ${result.lng}`);
 
     return res.status(200).json({
       success: true,
@@ -214,7 +211,6 @@ async function handleReverseGeocode(req: AuthenticatedRequest, res: VercelRespon
     // Check cache first
     const cached = maptilerCache.get(cacheKey);
     if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
-      console.log(`Cache hit for MapTiler reverse geocoding: ${lat}, ${lng} (user: ${userId})`);
       return res.status(200).json({
         success: true,
         result: cached.result,
@@ -228,7 +224,6 @@ async function handleReverseGeocode(req: AuthenticatedRequest, res: VercelRespon
     url.searchParams.set('key', MAPTILER_API_KEY);
     url.searchParams.set('limit', '1');
 
-    console.log(`MapTiler reverse geocoding request for user ${userId}: ${lat}, ${lng}`);
 
     // Make request to MapTiler API
     const response = await fetch(url.toString(), {
@@ -266,7 +261,6 @@ async function handleReverseGeocode(req: AuthenticatedRequest, res: VercelRespon
     });
 
     // Log usage for audit
-    console.log(`MapTiler reverse geocoding success for user ${userId}: ${lat}, ${lng} -> ${result.formatted_address}`);
 
     return res.status(200).json({
       success: true,

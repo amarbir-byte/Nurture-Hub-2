@@ -401,7 +401,6 @@ class EnterpriseSecurity {
         );
       }
 
-      console.log(`🔒 Security event logged: ${securityEvent.type}/${securityEvent.action}`);
     } catch (error) {
       reportError(error as Error, 'Security Event Logging', 'medium');
     }
@@ -435,33 +434,13 @@ class EnterpriseSecurity {
 
   // 🚀 SECURITY HEADERS & CSP
   private setupSecurityHeaders() {
-    // These would typically be set at the server level, but we can suggest them
-    const securityHeaders = {
-      'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-      'X-Content-Type-Options': 'nosniff',
-      'X-Frame-Options': 'DENY',
-      'X-XSS-Protection': '1; mode=block',
-      'Referrer-Policy': 'strict-origin-when-cross-origin',
-      'Permissions-Policy': 'geolocation=(), microphone=(), camera=()'
-    };
-
-    console.log('🔒 Recommended security headers:', securityHeaders);
+    // Security headers would typically be set at the server level
+    // This method exists for initialization but headers are configured in Vercel
   }
 
   private setupContentSecurityPolicy() {
-    const csp = [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://api.maptiler.com",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: https:",
-      "connect-src 'self' https://*.supabase.co https://api.maptiler.com",
-      "frame-ancestors 'none'",
-      "base-uri 'self'",
-      "object-src 'none'"
-    ].join('; ');
-
-    console.log('🔒 Recommended Content Security Policy:', csp);
+    // Content Security Policy would typically be set at the server level
+    // This method exists for initialization but CSP is configured in Vercel
   }
 
   // 🔧 HELPER METHODS
@@ -568,7 +547,6 @@ class EnterpriseSecurity {
       no_inline_scripts: !document.querySelectorAll('script[src=""]').length
     };
 
-    console.log('🔒 Security test results:', tests);
     return tests;
   }
 }

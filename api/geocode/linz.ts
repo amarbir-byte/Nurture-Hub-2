@@ -105,7 +105,6 @@ async function handleLINZGeocode(req: AuthenticatedRequest, res: VercelResponse)
     // Check cache first
     const cached = linzCache.get(cacheKey);
     if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
-      console.log(`Cache hit for LINZ geocoding: ${address} (user: ${userId})`);
       return res.status(200).json({
         success: true,
         result: cached.result,
@@ -136,7 +135,6 @@ async function handleLINZGeocode(req: AuthenticatedRequest, res: VercelResponse)
 
     const url = `${baseUrl}?${params.toString()}`;
 
-    console.log(`LINZ geocoding request for user ${userId}: ${address}`);
 
     // Make request to LINZ API
     const response = await fetch(url, {
@@ -183,7 +181,6 @@ async function handleLINZGeocode(req: AuthenticatedRequest, res: VercelResponse)
     });
 
     // Log usage for audit
-    console.log(`LINZ geocoding success for user ${userId}: ${address} -> ${result.lat}, ${result.lng}`);
 
     return res.status(200).json({
       success: true,

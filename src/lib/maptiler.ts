@@ -9,6 +9,8 @@
  * - Street-level refinement handled backend
  */
 
+import { serviceErrorLog } from './logger'
+
 export interface GeocodingResult {
   lat: number
   lng: number
@@ -43,7 +45,14 @@ export async function geocodeAddress(address: string): Promise<GeocodingResult |
     })
 
     if (!response.ok) {
-      console.error(`Secure MapTiler API error: ${response.status} ${response.statusText}`)
+      serviceErrorLog('maptiler', `HTTP ${response.status}: ${response.statusText}`, 'maptiler_geocoding', {
+        metadata: {
+          address,
+          status: response.status,
+          statusText: response.statusText,
+          operation: 'forward_geocoding'
+        }
+      })
       return null
     }
 
@@ -56,7 +65,12 @@ export async function geocodeAddress(address: string): Promise<GeocodingResult |
     return data.result
 
   } catch (error) {
-    console.error('Secure MapTiler geocoding error:', error)
+    serviceErrorLog('maptiler', error as Error, 'maptiler_geocoding', {
+      metadata: {
+        address,
+        operation: 'forward_geocoding'
+      }
+    })
     return null
   }
 }
@@ -76,7 +90,15 @@ export async function reverseGeocode(lat: number, lng: number): Promise<string |
     })
 
     if (!response.ok) {
-      console.error(`Secure reverse geocoding error: ${response.status} ${response.statusText}`)
+      serviceErrorLog('maptiler', `HTTP ${response.status}: ${response.statusText}`, 'maptiler_reverse_geocoding', {
+        metadata: {
+          lat,
+          lng,
+          status: response.status,
+          statusText: response.statusText,
+          operation: 'reverse_geocoding'
+        }
+      })
       return null
     }
 
@@ -89,7 +111,13 @@ export async function reverseGeocode(lat: number, lng: number): Promise<string |
     return data.address
 
   } catch (error) {
-    console.error('Secure reverse geocoding error:', error)
+    serviceErrorLog('maptiler', error as Error, 'maptiler_reverse_geocoding', {
+      metadata: {
+        lat,
+        lng,
+        operation: 'reverse_geocoding'
+      }
+    })
     return null
   }
 }
@@ -112,7 +140,13 @@ export async function autocompleteAddress(query: string): Promise<AutocompleteRe
     })
 
     if (!response.ok) {
-      console.error(`Secure autocomplete error: ${response.status}`)
+      serviceErrorLog('maptiler', `HTTP ${response.status}`, 'maptiler_autocomplete', {
+        metadata: {
+          query,
+          status: response.status,
+          operation: 'autocomplete'
+        }
+      })
       return []
     }
 
@@ -125,7 +159,12 @@ export async function autocompleteAddress(query: string): Promise<AutocompleteRe
     return data.results
 
   } catch (error) {
-    console.error('Secure autocomplete error:', error)
+    serviceErrorLog('maptiler', error as Error, 'maptiler_autocomplete', {
+      metadata: {
+        query,
+        operation: 'autocomplete'
+      }
+    })
     return []
   }
 }

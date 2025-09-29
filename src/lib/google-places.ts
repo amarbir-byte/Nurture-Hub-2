@@ -3,6 +3,8 @@
  * Provides high-quality address suggestions with excellent New Zealand coverage
  */
 
+import { serviceErrorLog } from './logger'
+
 export interface GooglePlacesResult {
   place_id: string
   description: string
@@ -40,7 +42,6 @@ export async function autocompleteGooglePlaces(query: string): Promise<GooglePla
   // Check cache first
   const cached = autocompleteCache.get(normalizedQuery)
   if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
-    console.log('Using cached Google Places results')
     return cached.results
   }
 
@@ -52,12 +53,17 @@ export async function autocompleteGooglePlaces(query: string): Promise<GooglePla
     url.searchParams.set('types', 'address') // Focus on addresses
     url.searchParams.set('language', 'en') // English results
 
-    console.log(`Google Places autocomplete request: "${query}"`)
 
     const response = await fetch(url.toString())
 
     if (!response.ok) {
-      console.error(`Google Places API error: ${response.status} ${response.statusText}`)
+      serviceErrorLog('google', `HTTP ${response.status}: ${response.statusText}`, 'places_autocomplete', {
+        metadata: {
+          query,
+          status: response.status,
+          statusText: response.statusText
+        }
+      })
       return []
     }
 
@@ -69,7 +75,6 @@ export async function autocompleteGooglePlaces(query: string): Promise<GooglePla
     }
 
     if (!data.predictions || data.predictions.length === 0) {
-      console.log('Google Places returned no suggestions')
       return []
     }
 
@@ -93,11 +98,15 @@ export async function autocompleteGooglePlaces(query: string): Promise<GooglePla
       timestamp: Date.now()
     })
 
-    console.log(`✅ Google Places returned ${results.length} suggestions`)
     return results
 
   } catch (error) {
-    console.error('Google Places autocomplete error:', error)
+    serviceErrorLog('google', error as Error, 'places_autocomplete', {
+      metadata: {
+        query,
+        operation: 'autocomplete'
+      }
+    })
     return []
   }
 }
@@ -126,7 +135,13 @@ export async function getPlaceDetails(placeId: string): Promise<{
     const response = await fetch(url.toString())
 
     if (!response.ok) {
-      console.error(`Google Place Details API error: ${response.status} ${response.statusText}`)
+      serviceErrorLog('google', `HTTP ${response.status}: ${response.statusText}`, 'place_details', {
+        metadata: {
+          placeId,
+          status: response.status,
+          statusText: response.statusText
+        }
+      })
       return null
     }
 
@@ -150,7 +165,12 @@ export async function getPlaceDetails(placeId: string): Promise<{
     }
 
   } catch (error) {
-    console.error('Google Place Details error:', error)
+    serviceErrorLog('google', error as Error, 'place_details', {
+      metadata: {
+        placeId,
+        operation: 'get_details'
+      }
+    })
     return null
   }
 }

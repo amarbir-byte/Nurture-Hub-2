@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import type { Session, User, AuthError } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { reportError } from '../lib/monitoring'
 
 interface AuthContextType {
   user: User | null
@@ -35,22 +36,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     let mounted = true
 
-    console.log('AuthProvider: Starting auth initialization')
 
     // Get initial session
     const getInitialSession = async () => {
       try {
-        console.log('AuthProvider: Getting initial session')
         const { data: { session }, error } = await supabase.auth.getSession()
 
         if (!mounted) return
 
         if (error) {
-          console.error('Session error:', error)
+          reportError(error as Error, 'Authentication session retrieval failed', 'high', { step: 'getInitialSession' })
           setSession(null)
           setUser(null)
         } else {
-          console.log('AuthProvider: Session retrieved', { hasSession: !!session })
           setSession(session)
           setUser(session?.user ?? null)
         }
@@ -58,7 +56,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setLoading(false)
       } catch (error) {
         if (!mounted) return
-        console.error('Error getting session:', error)
+        reportError(error as Error, 'Authentication session initialization failed', 'high', { step: 'getInitialSession' })
         setSession(null)
         setUser(null)
         setLoading(false)
@@ -72,7 +70,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('AuthProvider: Auth state changed:', event, session?.user?.email)
 
       if (!mounted) return
 
@@ -103,12 +100,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .maybeSingle()
 
       if (checkError) {
-        console.error('Error checking user existence:', checkError)
+        reportError(checkError as Error, 'User existence check failed', 'medium', { userId: user.id, step: 'createUserRecord' })
         return
       }
 
       if (!existingUser) {
-        console.log('AuthProvider: Creating user record for', user.email)
         const trialEndDate = new Date()
         trialEndDate.setDate(trialEndDate.getDate() + 14) // 14-day trial
 
@@ -122,19 +118,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
         })
 
         if (insertError) {
-          console.error('Error creating user record:', insertError)
+          reportError(insertError as Error, 'User record creation failed', 'high', { userId: user.id, email: user.email })
           // If insert fails due to missing policy, show helpful message
           if (insertError.code === '42501' || insertError.code === '403') {
-            console.error('🔒 Database Policy Issue: User creation blocked. Please run the 008_fix_user_policies.sql migration in your Supabase dashboard.')
+            reportError(insertError as Error, 'Database policy blocking user creation', 'critical', { userId: user.id, email: user.email, code: insertError.code, migration: '008_fix_user_policies.sql' })
           }
         } else {
-          console.log('AuthProvider: User record created successfully for', user.email)
         }
       } else {
-        console.log('AuthProvider: User record already exists for', user.email)
       }
     } catch (error) {
-      console.error('Error in createUserRecordIfNeeded:', error)
+      reportError(error as Error, 'User record creation process failed', 'medium', { userId: user?.id, step: 'createUserRecordIfNeeded' })
       // Don't throw - this shouldn't block auth flow
     }
   }
@@ -150,7 +144,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       })
       return { error }
     } catch (error) {
-      console.error('Sign up error:', error)
+      reportError(error as Error, 'User registration failed', 'high', { email, step: 'signUp' })
       return { error: error as AuthError }
     }
   }
@@ -163,7 +157,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       })
       return { error }
     } catch (error) {
-      console.error('Sign in error:', error)
+      reportError(error as Error, 'User login failed', 'high', { email, step: 'signIn' })
       return { error: error as AuthError }
     }
   }
@@ -173,13 +167,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const { error } = await supabase.auth.signOut()
       return { error }
     } catch (error) {
-      console.error('Sign out error:', error)
+      reportError(error as Error, 'User logout failed', 'medium', { userId: user?.id, step: 'signOut' })
       return { error: error as AuthError }
     }
   }
 
   const forceAuthReset = () => {
-    console.log('AuthProvider: Force resetting auth state')
     setLoading(false)
     setSession(null)
     setUser(null)
@@ -192,7 +185,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       })
       return { error }
     } catch (error) {
-      console.error('Reset password error:', error)
+      reportError(error as Error, 'Password reset failed', 'medium', { email, step: 'resetPassword' })
       return { error: error as AuthError }
     }
   }

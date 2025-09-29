@@ -7,6 +7,7 @@ import { AddressAutoCorrect } from '../ui/AddressAutoCorrect'
 import type { AddressSuggestion } from '../ui/AddressAutoCorrect'
 import { checkDuplicateContact, type DuplicateContactResult } from '../../utils/duplicateCheck'
 import type { Contact } from '../../types/contact'
+import { reportError } from '../../lib/monitoring'
 
 // Using AddressSuggestion from AddressAutoCorrect component
 
@@ -254,7 +255,12 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
 
       onSave()
     } catch (error) {
-      console.error('Error updating existing contact:', error)
+      reportError(error as Error, 'Contact update operation failed', 'high', {
+        userId: user?.id,
+        contactId: contact?.id,
+        operation: 'update_existing_contact',
+        address: formData.address
+      })
       alert('Error updating contact. Please try again.')
     } finally {
       setLoading(false)
@@ -349,7 +355,12 @@ export function ContactForm({ contact, onSave, onCancel }: ContactFormProps) {
 
       onSave()
     } catch (error) {
-      console.error('Error saving contact:', error)
+      reportError(error as Error, 'Contact creation operation failed', 'high', {
+        userId: user?.id,
+        operation: 'create_new_contact',
+        address: formData.address,
+        contactName: `${formData.first_name} ${formData.last_name}`
+      })
       alert('Error saving contact. Please try again.')
     } finally {
       setLoading(false)

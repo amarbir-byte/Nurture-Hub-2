@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
+import { reportError } from '../../lib/monitoring'
 import { ContactCard } from './ContactCard'
 import { ContactForm } from './ContactForm'
 import { ContactImport } from './ContactImport'
@@ -75,7 +76,7 @@ export function ContactsPage() {
       setContacts(contactsData || [])
       setContactsCommunications(communicationsCount)
     } catch (error) {
-      console.error('Error fetching contacts:', error)
+      reportError(error as Error, 'Contacts list fetch failed', 'high', { userId: user?.id, page: 'contacts' })
     } finally {
       setLoading(false)
     }
@@ -111,7 +112,7 @@ export function ContactsPage() {
       if (error) throw error
       setContacts(prev => prev.filter(c => c.id !== contactId))
     } catch (error) {
-      console.error('Error deleting contact:', error)
+      reportError(error as Error, 'Contact deletion failed', 'medium', { userId: user?.id, contactId, operation: 'delete' })
       alert('Error deleting contact. Please try again.')
     }
   }

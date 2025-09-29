@@ -8,6 +8,7 @@
  * - Caching handled server-side
  */
 
+import { serviceErrorLog } from './logger'
 
 export interface LinzGeocodingResult {
   lat: number
@@ -42,7 +43,14 @@ export async function searchLinzAddresses(query: string): Promise<LinzGeocodingR
     })
 
     if (!response.ok) {
-      console.error(`Secure LINZ API error: ${response.status} ${response.statusText}`)
+      serviceErrorLog('linz', `HTTP ${response.status}: ${response.statusText}`, 'linz_geocoding', {
+        metadata: {
+          address: query,
+          status: response.status,
+          statusText: response.statusText,
+          operation: 'nz_address_search'
+        }
+      })
       return []
     }
 
@@ -55,7 +63,13 @@ export async function searchLinzAddresses(query: string): Promise<LinzGeocodingR
     return data.results
 
   } catch (error) {
-    console.error('Secure LINZ geocoding error:', error)
+    serviceErrorLog('linz', error as Error, 'linz_geocoding', {
+      metadata: {
+        address: query,
+        operation: 'nz_address_search',
+        serviceType: 'government_geocoding'
+      }
+    })
     return []
   }
 }

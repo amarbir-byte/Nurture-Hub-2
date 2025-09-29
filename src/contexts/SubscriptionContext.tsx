@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react'
 import { useAuth } from './AuthContext'
 import { supabase } from '../lib/supabase'
 import type { PlanId } from '../lib/stripe'
+import { reportError } from '../lib/monitoring'
 import {
   getPlanLimits,
   checkPlanLimit,
@@ -82,14 +83,14 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
         .maybeSingle() // Use maybeSingle() instead of single() to handle 0 results gracefully
 
       if (error) {
-        console.error('Error fetching subscription:', error)
+        reportError(error as Error, 'Subscription fetch failed from Supabase', 'high', { userId: user?.id, step: 'fetchSubscription' })
         setUserSubscription(null)
         return
       }
 
       setUserSubscription(data)
     } catch (error) {
-      console.error('Error fetching subscription:', error)
+      reportError(error as Error, 'Subscription fetch failed in try/catch', 'high', { userId: user?.id, step: 'fetchSubscription' })
       setUserSubscription(null)
     } finally {
       setLoading(false)
@@ -140,7 +141,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
         storage_mb: 0 // TODO: Calculate actual storage usage
       })
     } catch (error) {
-      console.error('Error fetching usage stats:', error)
+      reportError(error as Error, 'Usage statistics fetch failed', 'medium', { userId: user?.id, step: 'fetchUsageStats' })
     }
   }
 

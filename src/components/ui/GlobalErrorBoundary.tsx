@@ -216,8 +216,11 @@ export class GlobalErrorBoundary extends Component<Props, State> {
   }
 
   private renderFeatureLevelError() {
-    const { errorId, retryCount } = this.state;
+    const { errorId, retryCount, error, errorInfo } = this.state;
     const { name } = this.props;
+
+    // Show detailed error information in development mode
+    const isDevelopment = import.meta.env.DEV;
 
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-6">
@@ -247,6 +250,28 @@ export class GlobalErrorBoundary extends Component<Props, State> {
                 You can continue using other parts of the application.
               </p>
             </div>
+
+            {/* Show detailed error information in development */}
+            {isDevelopment && error && (
+              <div className="mt-3 p-3 bg-red-100 rounded border text-xs">
+                <div className="font-semibold text-red-900 mb-2">Development Debug Info:</div>
+                <div className="text-red-800 mb-2">
+                  <strong>Error:</strong> {error.message}
+                </div>
+                {error.stack && (
+                  <div className="text-red-700 font-mono text-xs whitespace-pre-wrap max-h-32 overflow-y-auto">
+                    {error.stack}
+                  </div>
+                )}
+                {errorInfo?.componentStack && (
+                  <div className="text-red-700 font-mono text-xs whitespace-pre-wrap max-h-32 overflow-y-auto mt-2">
+                    <strong>Component Stack:</strong>
+                    {errorInfo.componentStack}
+                  </div>
+                )}
+              </div>
+            )}
+
             {errorId && (
               <div className="mt-2 text-xs text-red-600">
                 Error ID: {errorId}

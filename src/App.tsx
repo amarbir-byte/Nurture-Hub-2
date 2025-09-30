@@ -14,11 +14,10 @@ import { SubscriptionPage } from './components/billing/SubscriptionPage'
 import { OfflineIndicator } from './components/common/OfflineIndicator'
 import { PerformanceMonitor } from './components/common/PerformanceMonitor'
 
-// Lazy load heavy components and mapping features
-const AdminPanel = lazy(async () => {
-  const module = await import('./components/admin/AdminPanel')
-  return { default: module.AdminPanel }
-})
+// Direct imports for core dashboard components (more reliable)
+import { AdminPanel } from './components/admin/AdminPanel'
+
+// Keep lazy loading only for truly heavy/optional components
 const FeedbackWidget = lazy(async () => {
   const module = await import('./components/feedback/FeedbackWidget')
   return { default: module.FeedbackWidget }
@@ -47,7 +46,7 @@ import { ensureTablesExist } from './utils/databaseInit'
 import './utils/errorAnalysis' // Enable monitoring console utilities
 import './utils/testErrorMonitoring' // Enable error monitoring testing
 // Enterprise monitoring and error handling
-import { AppErrorBoundary, FeatureErrorBoundary } from './components/ui/GlobalErrorBoundary'
+import { AppErrorBoundary, FeatureErrorBoundary, ComponentErrorBoundary } from './components/ui/GlobalErrorBoundary'
 import { monitoring, trackUserAction, recordMetric } from './lib/monitoring'
 import { preloadCriticalResources } from './lib/performance'
 import { detectSuspiciousActivity } from './lib/security'
@@ -455,9 +454,21 @@ function Dashboard() {
   const [currentPage, setCurrentPage] = useState<DashboardPage>('dashboard')
   const { userSubscription } = useSubscription()
 
-  // Initialize database tables on component mount
+  // Initialize database tables on component mount with proper error handling
   useEffect(() => {
-    ensureTablesExist()
+    const initializeDatabase = async () => {
+      try {
+        console.debug('🔧 Dashboard: Initializing database tables...')
+        await ensureTablesExist()
+        console.debug('✅ Dashboard: Database tables initialized successfully')
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown database error'
+        console.warn('⚠️ Dashboard: Database initialization failed (non-blocking):', errorMessage)
+        // Dashboard continues loading regardless of database state
+      }
+    }
+
+    initializeDatabase()
   }, [])
 
   // Check if user is beta tester (extended trial)
@@ -467,24 +478,42 @@ function Dashboard() {
   const renderPage = () => {
     switch (currentPage) {
       case 'properties':
-        return <PropertiesPage />
+        return (
+          <ComponentErrorBoundary name="PropertiesPage">
+            <PropertiesPage />
+          </ComponentErrorBoundary>
+        )
       case 'contacts':
-        return <ContactsPage />
+        return (
+          <ComponentErrorBoundary name="ContactsPage">
+            <ContactsPage />
+          </ComponentErrorBoundary>
+        )
       case 'marketing':
         return (
-          <Suspense fallback={
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary-500 border-t-transparent"></div>
-              <span className="ml-2 text-primary-600">Loading marketing tools...</span>
-            </div>
-          }>
-            <MarketingPage />
-          </Suspense>
+          <ComponentErrorBoundary name="MarketingPage">
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary-500 border-t-transparent"></div>
+                <span className="ml-2 text-primary-600">Loading marketing tools...</span>
+              </div>
+            }>
+              <MarketingPage />
+            </Suspense>
+          </ComponentErrorBoundary>
         )
       case 'templates':
-        return <TemplatesPage />
+        return (
+          <ComponentErrorBoundary name="TemplatesPage">
+            <TemplatesPage />
+          </ComponentErrorBoundary>
+        )
       case 'settings':
-        return <SubscriptionPage />
+        return (
+          <ComponentErrorBoundary name="SubscriptionPage">
+            <SubscriptionPage />
+          </ComponentErrorBoundary>
+        )
       case 'beta':
         return isBetaTester ? (
           <Suspense fallback={
@@ -498,14 +527,9 @@ function Dashboard() {
         ) : <DashboardHome onNavigate={setCurrentPage} />
       case 'admin':
         return (
-          <Suspense fallback={
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary-500 border-t-transparent"></div>
-              <span className="ml-2 text-primary-600">Loading admin panel...</span>
-            </div>
-          }>
+          <ComponentErrorBoundary name="AdminPanel">
             <AdminPanel />
-          </Suspense>
+          </ComponentErrorBoundary>
         )
       default:
         return <DashboardHome onNavigate={setCurrentPage} />

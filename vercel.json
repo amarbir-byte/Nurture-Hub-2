@@ -1,7 +1,107 @@
 {
   "version": 2,
+  "name": "nurture-hub",
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "installCommand": "npm ci --legacy-peer-deps"
+  "installCommand": "npm ci",
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        },
+        {
+          "key": "Content-Type",
+          "value": "text/javascript; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)\\.js$",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/javascript; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)\\.mjs$",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/javascript; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.webmanifest",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "build": {
+    "env": {
+      "NODE_VERSION": "18"
+    }
+  },
+  "regions": ["iad1"],
+  "cleanUrls": true,
+  "trailingSlash": false
 }

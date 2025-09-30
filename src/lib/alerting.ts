@@ -647,7 +647,7 @@ class EnterpriseAlerting {
 
       if (error) throw error;
 
-      return data.map(row => ({
+      return data.map((row: any) => ({
         id: row.id,
         ruleId: row.rule_id,
         title: row.title,

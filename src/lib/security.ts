@@ -525,11 +525,11 @@ class EnterpriseSecurity {
 
       const metrics = {
         total_events: data.length,
-        critical_events: data.filter(e => e.severity === 'critical').length,
-        high_events: data.filter(e => e.severity === 'high').length,
-        auth_events: data.filter(e => e.type === 'authentication').length,
-        rate_limit_events: data.filter(e => e.type === 'rate_limit').length,
-        suspicious_events: data.filter(e => e.type === 'suspicious_activity').length
+        critical_events: data.filter((e: any) => e.severity === 'critical').length,
+        high_events: data.filter((e: any) => e.severity === 'high').length,
+        auth_events: data.filter((e: any) => e.type === 'authentication').length,
+        rate_limit_events: data.filter((e: any) => e.type === 'rate_limit').length,
+        suspicious_events: data.filter((e: any) => e.type === 'suspicious_activity').length
       };
 
       return metrics;

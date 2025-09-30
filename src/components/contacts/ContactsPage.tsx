@@ -62,7 +62,7 @@ export function ContactsPage() {
           throw communicationsError
         } else {
           // Count communications per contact
-          communicationsData?.forEach(comm => {
+          communicationsData?.forEach((comm: { contact_id: string }) => {
             if (comm.contact_id) {
               communicationsCount[comm.contact_id] = (communicationsCount[comm.contact_id] || 0) + 1
             }

@@ -81,7 +81,7 @@ export function PropertiesPage() {
           throw communicationsError
         } else {
           // Count communications per property
-          communicationsData?.forEach(comm => {
+          communicationsData?.forEach((comm: { property_id: string }) => {
             if (comm.property_id) {
               communicationsCount[comm.property_id] = (communicationsCount[comm.property_id] || 0) + 1
             }

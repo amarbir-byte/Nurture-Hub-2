@@ -70,14 +70,14 @@ export async function migrateContactAddresses(
     // Process in batches
     for (let i = 0; i < contacts.length; i += batchSize) {
       const batch = contacts.slice(i, i + batchSize)
-      const addresses = batch.map(contact => contact.address)
+      const addresses = batch.map((contact: any) => contact.address)
 
       try {
         // Geocode the batch
         const results = await batchGeocode(addresses)
 
         // Update database with results
-        const updates = batch.map(contact => {
+        const updates = batch.map((contact: any) => {
           const geocodeResult = results.get(contact.address)
 
           if (geocodeResult) {
@@ -95,7 +95,7 @@ export async function migrateContactAddresses(
             progress.errors.push(`Failed to geocode: ${contact.address}`)
             return null
           }
-        }).filter(update => update !== null)
+        }).filter((update: any) => update !== null)
 
         // Batch update the database
         if (updates.length > 0) {
@@ -196,14 +196,14 @@ export async function migratePropertyAddresses(
     // Process in batches
     for (let i = 0; i < properties.length; i += batchSize) {
       const batch = properties.slice(i, i + batchSize)
-      const addresses = batch.map(property => property.address)
+      const addresses = batch.map((property: any) => property.address)
 
       try {
         // Geocode the batch
         const results = await batchGeocode(addresses)
 
         // Update database with results
-        const updates = batch.map(property => {
+        const updates = batch.map((property: any) => {
           const geocodeResult = results.get(property.address)
 
           if (geocodeResult) {
@@ -221,7 +221,7 @@ export async function migratePropertyAddresses(
             progress.errors.push(`Failed to geocode: ${property.address}`)
             return null
           }
-        }).filter(update => update !== null)
+        }).filter((update: any) => update !== null)
 
         // Batch update the database
         if (updates.length > 0) {

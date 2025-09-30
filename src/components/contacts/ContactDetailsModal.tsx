@@ -103,7 +103,7 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
       if (error) throw error
 
       // Filter by distance (simple approximation for nearby properties)
-      const nearby = properties?.filter(property => {
+      const nearby = properties?.filter((property: Property) => {
         if (!property.lat || !property.lng) return false
         const distance = calculateDistance(
           contact.lat!, contact.lng!,
@@ -113,7 +113,7 @@ export function ContactDetailsModal({ contact, onClose }: ContactDetailsModalPro
       }) || []
 
       // Sort by distance and status (sold properties first as they're good market references)
-      const sorted = nearby.sort((a, b) => {
+      const sorted = nearby.sort((a: Property, b: Property) => {
         // Prioritize sold properties
         if (a.status === 'sold' && b.status !== 'sold') return -1
         if (b.status === 'sold' && a.status !== 'sold') return 1

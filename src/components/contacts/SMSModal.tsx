@@ -142,7 +142,7 @@ export function SMSModal({ contact, onClose, onSent }: SMSModalProps) {
       if (error) throw error
 
       // Filter by distance - only sold properties within radius
-      const nearby = properties?.filter(property => {
+      const nearby = properties?.filter((property: Property) => {
         if (!property.lat || !property.lng) return false
         const distance = calculateDistance(
           contact.lat!, contact.lng!,
@@ -152,7 +152,7 @@ export function SMSModal({ contact, onClose, onSent }: SMSModalProps) {
       }) || []
 
       // Sort by distance (closest first)
-      const sorted = nearby.sort((a, b) => {
+      const sorted = nearby.sort((a: Property, b: Property) => {
         const distanceA = calculateDistance(contact.lat!, contact.lng!, a.lat!, a.lng!)
         const distanceB = calculateDistance(contact.lat!, contact.lng!, b.lat!, b.lng!)
         return distanceA - distanceB

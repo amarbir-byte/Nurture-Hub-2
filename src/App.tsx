@@ -604,6 +604,40 @@ function AppContent() {
     )
   }
 
+  // Check if Supabase is properly configured
+  if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20">
+        <div className="max-w-md mx-auto text-center p-8">
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-red-900 dark:text-red-100 mb-4">
+            Configuration Error
+          </h1>
+          <p className="text-red-700 dark:text-red-300 mb-6">
+            The application is missing required environment variables. This usually means the deployment configuration is incomplete.
+          </p>
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-left">
+            <h3 className="font-semibold text-red-900 dark:text-red-100 mb-2">To fix this issue:</h3>
+            <ol className="text-sm text-red-700 dark:text-red-300 space-y-1">
+              <li>1. Go to <strong>Vercel Dashboard</strong> → Your Project</li>
+              <li>2. Navigate to <strong>Settings</strong> → <strong>Environment Variables</strong></li>
+              <li>3. Add these variables for all environments:</li>
+              <li className="ml-4">• <code className="bg-red-100 dark:bg-red-800 px-1 rounded">VITE_SUPABASE_URL</code></li>
+              <li className="ml-4">• <code className="bg-red-100 dark:bg-red-800 px-1 rounded">VITE_SUPABASE_ANON_KEY</code></li>
+              <li className="ml-4">• <code className="bg-red-100 dark:bg-red-800 px-1 rounded">VITE_APP_URL</code></li>
+              <li className="ml-4">• <code className="bg-red-100 dark:bg-red-800 px-1 rounded">VITE_STRIPE_PUBLISHABLE_KEY</code></li>
+              <li>4. Redeploy the application</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen">
       <PerformanceMonitor />

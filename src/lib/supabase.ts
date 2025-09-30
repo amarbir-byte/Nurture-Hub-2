@@ -1,33 +1,67 @@
 import { createClient } from '@supabase/supabase-js'
-import { reportError } from './monitoring'
 
+// Check for required environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
+// Log environment variable status for debugging
+console.log('🔍 Environment Variables Check:', {
+  VITE_SUPABASE_URL: supabaseUrl ? '✅ Set' : '❌ Missing',
+  VITE_SUPABASE_ANON_KEY: supabaseKey ? '✅ Set' : '❌ Missing',
+  VITE_APP_URL: import.meta.env.VITE_APP_URL ? '✅ Set' : '❌ Missing',
+  VITE_STRIPE_PUBLISHABLE_KEY: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ? '✅ Set' : '❌ Missing'
+})
+
+// Create the supabase client based on environment variables
+let supabase: any
+
 if (!supabaseUrl || !supabaseKey) {
-  const error = new Error('Missing Supabase environment variables')
-  reportError(error, 'Supabase configuration error - missing environment variables', 'critical', {
-    missingVars: {
-      url: !supabaseUrl,
-      key: !supabaseKey
+  console.error('❌ CRITICAL: Missing Supabase environment variables in Vercel!')
+  console.error('Required variables:')
+  console.error('- VITE_SUPABASE_URL:', supabaseUrl || 'NOT SET')
+  console.error('- VITE_SUPABASE_ANON_KEY:', supabaseKey ? 'Set (hidden)' : 'NOT SET')
+  console.error('')
+  console.error('🔧 To fix this:')
+  console.error('1. Go to Vercel Dashboard → Your Project → Settings → Environment Variables')
+  console.error('2. Add these variables for Production, Preview, and Development:')
+  console.error('   VITE_SUPABASE_URL=https://your-project-id.supabase.co')
+  console.error('   VITE_SUPABASE_ANON_KEY=your-anon-key')
+  console.error('   VITE_APP_URL=https://your-app.vercel.app')
+  console.error('3. Redeploy after adding variables')
+
+  // Instead of throwing, create a dummy client to prevent crashes
+  // This allows the app to show an error message instead of white screen
+  supabase = {
+    auth: {
+      getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+      signUp: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
+      signInWithPassword: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
+      signOut: () => Promise.resolve({ error: null })
     },
-    envFile: 'Required: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env file'
+    from: () => ({
+      select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: null, error: null }) }) }),
+      insert: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') })
+    })
+  }
+} else {
+  // Normal Supabase client creation
+  supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 10,
+      },
+    }
   })
-  throw error
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true
-  },
-  realtime: {
-    params: {
-      eventsPerSecond: 10,
-    },
-  },
-})
+// Export the supabase client (either real or dummy)
+export { supabase }
 
 // Database types for TypeScript
 export interface Database {

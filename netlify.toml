@@ -50,8 +50,8 @@
   node_bundler = "esbuild"
 
 # Build plugins for optimization
-[[plugins]]
-  package = "@netlify/plugin-lighthouse"
+# [[plugins]]
+#   package = "@netlify/plugin-lighthouse"
 
 # Environment variables that are safe to expose
 [context.production.environment]

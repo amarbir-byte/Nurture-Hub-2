@@ -21,9 +21,11 @@ const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 const LINZ_API_KEY = process.env.LINZ_API_KEY;
 const MAPTILER_API_KEY = process.env.MAPTILER_API_KEY;
 
-// Unified cache for all providers
-const geocodeCache = new Map<string, { result: any; timestamp: number; userId: string }>();
-const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+interface AddressComponent {
+  long_name: string;
+  short_name: string;
+  types: string[];
+}
 
 interface UnifiedGeocodingResult {
   lat: number;
@@ -32,12 +34,16 @@ interface UnifiedGeocodingResult {
   formatted_address: string;
   place_type: string;
   provider: 'google' | 'linz' | 'maptiler';
-  address_components?: any;
+  address_components?: AddressComponent[];
   bounds?: {
     northeast: { lat: number; lng: number };
     southwest: { lat: number; lng: number };
   };
 }
+
+// Unified cache for all providers
+const geocodeCache = new Map<string, { result: UnifiedGeocodingResult; timestamp: number; userId: string }>();
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
 // Simple auth check (replace with your auth logic)
 function isAuthenticated(req: VercelRequest): boolean {

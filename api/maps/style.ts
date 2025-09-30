@@ -7,7 +7,7 @@
  * - Implements authentication and rate limiting
  */
 
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import { VercelResponse } from '@vercel/node';
 import { withAuth, AuthenticatedRequest } from '../middleware/auth';
 import { withRateLimit, RATE_LIMIT_CONFIGS } from '../middleware/rateLimit';
 
@@ -15,8 +15,25 @@ import { withRateLimit, RATE_LIMIT_CONFIGS } from '../middleware/rateLimit';
 const MAPTILER_API_KEY = process.env.MAPTILER_API_KEY;
 const BASE_URL = 'https://api.maptiler.com';
 
+/**
+ * MapTiler Style JSON format
+ * Based on Mapbox/MapLibre style specification
+ */
+interface MapStyleJSON {
+  version: number;
+  name?: string;
+  sources: Record<string, unknown>;
+  layers: Array<Record<string, unknown>>;
+  sprite?: string;
+  glyphs?: string;
+  center?: [number, number];
+  zoom?: number;
+  bearing?: number;
+  pitch?: number;
+}
+
 // Cache for style responses
-const styleCache = new Map<string, { result: any; timestamp: number }>();
+const styleCache = new Map<string, { result: MapStyleJSON; timestamp: number }>();
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour cache for styles
 
 /**
@@ -130,9 +147,9 @@ async function handleMapStyle(req: AuthenticatedRequest, res: VercelResponse) {
 /**
  * Process style JSON to replace external URLs with proxy endpoints if needed
  */
-function processStyleForProxy(style: any): any {
+function processStyleForProxy(style: MapStyleJSON): MapStyleJSON {
   // Clone the style object to avoid mutations
-  const processedStyle = JSON.parse(JSON.stringify(style));
+  const processedStyle = JSON.parse(JSON.stringify(style)) as MapStyleJSON;
 
   // If there are sources that need proxying, update them here
   // For now, we'll return the style as-is since MapTiler styles

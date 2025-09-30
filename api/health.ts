@@ -237,9 +237,8 @@ async function checkPerformance(): Promise<HealthCheck> {
 
   try {
     // Perform a simple CPU-bound operation to test performance
-    let result = 0;
     for (let i = 0; i < 100000; i++) {
-      result += Math.sqrt(i);
+      Math.sqrt(i); // Intentionally testing CPU performance
     }
 
     const end = process.hrtime.bigint();

@@ -42,7 +42,7 @@ interface ErrorReport {
     feature?: string;
     action?: string;
   };
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 interface MetricData {
@@ -280,17 +280,19 @@ async function handleAdminActions(req: VercelRequest, res: VercelResponse) {
   };
 
   switch (actionType) {
-    case 'clear_errors':
+    case 'clear_errors': {
       const clearedCount = errors.length;
       errors.splice(0);
       action.result = { cleared: clearedCount };
       break;
+    }
 
-    case 'clear_metrics':
+    case 'clear_metrics': {
       const clearedMetrics = metrics.length;
       metrics.splice(0);
       action.result = { cleared: clearedMetrics };
       break;
+    }
 
     case 'get_system_info':
       action.result = {

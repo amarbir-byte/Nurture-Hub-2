@@ -13,6 +13,10 @@ export default defineConfig({
     },
     headers: {
       'Cache-Control': 'no-cache, no-store, must-revalidate'
+    },
+    middlewareMode: false,
+    fs: {
+      strict: false
     }
   },
   build: {
@@ -39,10 +43,7 @@ export default defineConfig({
             return 'react-vendor';
           }
 
-          // Separate Supabase and Stripe to prevent conflicts
-          if (id.includes('@supabase/supabase-js')) {
-            return 'supabase-vendor';
-          }
+          // Keep Stripe separate, but let Supabase stay in main bundle to prevent init issues
           if (id.includes('@stripe/')) {
             return 'stripe-vendor';
           }

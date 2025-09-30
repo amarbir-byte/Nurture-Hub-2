@@ -70,8 +70,10 @@ export default defineConfig({
             return 'beta-features';
           }
 
-          // Admin features (lazy loaded)
-          if (id.includes('/components/admin/')) {
+          // Admin features - Keep AdminPanel in main bundle to prevent initialization errors
+          // Only split heavy admin features
+          if (id.includes('/components/admin/') &&
+              !id.includes('AdminPanel.tsx')) {
             return 'admin-features';
           }
 

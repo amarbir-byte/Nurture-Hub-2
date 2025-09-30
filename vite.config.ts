@@ -21,8 +21,14 @@ export default defineConfig({
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: true,
-        drop_debugger: true
+        drop_console: false, // Keep console for debugging
+        drop_debugger: true,
+        pure_funcs: ['console.log'], // Only remove console.log specifically
+        passes: 1 // Reduce optimization passes to prevent dependency issues
+      },
+      mangle: {
+        keep_fnames: true, // Keep function names to prevent initialization issues
+        safari10: true
       }
     },
     rollupOptions: {
@@ -33,9 +39,12 @@ export default defineConfig({
             return 'react-vendor';
           }
 
-          // API vendors chunk
-          if (id.includes('@supabase/supabase-js') || id.includes('@stripe/')) {
-            return 'api-vendor';
+          // Separate Supabase and Stripe to prevent conflicts
+          if (id.includes('@supabase/supabase-js')) {
+            return 'supabase-vendor';
+          }
+          if (id.includes('@stripe/')) {
+            return 'stripe-vendor';
           }
 
           // Large mapping libraries - separate chunks

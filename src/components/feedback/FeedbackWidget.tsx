@@ -6,7 +6,15 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { useAnalytics, betaAnalytics } from '../../lib/analytics'
+
+// Lazy load analytics to avoid blocking initial render
+let analyticsModule: any = null;
+const loadAnalytics = async () => {
+  if (!analyticsModule) {
+    analyticsModule = await import('../../lib/analytics');
+  }
+  return analyticsModule;
+};
 
 type FeedbackType = 'bug' | 'feature_request' | 'general' | 'nps'
 type FeedbackPriority = 'low' | 'medium' | 'high' | 'critical'
@@ -51,7 +59,6 @@ export const FeedbackWidget = ({
   const [submitted, setSubmitted] = useState(false)
 
   const { user } = useAuth()
-  const { trackEngagement } = useAnalytics()
 
   const feedbackTypes = [
     { id: 'bug', label: 'Bug Report', icon: '🐛', description: 'Something isn\'t working correctly' },
@@ -69,9 +76,19 @@ export const FeedbackWidget = ({
 
   useEffect(() => {
     if (isOpen) {
-      trackEngagement('feedback_widget_opened', { feedback_type: feedbackType })
+      // Lazy load analytics for tracking
+      loadAnalytics().then(({ useAnalytics }) => {
+        try {
+          const analytics = useAnalytics();
+          analytics.trackEngagement('feedback_widget_opened', { feedback_type: feedbackType });
+        } catch (error) {
+          console.warn('Analytics tracking failed:', error);
+        }
+      }).catch(() => {
+        // Silently fail analytics loading
+      });
     }
-  }, [isOpen, feedbackType, trackEngagement])
+  }, [isOpen, feedbackType])
 
   const handleSubmit = async () => {
     if (!formData.title.trim() || !formData.description.trim()) {
@@ -109,7 +126,12 @@ export const FeedbackWidget = ({
 
       if (response.ok) {
         // Track successful submission
-        betaAnalytics.trackFeedbackSubmission(feedbackType as 'bug' | 'feature_request' | 'general', formData.rating)
+        try {
+          const { betaAnalytics } = await loadAnalytics();
+          betaAnalytics.trackFeedbackSubmission(feedbackType as 'bug' | 'feature_request' | 'general', formData.rating);
+        } catch (analyticsError) {
+          console.warn('Analytics tracking failed:', analyticsError);
+        }
 
         // Call onSubmit callback if provided
         onSubmit?.(feedbackData)

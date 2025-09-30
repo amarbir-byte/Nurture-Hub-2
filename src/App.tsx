@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense, lazy } from 'react'
 import { useAuth } from './contexts/AuthContext'
 import { useSubscription } from './contexts/SubscriptionContext'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -9,13 +9,19 @@ import { DashboardLayout } from './components/dashboard/DashboardLayout'
 import { PropertiesPage } from './components/properties/PropertiesPage'
 import { ContactsPage } from './components/contacts/ContactsPage'
 import { TemplatesPage } from './components/templates/TemplatesPage'
-import { MarketingPage } from './components/marketing/MarketingPage'
+// MarketingPage lazy loaded above
 import { SubscriptionPage } from './components/billing/SubscriptionPage'
-import { AdminPanel } from './components/admin/AdminPanel'
 import { OfflineIndicator } from './components/common/OfflineIndicator'
 import { PerformanceMonitor } from './components/common/PerformanceMonitor'
-import { FeedbackWidget } from './components/beta/FeedbackWidget'
-import { BetaDashboard } from './components/beta/BetaDashboard'
+
+// Lazy load heavy components and mapping features
+const AdminPanel = lazy(() => import('./components/admin/AdminPanel').then(module => ({ default: module.AdminPanel })))
+const FeedbackWidget = lazy(() => import('./components/feedback/FeedbackWidget').then(module => ({ default: module.FeedbackWidget })))
+const BetaDashboard = lazy(() => import('./components/analytics/BetaAnalyticsDashboard').then(module => ({ default: module.BetaAnalyticsDashboard })))
+const MarketingPage = lazy(() => import('./components/marketing/MarketingPage').then(module => ({ default: module.MarketingPage })))
+const OnboardingManager = lazy(() => import('./components/onboarding/OnboardingManager').then(module => ({ default: module.OnboardingManager })))
+const QuickStartGuide = lazy(() => import('./components/onboarding/QuickStartGuide').then(module => ({ default: module.QuickStartGuide })))
+const SupportWidget = lazy(() => import('./components/help/SupportWidget').then(module => ({ default: module.SupportWidget })))
 import { ensureTablesExist } from './utils/databaseInit'
 import './utils/errorAnalysis' // Enable monitoring console utilities
 import './utils/testErrorMonitoring' // Enable error monitoring testing
@@ -444,15 +450,42 @@ function Dashboard() {
       case 'contacts':
         return <ContactsPage />
       case 'marketing':
-        return <MarketingPage />
+        return (
+          <Suspense fallback={
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary-500 border-t-transparent"></div>
+              <span className="ml-2 text-primary-600">Loading marketing tools...</span>
+            </div>
+          }>
+            <MarketingPage />
+          </Suspense>
+        )
       case 'templates':
         return <TemplatesPage />
       case 'settings':
         return <SubscriptionPage />
       case 'beta':
-        return isBetaTester ? <BetaDashboard /> : <DashboardHome onNavigate={setCurrentPage} />
+        return isBetaTester ? (
+          <Suspense fallback={
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary-500 border-t-transparent"></div>
+              <span className="ml-2 text-primary-600">Loading beta dashboard...</span>
+            </div>
+          }>
+            <BetaDashboard />
+          </Suspense>
+        ) : <DashboardHome onNavigate={setCurrentPage} />
       case 'admin':
-        return <AdminPanel />
+        return (
+          <Suspense fallback={
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary-500 border-t-transparent"></div>
+              <span className="ml-2 text-primary-600">Loading admin panel...</span>
+            </div>
+          }>
+            <AdminPanel />
+          </Suspense>
+        )
       default:
         return <DashboardHome onNavigate={setCurrentPage} />
     }
@@ -461,7 +494,20 @@ function Dashboard() {
   return (
     <DashboardLayout currentPage={currentPage} onNavigate={setCurrentPage}>
       {renderPage()}
-      {isBetaTester && <FeedbackWidget />}
+      {isBetaTester && (
+        <Suspense fallback={null}>
+          <FeedbackWidget />
+        </Suspense>
+      )}
+      <Suspense fallback={null}>
+        <OnboardingManager />
+      </Suspense>
+      <Suspense fallback={null}>
+        <QuickStartGuide />
+      </Suspense>
+      <Suspense fallback={null}>
+        <SupportWidget className="fixed bottom-4 right-4 z-40" />
+      </Suspense>
     </DashboardLayout>
   )
 }

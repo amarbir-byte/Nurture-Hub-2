@@ -15,6 +15,77 @@ export default defineConfig({
       'Cache-Control': 'no-cache, no-store, must-revalidate'
     }
   },
+  build: {
+    target: 'esnext',
+    sourcemap: false,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true
+      }
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          // Core React chunk
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'react-vendor';
+          }
+
+          // API vendors chunk
+          if (id.includes('@supabase/supabase-js') || id.includes('@stripe/')) {
+            return 'api-vendor';
+          }
+
+          // Large mapping libraries - separate chunks
+          if (id.includes('maplibre-gl')) {
+            return 'maplibre-vendor';
+          }
+          if (id.includes('@turf/') || id.includes('proj4')) {
+            return 'geo-vendor';
+          }
+
+          // Utility libraries
+          if (id.includes('date-fns') || id.includes('lodash')) {
+            return 'utils-vendor';
+          }
+
+          // Beta features (lazy loaded)
+          if (id.includes('/components/analytics/') ||
+              id.includes('/components/feedback/') ||
+              id.includes('/components/onboarding/') ||
+              id.includes('/lib/analytics')) {
+            return 'beta-features';
+          }
+
+          // Admin features (lazy loaded)
+          if (id.includes('/components/admin/')) {
+            return 'admin-features';
+          }
+
+          // Marketing features (lazy loaded)
+          if (id.includes('/components/marketing/')) {
+            return 'marketing-features';
+          }
+
+          // Help and support features
+          if (id.includes('/components/help/')) {
+            return 'help-features';
+          }
+
+          // Default for other node_modules
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        },
+        chunkFileNames: () => {
+          return `assets/[name]-[hash].js`;
+        }
+      }
+    },
+    chunkSizeWarningLimit: 400 // Reduced to catch large chunks
+  },
   plugins: [
     react(),
     VitePWA({

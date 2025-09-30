@@ -129,21 +129,7 @@ export const FeatureTour = ({ isActive, onComplete, onSkip }: FeatureTourProps) 
     }
   }
 
-  const getTooltipPosition = () => {
-    const position = currentTourStep.position
-    switch (position) {
-      case 'top':
-        return 'bottom-full mb-2'
-      case 'bottom':
-        return 'top-full mt-2'
-      case 'left':
-        return 'right-full mr-2'
-      case 'right':
-        return 'left-full ml-2'
-      default:
-        return 'top-full mt-2'
-    }
-  }
+  // Helper for tooltip positioning - currently using static positioning
 
   if (!isVisible || !currentTourStep) return null
 

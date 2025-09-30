@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '../../contexts/AuthContext'
+// import { useAuth } from '../../contexts/AuthContext'
 
 interface QuickStartItem {
   id: string
@@ -21,7 +21,7 @@ interface QuickStartItem {
 export const QuickStartGuide = () => {
   const [completedItems, setCompletedItems] = useState<string[]>([])
   const [isMinimized, setIsMinimized] = useState(false)
-  const { user } = useAuth()
+  // const { user } = useAuth() // Available if needed
 
   const quickStartItems: QuickStartItem[] = [
     {
@@ -137,14 +137,7 @@ export const QuickStartGuide = () => {
   const totalProgress = completedItems.length
   const progressPercentage = Math.round((totalProgress / quickStartItems.length) * 100)
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'essential': return 'text-red-600 bg-red-50'
-      case 'important': return 'text-orange-600 bg-orange-50'
-      case 'optional': return 'text-green-600 bg-green-50'
-      default: return 'text-gray-600 bg-gray-50'
-    }
-  }
+  // Priority color helper - currently using inline styles
 
   if (isMinimized) {
     return (

@@ -44,7 +44,7 @@ class Analytics {
 
     // Initialize dataLayer and gtag
     window.dataLayer = window.dataLayer || [];
-    window.gtag = function(...args: any[]) {
+    window.gtag = function() {
       window.dataLayer.push(arguments);
     };
 
@@ -169,7 +169,7 @@ class Analytics {
   trackConversion(action: string, value?: number, params?: EventParams) {
     this.trackEvent('conversion', action, {
       event_category: 'conversions',
-      value,
+      value: value || 0,
       currency: 'NZD',
       ...params
     });
@@ -258,7 +258,7 @@ export const betaAnalytics = {
   trackFeedbackSubmission: (type: 'bug' | 'feature_request' | 'general', rating?: number) => {
     analytics.trackBetaEvent('feedback_submitted', {
       feedback_type: type,
-      rating
+      rating: rating || 0
     });
   },
 
@@ -273,8 +273,8 @@ export const betaAnalytics = {
   // Track retention events
   trackRetention: (daysActive: number, sessionsCount: number) => {
     analytics.trackEngagement('retention_check', {
-      days_active: daysActive,
-      sessions_count: sessionsCount
+      days_active: daysActive || 0,
+      sessions_count: sessionsCount || 0
     });
   }
 };
@@ -286,32 +286,32 @@ export const realEstateAnalytics = {
   // Track contact management
   trackContactAction: (action: 'import' | 'add' | 'edit' | 'delete', count?: number) => {
     analytics.trackFeatureUsage('contacts', action, {
-      contact_count: count
+      contact_count: count || 0
     });
   },
 
   // Track property management
   trackPropertyAction: (action: 'add' | 'edit' | 'delete' | 'view', propertyType?: string) => {
     analytics.trackFeatureUsage('properties', action, {
-      property_type: propertyType
+      property_type: propertyType || 'unknown'
     });
   },
 
   // Track proximity marketing usage
   trackProximityMarketing: (action: 'search' | 'campaign_created' | 'message_sent', data?: any) => {
     analytics.trackMarketingEvent(action, {
-      radius: data?.radius,
-      contacts_found: data?.contactsFound,
-      messages_sent: data?.messagesSent
+      radius: data?.radius || 0,
+      contacts_found: data?.contactsFound || 0,
+      messages_sent: data?.messagesSent || 0
     });
   },
 
   // Track SMS campaign performance
   trackSMSCampaign: (action: 'created' | 'sent' | 'delivered' | 'clicked', campaignData?: any) => {
     analytics.trackMarketingEvent(`sms_${action}`, {
-      template_used: campaignData?.template,
-      recipient_count: campaignData?.recipientCount,
-      campaign_type: campaignData?.type
+      template_used: (campaignData?.template as string) || 'unknown',
+      recipient_count: campaignData?.recipientCount || 0,
+      campaign_type: (campaignData?.type as string) || 'unknown'
     });
   }
 };

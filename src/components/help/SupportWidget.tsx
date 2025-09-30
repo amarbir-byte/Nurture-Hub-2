@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '../../contexts/AuthContext'
+// import { useAuth } from '../../contexts/AuthContext'
 import { useAnalytics } from '../../lib/analytics'
 
 interface SupportOption {
@@ -161,7 +161,6 @@ export const SupportWidget = ({ context = 'general', className = '' }: SupportWi
                 <button
                   onClick={() => {
                     trackEngagement('contextual_tip_dismissed', { context, tip: contextualHelp.title })
-                    setShowQuickHelp(false)
                   }}
                   className="text-yellow-600 hover:text-yellow-800 text-xs mt-1"
                 >

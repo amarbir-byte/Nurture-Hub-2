@@ -61,10 +61,10 @@ export const OnboardingManager = () => {
     setShowQuickStart(true)
   }
 
-  const handleQuickStartDismiss = () => {
-    setShowQuickStart(false)
-    setCurrentPhase('complete')
-  }
+  // const handleQuickStartDismiss = () => {
+  //   setShowQuickStart(false)
+  //   setCurrentPhase('complete')
+  // }
 
   // Don't render anything if user is not authenticated
   if (!user) return null
@@ -221,7 +221,7 @@ export const OnboardingStatus = () => {
       </div>
 
       <div className="space-y-2 mb-4">
-        {progress.steps.map((step, index) => (
+        {progress.steps.map((step) => (
           <div key={step.id} className="flex items-center gap-2">
             <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
               step.completed ? 'bg-green-600 text-white' : 'bg-gray-200'

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import type { Session, User, AuthError } from '@supabase/supabase-js'
+import type { Session, User, AuthError, AuthChangeEvent } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { reportError } from '../lib/monitoring'
 
@@ -69,7 +69,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
+    } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
 
       if (!mounted) return
 

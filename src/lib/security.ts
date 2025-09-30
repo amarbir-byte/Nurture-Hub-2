@@ -523,13 +523,19 @@ class EnterpriseSecurity {
 
       if (error) throw error;
 
+      interface SecurityEventRow {
+        type: 'authentication' | 'authorization' | 'input_validation' | 'rate_limit' | 'suspicious_activity' | 'data_access';
+        severity: 'low' | 'medium' | 'high' | 'critical';
+        timestamp: string;
+      }
+
       const metrics = {
         total_events: data.length,
-        critical_events: data.filter((e: any) => e.severity === 'critical').length,
-        high_events: data.filter((e: any) => e.severity === 'high').length,
-        auth_events: data.filter((e: any) => e.type === 'authentication').length,
-        rate_limit_events: data.filter((e: any) => e.type === 'rate_limit').length,
-        suspicious_events: data.filter((e: any) => e.type === 'suspicious_activity').length
+        critical_events: data.filter((e: SecurityEventRow) => e.severity === 'critical').length,
+        high_events: data.filter((e: SecurityEventRow) => e.severity === 'high').length,
+        auth_events: data.filter((e: SecurityEventRow) => e.type === 'authentication').length,
+        rate_limit_events: data.filter((e: SecurityEventRow) => e.type === 'rate_limit').length,
+        suspicious_events: data.filter((e: SecurityEventRow) => e.type === 'suspicious_activity').length
       };
 
       return metrics;

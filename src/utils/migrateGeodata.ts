@@ -20,6 +20,38 @@ export interface MigrationOptions {
   skipExisting?: boolean // Skip records that already have coordinates
 }
 
+interface ContactRow {
+  id: string;
+  address: string;
+  lat?: number | null;
+  lng?: number | null;
+}
+
+interface ContactUpdate {
+  id: string;
+  lat: number;
+  lng: number;
+  geocoded_at: string;
+  geocode_confidence: number;
+  geocode_source: string;
+}
+
+interface PropertyRow {
+  id: string;
+  address: string;
+  lat?: number | null;
+  lng?: number | null;
+}
+
+interface PropertyUpdate {
+  id: string;
+  lat: number;
+  lng: number;
+  geocoded_at: string;
+  geocode_confidence: number;
+  geocode_source: string;
+}
+
 /**
  * Migrate contact addresses to use real geocoding
  */
@@ -70,14 +102,14 @@ export async function migrateContactAddresses(
     // Process in batches
     for (let i = 0; i < contacts.length; i += batchSize) {
       const batch = contacts.slice(i, i + batchSize)
-      const addresses = batch.map((contact: any) => contact.address)
+      const addresses = batch.map((contact: ContactRow) => contact.address)
 
       try {
         // Geocode the batch
         const results = await batchGeocode(addresses)
 
         // Update database with results
-        const updates = batch.map((contact: any) => {
+        const updates = batch.map((contact: ContactRow) => {
           const geocodeResult = results.get(contact.address)
 
           if (geocodeResult) {
@@ -95,7 +127,7 @@ export async function migrateContactAddresses(
             progress.errors.push(`Failed to geocode: ${contact.address}`)
             return null
           }
-        }).filter((update: any) => update !== null)
+        }).filter((update: ContactUpdate | null): update is ContactUpdate => update !== null)
 
         // Batch update the database
         if (updates.length > 0) {
@@ -196,14 +228,14 @@ export async function migratePropertyAddresses(
     // Process in batches
     for (let i = 0; i < properties.length; i += batchSize) {
       const batch = properties.slice(i, i + batchSize)
-      const addresses = batch.map((property: any) => property.address)
+      const addresses = batch.map((property: PropertyRow) => property.address)
 
       try {
         // Geocode the batch
         const results = await batchGeocode(addresses)
 
         // Update database with results
-        const updates = batch.map((property: any) => {
+        const updates = batch.map((property: PropertyRow) => {
           const geocodeResult = results.get(property.address)
 
           if (geocodeResult) {
@@ -221,7 +253,7 @@ export async function migratePropertyAddresses(
             progress.errors.push(`Failed to geocode: ${property.address}`)
             return null
           }
-        }).filter((update: any) => update !== null)
+        }).filter((update: PropertyUpdate | null): update is PropertyUpdate => update !== null)
 
         // Batch update the database
         if (updates.length > 0) {

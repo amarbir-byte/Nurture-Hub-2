@@ -647,7 +647,21 @@ class EnterpriseAlerting {
 
       if (error) throw error;
 
-      return data.map((row: any) => ({
+      interface AlertRow {
+        id: string;
+        rule_id: string;
+        title: string;
+        description: string;
+        severity: 'info' | 'warning' | 'critical';
+        status: 'active' | 'resolved' | 'acknowledged';
+        triggered_at: string;
+        resolved_at?: string;
+        acknowledged_at?: string;
+        acknowledged_by?: string;
+        metadata: Record<string, any>;
+      }
+
+      return data.map((row: AlertRow) => ({
         id: row.id,
         ruleId: row.rule_id,
         title: row.title,

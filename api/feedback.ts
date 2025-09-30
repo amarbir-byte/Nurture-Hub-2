@@ -17,7 +17,14 @@ interface FeedbackData {
   userAgent?: string
   timestamp: string
   userId?: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
+}
+
+interface FeedbackRecord extends FeedbackData {
+  id: string
+  status: string
+  created_at: string
+  updated_at: string
 }
 
 export default async function handler(
@@ -91,7 +98,7 @@ function generateFeedbackId(): string {
  * Store feedback in database
  * In production, this would use your actual database (Supabase, etc.)
  */
-async function storeFeedback(feedback: any): Promise<void> {
+async function storeFeedback(feedback: FeedbackRecord): Promise<void> {
   try {
     // For now, store in memory/file system
     // In production, use Supabase or your database
@@ -130,7 +137,7 @@ async function storeFeedback(feedback: any): Promise<void> {
 /**
  * Send alert for high priority feedback
  */
-async function sendPriorityFeedbackAlert(feedback: any): Promise<void> {
+async function sendPriorityFeedbackAlert(feedback: FeedbackRecord): Promise<void> {
   try {
     const alertMessage = `🚨 HIGH PRIORITY FEEDBACK RECEIVED
 
@@ -192,13 +199,39 @@ async function trackNPSResponse(rating: number, userId?: string): Promise<void> 
   }
 }
 
+interface FeedbackAnalytics {
+  totalFeedback: number
+  byType: {
+    bug: number
+    feature_request: number
+    general: number
+    nps: number
+  }
+  byPriority: {
+    critical: number
+    high: number
+    medium: number
+    low: number
+  }
+  averageNPS: number
+  npsDistribution: {
+    promoters: number
+    passives: number
+    detractors: number
+  }
+  recentTrends: {
+    last7Days: number
+    last30Days: number
+  }
+}
+
 /**
  * Get feedback analytics (for admin dashboard)
  */
-export async function getFeedbackAnalytics(): Promise<any> {
+export async function getFeedbackAnalytics(): Promise<FeedbackAnalytics | null> {
   try {
     // This would query your database for feedback analytics
-    const analytics = {
+    const analytics: FeedbackAnalytics = {
       totalFeedback: 0,
       byType: {
         bug: 0,

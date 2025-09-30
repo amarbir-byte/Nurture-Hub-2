@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import type { Connect } from 'vite'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -17,7 +18,7 @@ export default defineConfig({
     middlewareMode: false,
     fs: {
       strict: false
-    },
+    }
   },
   build: {
     target: 'esnext',
@@ -98,7 +99,23 @@ export default defineConfig({
   },
   plugins: [
     react(),
-    VitePWA({
+    {
+      name: 'configure-server',
+      configureServer(server) {
+        server.middlewares.use((req: Connect.IncomingMessage, res: any, next: Connect.NextFunction) => {
+          // Force correct MIME types for JavaScript modules
+          if (req.url?.endsWith('.js') || req.url?.includes('/.vite/') || req.url?.includes('/node_modules/')) {
+            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+          }
+          // Force correct MIME types for CSS
+          if (req.url?.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css; charset=utf-8');
+          }
+          next();
+        });
+      }
+    },
+    ...(process.env.NODE_ENV === 'production' ? [VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
@@ -126,6 +143,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         maximumFileSizeToCacheInBytes: 3000000,
+        // Skip caching development dependencies
+        globIgnores: ['**/node_modules/**', '**/.vite/**'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
@@ -165,6 +184,6 @@ export default defineConfig({
           }
         ]
       }
-    })
+    })] : [])
   ],
 })

@@ -17,9 +17,9 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 
 // In-memory storage (in production, use proper database)
-const errors: any[] = [];
-const metrics: any[] = [];
-const adminActions: any[] = [];
+const errors: ErrorReport[] = [];
+const metrics: MetricData[] = [];
+const adminActions: AdminAction[] = [];
 
 // Configuration
 const MAX_ERRORS = 1000;
@@ -60,6 +60,23 @@ interface MetricData {
   tags?: Record<string, string>;
 }
 
+interface AlertingRule {
+  id: string;
+  name: string;
+  condition: string;
+  threshold: number;
+  enabled: boolean;
+}
+
+interface AdminAction {
+  id: string;
+  timestamp: string;
+  adminUser: string;
+  actionType: string;
+  payload: Record<string, unknown>;
+  result: unknown;
+}
+
 interface DashboardData {
   summary: {
     totalErrors: number;
@@ -70,7 +87,7 @@ interface DashboardData {
   };
   recentErrors: ErrorReport[];
   performanceMetrics: MetricData[];
-  alertingRules: any[];
+  alertingRules: AlertingRule[];
 }
 
 // Simple auth check
@@ -253,13 +270,13 @@ async function handleAdminActions(req: VercelRequest, res: VercelResponse) {
 
   const { actionType, payload } = req.body;
 
-  const action = {
+  const action: AdminAction = {
     id: `action_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     timestamp: new Date().toISOString(),
     adminUser: req.headers['x-admin-user'] as string || 'unknown',
     actionType,
-    payload,
-    result: null as any
+    payload: payload || {},
+    result: null
   };
 
   switch (actionType) {

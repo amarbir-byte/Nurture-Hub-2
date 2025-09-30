@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Cache</title>
+</head>
+<body>
+    <h1>Clearing Service Worker Cache...</h1>
+    <div id="status">Working...</div>
+
+    <script>
+        async function clearServiceWorkers() {
+            const status = document.getElementById('status');
+
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+
+                    for (let registration of registrations) {
+                        await registration.unregister();
+                        console.log('Service Worker unregistered:', registration.scope);
+                    }
+
+                    // Clear all caches
+                    if ('caches' in window) {
+                        const cacheNames = await caches.keys();
+                        await Promise.all(
+                            cacheNames.map(cacheName => caches.delete(cacheName))
+                        );
+                        console.log('All caches cleared');
+                    }
+
+                    status.innerHTML = `
+                        <p>✅ ${registrations.length} service worker(s) unregistered</p>
+                        <p>✅ All caches cleared</p>
+                        <p><strong>Please refresh the main application page.</strong></p>
+                    `;
+                } catch (error) {
+                    status.innerHTML = `❌ Error: ${error.message}`;
+                }
+            } else {
+                status.innerHTML = '❌ Service Workers not supported';
+            }
+        }
+
+        clearServiceWorkers();
+    </script>
+</body>
+</html>

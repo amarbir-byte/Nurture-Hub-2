@@ -40,7 +40,7 @@ export interface SecurityEvent {
   ipAddress: string;
   userAgent: string;
   timestamp: Date;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   action: string;
   resource?: string;
 }
@@ -52,7 +52,7 @@ export interface ValidationRule {
   minLength?: number;
   maxLength?: number;
   pattern?: RegExp;
-  customValidator?: (value: any) => boolean | string;
+  customValidator?: (value: unknown) => boolean | string;
   sanitize?: boolean;
 }
 
@@ -69,9 +69,9 @@ class EnterpriseSecurity {
   }
 
   // 🔒 INPUT VALIDATION & SANITIZATION
-  validateInput(data: Record<string, any>, rules: ValidationRule[]): { isValid: boolean; errors: string[]; sanitized: Record<string, any> } {
+  validateInput(data: Record<string, unknown>, rules: ValidationRule[]): { isValid: boolean; errors: string[]; sanitized: Record<string, unknown> } {
     const errors: string[] = [];
-    const sanitized: Record<string, any> = {};
+    const sanitized: Record<string, unknown> = {};
 
     for (const rule of rules) {
       const value = data[rule.field];
@@ -121,7 +121,7 @@ class EnterpriseSecurity {
     return { isValid, errors, sanitized };
   }
 
-  private validateByType(value: any, rule: ValidationRule): true | string {
+  private validateByType(value: unknown, rule: ValidationRule): true | string {
     switch (rule.type) {
       case 'string':
         if (typeof value !== 'string') return 'must be a string';
@@ -135,22 +135,22 @@ class EnterpriseSecurity {
         break;
 
       case 'email':
-        if (!this.isValidEmail(value)) return 'must be a valid email address';
+        if (typeof value !== 'string' || !this.isValidEmail(value)) return 'must be a valid email address';
         break;
 
       case 'phone':
-        if (!this.isValidPhone(value)) return 'must be a valid phone number';
+        if (typeof value !== 'string' || !this.isValidPhone(value)) return 'must be a valid phone number';
         break;
 
       case 'url':
-        if (!this.isValidURL(value)) return 'must be a valid URL';
+        if (typeof value !== 'string' || !this.isValidURL(value)) return 'must be a valid URL';
         break;
     }
 
     return true;
   }
 
-  private sanitizeValue(value: any, type: ValidationRule['type']): any {
+  private sanitizeValue(value: unknown, type: ValidationRule['type']): unknown {
     if (typeof value !== 'string') return value;
 
     // Basic HTML sanitization
@@ -463,8 +463,10 @@ class EnterpriseSecurity {
     }
   }
 
-  private isNumeric(value: any): boolean {
-    return !isNaN(value) && !isNaN(parseFloat(value));
+  private isNumeric(value: unknown): boolean {
+    if (typeof value === 'number') return !isNaN(value);
+    if (typeof value === 'string') return !isNaN(parseFloat(value));
+    return false;
   }
 
   private generateSecureToken(): string {
@@ -485,13 +487,15 @@ class EnterpriseSecurity {
         const parsed = JSON.parse(authData);
         return parsed.user?.id;
       }
-    } catch (error) {
+    } catch {
       // Ignore parsing errors
     }
     return undefined;
   }
 
-  private checkSuspiciousPattern(_userId: string, _action: string, _pattern: any, _metadata: Record<string, any>): boolean {
+  // This method is intentionally stubbed for future implementation
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private checkSuspiciousPattern(_userId: string, _action: string, _pattern: unknown, _metadata: Record<string, unknown>): boolean {
     // Simplified suspicious pattern detection
     // In production, this would involve more sophisticated analysis
     return false;

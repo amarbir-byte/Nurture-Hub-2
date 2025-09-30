@@ -62,29 +62,13 @@ export default defineConfig({
             return 'utils-vendor';
           }
 
-          // Beta features (lazy loaded)
-          if (id.includes('/components/analytics/') ||
-              id.includes('/components/feedback/') ||
-              id.includes('/components/onboarding/') ||
-              id.includes('/lib/analytics')) {
-            return 'beta-features';
-          }
+          // Don't split lazy-loaded components into separate chunks
+          // They're already code-split via lazy() in App.tsx
+          // Splitting them causes initialization order issues
 
-          // Admin features - Keep AdminPanel in main bundle to prevent initialization errors
-          // Only split heavy admin features
-          if (id.includes('/components/admin/') &&
-              !id.includes('AdminPanel.tsx')) {
-            return 'admin-features';
-          }
-
-          // Marketing features (lazy loaded)
-          if (id.includes('/components/marketing/')) {
+          // Only split truly independent heavy features
+          if (id.includes('/components/marketing/') && !id.includes('MarketingPage.tsx')) {
             return 'marketing-features';
-          }
-
-          // Help and support features
-          if (id.includes('/components/help/')) {
-            return 'help-features';
           }
 
           // Default for other node_modules

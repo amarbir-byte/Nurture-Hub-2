@@ -80,7 +80,10 @@ export function SMSModal({ contact, onClose, onSent }: SMSModalProps) {
   const [selectedProperties, setSelectedProperties] = useState<string[]>([])
   const [sending, setSending] = useState(false)
   const [radius, setRadius] = useState(10) // Default 10km radius
-  const [smsTemplate, setSmsTemplate] = useState<Template | null>(null)
+  const [smsTemplates, setSmsTemplates] = useState<Template[]>([])
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
+  const [customMessage, setCustomMessage] = useState('')
+  const [templatesLoading, setTemplatesLoading] = useState(true)
 
   useEffect(() => {
     // Prevent body scroll when modal is open
@@ -94,11 +97,12 @@ export function SMSModal({ contact, onClose, onSent }: SMSModalProps) {
 
   useEffect(() => {
     fetchNearbyProperties()
-    fetchSMSTemplate()
+    fetchSMSTemplates()
   }, [contact, radius])
 
-  const fetchSMSTemplate = async () => {
+  const fetchSMSTemplates = async () => {
     if (!user) {
+      setTemplatesLoading(false)
       return
     }
 
@@ -109,17 +113,21 @@ export function SMSModal({ contact, onClose, onSent }: SMSModalProps) {
         .eq('user_id', user.id)
         .or('category.eq.sms,and(category.eq.custom,name.ilike.*SMS*)')
         .order('is_default', { ascending: false })
+        .order('usage_count', { ascending: false })
         .order('created_at', { ascending: false })
-        .limit(1)
 
       if (error) throw error
 
+      setSmsTemplates(data || [])
+
+      // Auto-select first template (default or most used)
       if (data && data.length > 0) {
-        setSmsTemplate(data[0])
+        setSelectedTemplate(data[0])
       }
     } catch (error) {
-      console.error('Error fetching SMS template:', error)
+      console.error('Error fetching SMS templates:', error)
     } finally {
+      setTemplatesLoading(false)
     }
   }
 
@@ -201,6 +209,12 @@ export function SMSModal({ contact, onClose, onSent }: SMSModalProps) {
     )
   }
 
+  // Generate message when template or property selection changes
+  useEffect(() => {
+    const message = generateMessageContent()
+    setCustomMessage(message)
+  }, [selectedTemplate, selectedProperties, nearbyProperties])
+
   const generateMessageContent = (): string => {
     const selectedProps = nearbyProperties.filter(p => selectedProperties.includes(p.id))
 
@@ -208,12 +222,12 @@ export function SMSModal({ contact, onClose, onSent }: SMSModalProps) {
       return ''
     }
 
-    // Use custom template if available, otherwise fallback to default messages
-    if (smsTemplate && smsTemplate.content) {
-      return replacePlaceholders(smsTemplate.content, selectedProps)
+    // Use selected template if available
+    if (selectedTemplate && selectedTemplate.content) {
+      return replacePlaceholders(selectedTemplate.content, selectedProps)
     }
 
-    // Fallback to default hardcoded messages if no template found
+    // Fallback to default "just sold" message format
     const contactName = contact.first_name || contact.name || 'homeowner'
     const agentName = user?.user_metadata?.full_name || 'Your Agent'
 
@@ -221,13 +235,13 @@ export function SMSModal({ contact, onClose, onSent }: SMSModalProps) {
       const property = selectedProps[0]
       const price = property.sale_price ? formatPrice(property.sale_price) : (property.price ? formatPrice(property.price) : 'recently')
 
-      return `Hi ${contactName}! The property at ${property.address} has been sold ${property.sale_price ? `for ${price}` : 'recently'}. Given the current market activity in your area, this might be a great time to consider your options. I'd love to discuss what this means for your property value. - ${agentName}`
+      return `Hi ${contactName}! The property at ${property.address} has just been sold${property.sale_price ? ` for ${price}` : ''}. If you'd like to know more or discuss your property's value, I'd be happy to help! - ${agentName}`
     } else {
       // Multiple properties selected
       const priceRange = selectedProps.map(p => p.sale_price || p.price).filter(Boolean)
       const avgPrice = priceRange.length > 0 ? priceRange.reduce((a, b) => a + b, 0) / priceRange.length : 0
 
-      return `Hi ${contactName}! I wanted to let you know that ${selectedProps.length} properties in your area have recently sold${avgPrice > 0 ? ` with prices around ${formatPrice(avgPrice)}` : ''}. The market is quite active right now. Would you like to discuss what this means for your property value? - ${agentName}`
+      return `Hi ${contactName}! ${selectedProps.length} properties in your area have just been sold${avgPrice > 0 ? ` with prices around ${formatPrice(avgPrice)}` : ''}. If you want to know what this means for your property value, I'd be happy to help! - ${agentName}`
     }
   }
 
@@ -238,31 +252,33 @@ export function SMSModal({ contact, onClose, onSent }: SMSModalProps) {
     const contactName = contact.first_name || contact.name || 'homeowner'
     const agentName = user?.user_metadata?.full_name || 'Your Agent'
 
-    message = message.replace(/\[ContactName\]/g, contactName)
-    message = message.replace(/\[AgentName\]/g, agentName)
+    message = message.replace(/\[ContactName\]/gi, contactName)
+    message = message.replace(/\[AgentName\]/gi, agentName)
 
     // Replace property-specific placeholders
     if (selectedProps.length === 1) {
       const property = selectedProps[0]
       const price = property.sale_price ? formatPrice(property.sale_price) : (property.price ? formatPrice(property.price) : 'recently')
 
-      message = message.replace(/\[PropertyCount\]/g, `The property at ${property.address} has been sold`)
-      message = message.replace(/\[PropertyDetails\]/g, property.sale_price ? `for ${price}` : 'recently')
+      message = message.replace(/\[PropertyAddress\]/gi, property.address)
+      message = message.replace(/\[Price\]/gi, price)
+      message = message.replace(/\[PropertyCount\]/gi, `The property at ${property.address} has been sold`)
+      message = message.replace(/\[PropertyDetails\]/gi, property.sale_price ? `for ${price}` : 'recently')
     } else {
       const priceRange = selectedProps.map(p => p.sale_price || p.price).filter(Boolean)
       const avgPrice = priceRange.length > 0 ? priceRange.reduce((a, b) => a + b, 0) / priceRange.length : 0
 
-      message = message.replace(/\[PropertyCount\]/g, `${selectedProps.length} properties`)
-      message = message.replace(/\[PropertyDetails\]/g, `have recently sold${avgPrice > 0 ? ` with prices around ${formatPrice(avgPrice)}` : ''}`)
+      message = message.replace(/\[PropertyAddress\]/gi, `${selectedProps.length} properties`)
+      message = message.replace(/\[Price\]/gi, avgPrice > 0 ? formatPrice(avgPrice) : 'market value')
+      message = message.replace(/\[PropertyCount\]/gi, `${selectedProps.length} properties`)
+      message = message.replace(/\[PropertyDetails\]/gi, `have recently sold${avgPrice > 0 ? ` with prices around ${formatPrice(avgPrice)}` : ''}`)
     }
 
     return message
   }
 
-  const finalMessage = generateMessageContent()
-
   const handleSend = async () => {
-    if (selectedProperties.length === 0 || !finalMessage.trim() || !contact.phone) return
+    if (!customMessage.trim() || !contact.phone) return
 
     setSending(true)
     try {
@@ -279,7 +295,7 @@ export function SMSModal({ contact, onClose, onSent }: SMSModalProps) {
           contact_email: contact.email,
           contact_phone: contact.phone,
           communication_type: 'text',
-          message: finalMessage,
+          message: customMessage,
           context: 'sms_contact',
           related_properties: selectedProperties.length > 0 ? selectedProperties : null,
           sent_at: new Date().toISOString()
@@ -287,8 +303,16 @@ export function SMSModal({ contact, onClose, onSent }: SMSModalProps) {
 
       if (error) throw error
 
+      // Update template usage count if template was used
+      if (selectedTemplate) {
+        await supabase
+          .from('templates')
+          .update({ usage_count: (selectedTemplate.usage_count || 0) + 1 })
+          .eq('id', selectedTemplate.id)
+      }
+
       // Open SMS app with the message
-      const smsUrl = `sms:${cleanPhone}?body=${encodeURIComponent(finalMessage)}`
+      const smsUrl = `sms:${cleanPhone}?body=${encodeURIComponent(customMessage)}`
       window.open(smsUrl, '_self')
 
       onSent?.()
@@ -340,122 +364,111 @@ export function SMSModal({ contact, onClose, onSent }: SMSModalProps) {
           </button>
         </div>
 
-        {/* Quick Templates Section */}
+        {/* Templates Section */}
         <div className="flex-shrink-0 border-b border-gray-200 bg-gray-50">
           <div className="p-4 sm:p-6">
-            <h3 className="text-sm font-medium text-gray-900 mb-3">Quick Templates</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-              <button
-                onClick={() => {
-                  const contactName = contact.first_name || contact.name || 'there'
-                  const agentName = user?.user_metadata?.full_name || 'Your Agent'
-                  const message = `Hi ${contactName}! Hope you're doing well. Just wanted to check in and see how you're finding the current market. If you're thinking about buying or selling, I'd love to help! - ${agentName}`
-
-                  const smsUrl = `sms:${contact.phone}?body=${encodeURIComponent(message)}`
-                  window.open(smsUrl, '_self')
-                  onSent?.()
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium text-gray-900">SMS Templates</h3>
+              <a
+                href="/templates"
+                className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                onClick={(e) => {
+                  e.preventDefault()
                   onClose()
+                  window.location.href = '/templates'
                 }}
-                className="p-3 text-left bg-white border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors"
               >
-                <div className="text-sm font-medium text-gray-900">Quick Check-in</div>
-                <div className="text-xs text-gray-600 mt-1">General follow-up message</div>
-              </button>
-
-              <button
-                onClick={() => {
-                  const contactName = contact.first_name || contact.name || 'there'
-                  const agentName = user?.user_metadata?.full_name || 'Your Agent'
-                  const message = `Hi ${contactName}! The market has been really active lately. Properties in your area are selling well. If you're thinking of selling or know someone who is, now could be a great time! - ${agentName}`
-
-                  const smsUrl = `sms:${contact.phone}?body=${encodeURIComponent(message)}`
-                  window.open(smsUrl, '_self')
-                  onSent?.()
-                  onClose()
-                }}
-                className="p-3 text-left bg-white border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors"
-              >
-                <div className="text-sm font-medium text-gray-900">Market Update</div>
-                <div className="text-xs text-gray-600 mt-1">General market activity message</div>
-              </button>
-
-              <button
-                onClick={() => {
-                  const contactName = contact.first_name || contact.name || 'there'
-                  const agentName = user?.user_metadata?.full_name || 'Your Agent'
-                  const message = `Hi ${contactName}! I've noticed some great buying opportunities in your area. Interest rates are still favorable and there's good selection. Want to chat about your options? - ${agentName}`
-
-                  const smsUrl = `sms:${contact.phone}?body=${encodeURIComponent(message)}`
-                  window.open(smsUrl, '_self')
-                  onSent?.()
-                  onClose()
-                }}
-                className="p-3 text-left bg-white border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors"
-              >
-                <div className="text-sm font-medium text-gray-900">Buying Opportunity</div>
-                <div className="text-xs text-gray-600 mt-1">Encourage buyers to act</div>
-              </button>
-
-              <button
-                onClick={() => {
-                  const contactName = contact.first_name || contact.name || 'there'
-                  const agentName = user?.user_metadata?.full_name || 'Your Agent'
-                  const message = `Hi ${contactName}! Hope you're well. I'm always here if you need any real estate advice or market insights. Feel free to reach out anytime! - ${agentName}`
-
-                  const smsUrl = `sms:${contact.phone}?body=${encodeURIComponent(message)}`
-                  window.open(smsUrl, '_self')
-                  onSent?.()
-                  onClose()
-                }}
-                className="p-3 text-left bg-white border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors"
-              >
-                <div className="text-sm font-medium text-gray-900">Stay Connected</div>
-                <div className="text-xs text-gray-600 mt-1">Maintain relationship</div>
-              </button>
-
-              <button
-                onClick={() => {
-                  const contactName = contact.first_name || contact.name || 'there'
-                  const agentName = user?.user_metadata?.full_name || 'Your Agent'
-                  const message = `Hi ${contactName}! I wanted to share some exciting news - I recently helped a client get a fantastic price for their home. If you've been thinking about selling, I'd love to provide you with a free market valuation! - ${agentName}`
-
-                  const smsUrl = `sms:${contact.phone}?body=${encodeURIComponent(message)}`
-                  window.open(smsUrl, '_self')
-                  onSent?.()
-                  onClose()
-                }}
-                className="p-3 text-left bg-white border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors"
-              >
-                <div className="text-sm font-medium text-gray-900">Free Valuation</div>
-                <div className="text-xs text-gray-600 mt-1">Offer market appraisal</div>
-              </button>
-
-              <button
-                onClick={() => {
-                  const contactName = contact.first_name || contact.name || 'there'
-                  const agentName = user?.user_metadata?.full_name || 'Your Agent'
-                  const message = `Hi ${contactName}! Just a quick note to wish you and your family all the best. Thanks for being such a valued part of my network. Have a wonderful day! - ${agentName}`
-
-                  const smsUrl = `sms:${contact.phone}?body=${encodeURIComponent(message)}`
-                  window.open(smsUrl, '_self')
-                  onSent?.()
-                  onClose()
-                }}
-                className="p-3 text-left bg-white border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors"
-              >
-                <div className="text-sm font-medium text-gray-900">Personal Touch</div>
-                <div className="text-xs text-gray-600 mt-1">Build personal connection</div>
-              </button>
+                Manage Templates →
+              </a>
             </div>
+
+            {templatesLoading ? (
+              <div className="text-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto"></div>
+                <p className="text-xs text-gray-500 mt-2">Loading templates...</p>
+              </div>
+            ) : smsTemplates.length === 0 ? (
+              <div className="text-center py-4 bg-white border border-gray-200 rounded-lg">
+                <p className="text-sm text-gray-600 mb-2">No SMS templates found</p>
+                <a
+                  href="/templates"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    onClose()
+                    window.location.href = '/templates'
+                  }}
+                  className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                >
+                  Create your first template →
+                </a>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                {smsTemplates.map((template) => (
+                  <button
+                    key={template.id}
+                    onClick={() => setSelectedTemplate(template)}
+                    className={`p-3 text-left bg-white border-2 rounded-lg transition-all ${
+                      selectedTemplate?.id === template.id
+                        ? 'border-primary-500 bg-primary-50 shadow-sm'
+                        : 'border-gray-200 hover:border-primary-300 hover:bg-primary-50'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 truncate">{template.name}</div>
+                        <div className="text-xs text-gray-600 mt-1 line-clamp-2">{template.content.substring(0, 80)}...</div>
+                      </div>
+                      {selectedTemplate?.id === template.id && (
+                        <svg className="w-5 h-5 text-primary-600 flex-shrink-0 ml-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </div>
+                    {template.is_default && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 mt-2">
+                        Default
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Message Preview Section */}
+        {customMessage && (
+          <div className="flex-shrink-0 border-b border-gray-200 bg-white">
+            <div className="p-4 sm:p-6">
+              <label className="block text-sm font-medium text-gray-900 mb-2">Message Preview (Editable)</label>
+              <textarea
+                value={customMessage}
+                onChange={(e) => setCustomMessage(e.target.value)}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm resize-none"
+                placeholder="Your message will appear here..."
+              />
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs text-gray-500">
+                  {customMessage.length} characters
+                </p>
+                {selectedTemplate && (
+                  <p className="text-xs text-primary-600">
+                    Using: {selectedTemplate.name}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Main Content - Properties Selection */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 sm:p-6">
             <div className="mb-4 sm:mb-6">
-              <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">Custom Market Update</h3>
-              <p className="text-xs sm:text-sm text-gray-600">Or select sold properties below to create a personalized market update with specific data.</p>
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">Select Nearby Sold Properties</h3>
+              <p className="text-xs sm:text-sm text-gray-600">Choose properties to include in your message. The closest sold property is selected by default.</p>
             </div>
 
             {/* Radius Control */}
@@ -546,10 +559,10 @@ export function SMSModal({ contact, onClose, onSent }: SMSModalProps) {
         <div className="flex-shrink-0 px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 bg-gray-50">
           <div className="flex flex-col sm:flex-row sm:justify-between items-center space-y-3 sm:space-y-0">
             <div className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
-              {selectedProperties.length > 0 ? (
+              {customMessage.trim() ? (
                 <>Ready to send to <strong>{contact.phone}</strong></>
               ) : (
-                'Select properties above to generate message'
+                'Select a template and properties to generate message'
               )}
             </div>
             <div className="flex space-x-2 sm:space-x-3 w-full sm:w-auto">
@@ -564,7 +577,7 @@ export function SMSModal({ contact, onClose, onSent }: SMSModalProps) {
               <button
                 type="button"
                 onClick={handleSend}
-                disabled={selectedProperties.length === 0 || !contact.phone || sending}
+                disabled={!customMessage.trim() || !contact.phone || sending}
                 className="flex-1 sm:flex-none px-4 sm:px-8 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm"
               >
                 {sending ? (

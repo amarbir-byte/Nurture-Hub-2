@@ -15,13 +15,34 @@ import { OfflineIndicator } from './components/common/OfflineIndicator'
 import { PerformanceMonitor } from './components/common/PerformanceMonitor'
 
 // Lazy load heavy components and mapping features
-const AdminPanel = lazy(() => import('./components/admin/AdminPanel').then(module => ({ default: module.AdminPanel })))
-const FeedbackWidget = lazy(() => import('./components/feedback/FeedbackWidget').then(module => ({ default: module.FeedbackWidget })))
-const BetaDashboard = lazy(() => import('./components/analytics/BetaAnalyticsDashboard').then(module => ({ default: module.BetaAnalyticsDashboard })))
-const MarketingPage = lazy(() => import('./components/marketing/MarketingPage').then(module => ({ default: module.MarketingPage })))
-const OnboardingManager = lazy(() => import('./components/onboarding/OnboardingManager').then(module => ({ default: module.OnboardingManager })))
-const QuickStartGuide = lazy(() => import('./components/onboarding/QuickStartGuide').then(module => ({ default: module.QuickStartGuide })))
-const SupportWidget = lazy(() => import('./components/help/SupportWidget').then(module => ({ default: module.SupportWidget })))
+const AdminPanel = lazy(async () => {
+  const module = await import('./components/admin/AdminPanel')
+  return { default: module.AdminPanel }
+})
+const FeedbackWidget = lazy(async () => {
+  const module = await import('./components/feedback/FeedbackWidget')
+  return { default: module.FeedbackWidget }
+})
+const BetaDashboard = lazy(async () => {
+  const module = await import('./components/analytics/BetaAnalyticsDashboard')
+  return { default: module.BetaAnalyticsDashboard }
+})
+const MarketingPage = lazy(async () => {
+  const module = await import('./components/marketing/MarketingPage')
+  return { default: module.MarketingPage }
+})
+const OnboardingManager = lazy(async () => {
+  const module = await import('./components/onboarding/OnboardingManager')
+  return { default: module.OnboardingManager }
+})
+const QuickStartGuide = lazy(async () => {
+  const module = await import('./components/onboarding/QuickStartGuide')
+  return { default: module.QuickStartGuide }
+})
+const SupportWidget = lazy(async () => {
+  const module = await import('./components/help/SupportWidget')
+  return { default: module.SupportWidget }
+})
 import { ensureTablesExist } from './utils/databaseInit'
 import './utils/errorAnalysis' // Enable monitoring console utilities
 import './utils/testErrorMonitoring' // Enable error monitoring testing

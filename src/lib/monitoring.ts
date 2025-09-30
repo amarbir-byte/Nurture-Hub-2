@@ -400,6 +400,12 @@ class EnterpriseMonitoring {
   }
 
   private async sendErrorReports(errors: ErrorReport[]) {
+    // Skip API calls in development mode
+    if (import.meta.env.DEV) {
+      console.debug('🚨 Development mode: Skipping error API call', errors);
+      return;
+    }
+
     // In a real implementation, this would send to your monitoring service
     // For now, we'll store in localStorage as backup and log
     try {
@@ -427,6 +433,12 @@ class EnterpriseMonitoring {
   }
 
   private async sendMetrics(metrics: PerformanceMetric[]) {
+    // Skip API calls in development mode
+    if (import.meta.env.DEV) {
+      console.debug('📊 Development mode: Skipping metrics API call', metrics);
+      return;
+    }
+
     try {
       const response = await fetch('/api/monitoring/metrics', {
         method: 'POST',
@@ -445,6 +457,12 @@ class EnterpriseMonitoring {
   }
 
   private async sendUserActions(actions: UserAction[]) {
+    // Skip API calls in development mode
+    if (import.meta.env.DEV) {
+      console.debug('🔄 Development mode: Skipping user actions API call', actions);
+      return;
+    }
+
     try {
       const response = await fetch('/api/monitoring/actions', {
         method: 'POST',

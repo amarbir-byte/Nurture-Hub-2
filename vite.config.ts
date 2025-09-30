@@ -17,7 +17,7 @@ export default defineConfig({
     middlewareMode: false,
     fs: {
       strict: false
-    }
+    },
   },
   build: {
     target: 'esnext',

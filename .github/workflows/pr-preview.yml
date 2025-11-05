@@ -113,7 +113,7 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: 🔗 Comment Preview URL
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             const { data: comments } = await github.rest.issues.listComments({
@@ -190,7 +190,7 @@ jobs:
           temporaryPublicStorage: true
 
       - name: 📊 Comment Performance Results
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             // This would parse Lighthouse results and comment on the PR
@@ -267,7 +267,7 @@ jobs:
 
     steps:
       - name: 👥 Assign Reviewers
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             const { data: collaborators } = await github.rest.repos.listCollaborators({
@@ -304,7 +304,7 @@ jobs:
           fetch-depth: 0
 
       - name: 🏷️ Add Labels Based on Changes
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             const { data: files } = await github.rest.pulls.listFiles({
